@@ -1,4 +1,3 @@
-// src/components/dashboard/LinkTable.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,9 @@ interface LinkTableProps {
 export function LinkTable({ links, totalPages }: LinkTableProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const { replace } = useRouter();
+  
+  // UBAH DI SINI: Ambil full router agar bisa menggunakan router.refresh() dan router.replace()
+  const router = useRouter(); 
 
   const currentPage = Number(searchParams.get("page")) || 1;
   const currentSearch = searchParams.get("search") || "";
@@ -24,6 +25,22 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchInput, 500);
+
+  // --- TEMPATKAN FITUR SMART POLLING DI SINI ---
+  useEffect(() => {
+    // Cari tahu apakah ada minimal 1 transaksi berstatus PENDING di halaman tabel saat ini
+    const hasPendingLinks = links.some((link) => link.status === "PENDING");
+
+    // Jika tidak ada yang PENDING, jangan jalankan interval (Hemat resource!)
+    if (!hasPendingLinks) return;
+
+    // Jika ada yang PENDING, cek ke database via server setiap 5 detik
+    const interval = setInterval(() => {
+      router.refresh(); // Menarik data terbaru dari server secara gaib tanpa reload layar
+    }, 5000);
+
+    return () => clearInterval(interval); // Bersihkan memori saat komponen unmount/berubah
+  }, [links, router]);
 
   useEffect(() => {
     if (debouncedSearch !== currentSearch) {
@@ -48,7 +65,8 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
       params.delete(key);
     }
 
-    replace(`${pathname}?${params.toString()}`);
+    // UBAH DI SINI: Sesuaikan dengan inisialisasi router yang baru
+    router.replace(`${pathname}?${params.toString()}`); 
   };
 
   const handleCopy = (id: string) => {
@@ -60,6 +78,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
   };
 
   return (
+    // ... SISA KODE JSX / HTML DI BAWAHNYA SAMA PERSIS SEPERTI SEBELUMNYA ...
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       
       <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#1E1E1E] p-4 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
@@ -122,15 +141,12 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
                     <td className="p-4 font-mono text-xs font-bold text-gray-900 dark:text-white">
                       {link.orderId}
                     </td>
-                    {/* Gross */}
                     <td className="p-4 text-xs font-mono font-medium text-gray-500 dark:text-gray-400">
                       {link.amount} SOL
                     </td>
-                    {/* Fee */}
                     <td className="p-4 text-xs font-mono font-medium text-red-500 dark:text-red-400">
                       {link.feeAmount ? `-${link.feeAmount} SOL` : '-'}
                     </td>
-                    {/* Net */}
                     <td className="p-4 text-xs font-mono font-bold text-green-600 dark:text-green-500">
                       {link.netAmount ? `${link.netAmount} SOL` : '-'}
                     </td>
