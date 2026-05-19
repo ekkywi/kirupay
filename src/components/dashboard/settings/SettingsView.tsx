@@ -1,83 +1,309 @@
-// src/components/dashboard/settings/SettingsView.tsx
 "use client";
 
 import { useState } from "react";
-import { Store, Wallet, Globe, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertCircle, BellRing, CheckCircle2, Globe, LockKeyhole, Mail, Save, Store, Wallet } from "lucide-react";
+import { WalletOverview } from "@/components/dashboard/WalletOverview";
 import { useMerchantUpdate } from "@/hooks/api/merchant/useMerchantUpdate";
-import { WalletOverview } from "@/components/dashboard/WalletOverview"; 
 
-export function SettingsView({ merchant }: { merchant: any }) {
-  const [activeTab, setActiveTab] = useState<"profile" | "payouts" | "webhooks">("profile");
+type SettingsTab = "profile" | "payouts" | "webhooks";
+
+type SettingsMerchant = {
+  businessName: string;
+  email: string;
+  walletAddress: string;
+  webhookUrl?: string | null;
+  webhookSecret?: string | null;
+  emailVerified: boolean;
+  isActive: boolean;
+  role: string;
+  createdAt: Date | string;
+};
+
+const tabs: Array<{
+  id: SettingsTab;
+  label: string;
+  description: string;
+  icon: typeof Store;
+}> = [
+  {
+    id: "profile",
+    label: "Store Profile",
+    description: "Checkout identity",
+    icon: Store,
+  },
+  {
+    id: "payouts",
+    label: "Payouts",
+    description: "Settlement wallet",
+    icon: Wallet,
+  },
+  {
+    id: "webhooks",
+    label: "Integrations",
+    description: "Event delivery",
+    icon: Globe,
+  },
+];
+
+function formatDate(value: Date | string) {
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [businessName, setBusinessName] = useState(merchant.businessName || "");
   const [webhookUrl, setWebhookUrl] = useState(merchant.webhookUrl || "");
   const { updateField, loading, status } = useMerchantUpdate();
 
+  const walletConnected = !merchant.walletAddress.includes("pending");
+  const profileChanged = businessName.trim() !== merchant.businessName;
+  const webhookChanged = webhookUrl.trim() !== (merchant.webhookUrl || "");
+
+  const saveBusinessName = () => {
+    void updateField("businessName", businessName.trim());
+  };
+
+  const saveWebhookUrl = () => {
+    void updateField("webhookUrl", webhookUrl.trim());
+  };
+
   return (
     <div className="space-y-6">
-      
-      {/* TABS NAVIGATION */}
-      <div className="flex gap-6 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <button onClick={() => setActiveTab("profile")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 ${activeTab === "profile" ? "border-blue-500 text-blue-600 dark:text-blue-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <Store size={16} /> Store Profile
-        </button>
-        <button onClick={() => setActiveTab("payouts")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 ${activeTab === "payouts" ? "border-green-500 text-green-600 dark:text-green-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <Wallet size={16} /> Payouts
-        </button>
-        <button onClick={() => setActiveTab("webhooks")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 ${activeTab === "webhooks" ? "border-purple-500 text-purple-600 dark:text-purple-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <Globe size={16} /> Integrations
-        </button>
+      <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none md:grid-cols-3">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
+              }`}
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isActive ? "bg-white/15" : "bg-slate-100 dark:bg-white/[0.06]"}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold">{tab.label}</span>
+                <span className={`block text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{tab.description}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* GLOBAL TOAST NOTIFICATION */}
       {status && (
-        <div className={`flex items-center gap-2 p-3 rounded-xl text-xs font-bold animate-in fade-in slide-in-from-top-2 ${status.type === 'success' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'}`}>
-          {status.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+        <div
+          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold animate-in fade-in slide-in-from-top-2 ${
+            status.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300"
+              : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300"
+          }`}
+        >
+          {status.type === "success" ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
           {status.msg}
         </div>
       )}
 
-      {/* TAB 1: PROFILE */}
       {activeTab === "profile" && (
-        <div className="max-w-3xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Business Name</h3>
-          <p className="text-xs text-gray-500 mb-4">This name will be displayed to your customers on the checkout page.</p>
-          <div className="flex gap-2">
-            <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="e.g. Acme Corporation" className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#2A2A2A] p-3 flex-1 outline-none text-sm font-semibold dark:text-white" />
-            <button onClick={() => updateField("businessName", businessName)} disabled={loading || businessName === merchant.businessName} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 rounded-xl font-bold text-sm transition-colors">
-              {loading ? "Saving..." : "Save"}
-            </button>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 animate-in fade-in slide-in-from-bottom-2 duration-300 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="border-b border-slate-200 p-5 dark:border-white/10">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Checkout identity</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Store profile</h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                This information appears across hosted checkout and merchant-facing operational views.
+              </p>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div>
+                <label htmlFor="businessName" className="text-sm font-semibold text-slate-950 dark:text-white">
+                  Business name
+                </label>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Displayed to customers during payment confirmation.</p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    id="businessName"
+                    value={businessName}
+                    onChange={(event) => setBusinessName(event.target.value)}
+                    placeholder="e.g. Acme Corporation"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveBusinessName}
+                    disabled={loading || !businessName.trim() || !profileChanged}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" />
+                    {loading ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="mb-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <Mail className="h-4 w-4" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Account email</p>
+                  </div>
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant.email}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{merchant.emailVerified ? "Verified for account notifications." : "Verification is still pending."}</p>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="mb-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                    <LockKeyhole className="h-4 w-4" />
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Access role</p>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{merchant.role}</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{merchant.isActive ? "Account can create live checkouts." : "Account is currently paused."}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Profile summary</p>
+            <div className="mt-5 space-y-4">
+              {[
+                { label: "Business", value: businessName || "Not configured" },
+                { label: "Created", value: formatDate(merchant.createdAt) },
+                { label: "Email status", value: merchant.emailVerified ? "Verified" : "Pending" },
+                { label: "Environment", value: merchant.isActive ? "Live" : "Paused" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+                  <span className="max-w-[180px] truncate text-right text-sm font-semibold text-slate-950 dark:text-white">{item.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* TAB 2: PAYOUTS */}
       {activeTab === "payouts" && (
-        <div className="max-w-3xl animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
-          <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/20 p-4 rounded-xl">
-             <p className="text-[11px] text-yellow-700 dark:text-yellow-500 leading-relaxed font-medium">
-               <strong>Security Notice:</strong> To ensure your funds are safe, we require you to cryptographically sign a message using your Phantom Wallet. We do not allow manual input of wallet addresses.
-             </p>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 dark:border-amber-500/20 dark:bg-amber-500/10">
+              <div className="flex items-start gap-3">
+                <Wallet className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-300" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-950 dark:text-amber-100">Wallet-signed payout protection</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-700 dark:text-amber-200">
+                    Settlement addresses are linked through Phantom wallet signing. Manual address entry is intentionally disabled for payment safety.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <WalletOverview initialWallet={merchant.walletAddress || "pending"} />
           </div>
-          <WalletOverview initialWallet={merchant.walletAddress || "pending"} />
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Payout readiness</p>
+            <div className="mt-5 space-y-4">
+              {[
+                { label: "Wallet", value: walletConnected ? "Connected" : "Pending", ok: walletConnected },
+                { label: "Checkout creation", value: walletConnected ? "Enabled" : "Blocked", ok: walletConnected },
+                { label: "Settlement asset", value: "SOL", ok: true },
+                { label: "Custody model", value: "Wallet-direct", ok: true },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${item.ok ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                    {item.ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      {/* TAB 3: WEBHOOKS */}
       {activeTab === "webhooks" && (
-        <div className="max-w-3xl bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-2xl p-6 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600"><Globe size={20} /></div>
-            <div><h3 className="text-sm font-bold text-gray-900 dark:text-white">Webhook Configuration</h3><p className="text-xs text-gray-500">Receive real-time notifications.</p></div>
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 animate-in fade-in slide-in-from-bottom-2 duration-300 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="border-b border-slate-200 p-5 dark:border-white/10">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Event delivery</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Webhook configuration</h3>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Receive payment confirmations from Trezalink and reconcile orders on your own backend.
+              </p>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div>
+                <label htmlFor="webhookUrl" className="text-sm font-semibold text-slate-950 dark:text-white">
+                  Webhook endpoint URL
+                </label>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Use an HTTPS endpoint that can accept signed payment events.</p>
+                <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                  <input
+                    id="webhookUrl"
+                    value={webhookUrl}
+                    onChange={(event) => setWebhookUrl(event.target.value)}
+                    placeholder="https://your-api.com/webhooks/trezalink"
+                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 font-mono text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveWebhookUrl}
+                    disabled={loading || !webhookUrl.trim() || !webhookChanged}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" />
+                    {loading ? "Saving..." : "Save endpoint"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+                <div className="flex items-start gap-3">
+                  <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Signed delivery</h4>
+                    <p className="mt-1 text-xs leading-relaxed text-blue-700 dark:text-blue-200">
+                      If this is your first endpoint, Trezalink will automatically generate a webhook signing secret when you save.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://your-api.com/webhook" className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#2A2A2A] p-3 flex-1 outline-none text-sm font-mono dark:text-white" />
-            <button onClick={() => updateField("webhookUrl", webhookUrl)} disabled={loading || webhookUrl === merchant.webhookUrl} className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-6 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
-              {loading ? "Saving..." : <><Save size={16} /> Save</>}
-            </button>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Integration status</p>
+            <div className="mt-5 space-y-4">
+              {[
+                { label: "Endpoint", value: merchant.webhookUrl ? "Configured" : "Not set", ok: Boolean(merchant.webhookUrl) },
+                { label: "Signing secret", value: merchant.webhookSecret ? "Enabled" : "Pending", ok: Boolean(merchant.webhookSecret) },
+                { label: "Delivery method", value: "POST JSON", ok: true },
+                { label: "Event source", value: "Payment confirmation", ok: true },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${item.ok ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                    {item.ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

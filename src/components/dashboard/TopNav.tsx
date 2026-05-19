@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Bell, User, LogOut, Settings } from "lucide-react";
+import { Activity, LogOut, Search, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface TopNavProps {
   merchant: {
-    businessName: string;
-    email: string;
+    businessName?: string | null;
+    email?: string | null;
   } | null;
 }
 
@@ -22,19 +23,33 @@ export function TopNav({ merchant }: TopNavProps) {
   };
 
   return (
-    <header className="h-14 bg-white dark:bg-[#1E1E1E] border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between px-4">
-      <div className="flex items-center gap-4 text-xs font-medium">
-        <span className="text-gray-500 dark:text-gray-400 uppercase tracking-wider">Network</span>
-        <div className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          <span className="text-green-600 dark:text-green-400">Solana Operational</span>
+    <header className="h-16 bg-white/95 dark:bg-[#0B0F17]/95 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center gap-4 min-w-0">
+        <div className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
+          T
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">
+            {merchant?.businessName || "Merchant dashboard"}
+          </p>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="hidden sm:inline">Network</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Solana operational
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-          <input type="text" placeholder="Search..." className="bg-[#F4F5F7] dark:bg-[#121212] border border-gray-200 dark:border-[#2A2A2A] rounded-md py-1.5 pl-8 pr-3 text-xs w-48" />
+        <div className="relative hidden md:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search transactions..."
+            className="w-64 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+          />
         </div>
         
         <ThemeToggle />
@@ -43,25 +58,34 @@ export function TopNav({ merchant }: TopNavProps) {
         <div className="relative">
           <button 
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
+            className="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20"
+            aria-label="Open account menu"
           >
             <User size={16} />
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-lg shadow-xl py-1 animate-in fade-in zoom-in duration-150">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-[#2A2A2A]">
-                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Merchant Account</p>
-                <p className="text-xs font-bold dark:text-white truncate">
-                  {merchant?.email || "admin@tokokripto.com"}
+            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 py-2 animate-in fade-in zoom-in duration-150">
+              <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Merchant account</p>
+                <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white truncate">
+                  {merchant?.email || "merchant@trezalink.com"}
                 </p>
               </div>
-              <button className="w-full flex items-center gap-2 px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#2A2A2A]">
+              <Link
+                href="/settings"
+                onClick={() => setIsProfileOpen(false)}
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/[0.04]"
+              >
                 <Settings size={14} /> Settings
-              </button>
+              </Link>
+              <div className="mx-4 my-1 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+                <Activity size={14} className="text-emerald-500" />
+                Live merchant environment
+              </div>
               <button 
                 onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
               >
                 <LogOut size={14} /> Logout
               </button>

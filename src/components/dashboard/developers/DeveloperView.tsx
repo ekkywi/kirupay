@@ -7,25 +7,72 @@ import { TabCredentials } from "./TabCredentials";
 import { TabApiDocs } from "./TabApiDocs";
 import { TabWebhookLogs } from "./TabWebhookLogs";
 
-export function DeveloperView({ merchant }: { merchant: any }) {
-  const [activeTab, setActiveTab] = useState<"credentials" | "docs" | "logs">("credentials");
+export type DeveloperTab = "credentials" | "docs" | "logs";
+
+export type DeveloperMerchant = {
+  apiKey?: string | null;
+  webhookSecret?: string | null;
+  webhookUrl?: string | null;
+};
+
+const tabs: Array<{
+  id: DeveloperTab;
+  label: string;
+  description: string;
+  icon: typeof Key;
+}> = [
+  {
+    id: "credentials",
+    label: "Credentials",
+    description: "Production keys",
+    icon: Key,
+  },
+  {
+    id: "docs",
+    label: "API Reference",
+    description: "Checkout schema",
+    icon: BookOpen,
+  },
+  {
+    id: "logs",
+    label: "Webhook Logs",
+    description: "Delivery history",
+    icon: Activity,
+  },
+];
+
+export function DeveloperView({ merchant }: { merchant: DeveloperMerchant }) {
+  const [activeTab, setActiveTab] = useState<DeveloperTab>("credentials");
 
   return (
-    <div className="space-y-6 relative">
-      {/* TAB NAVIGATION HEADER */}
-      <div className="flex gap-6 border-b border-gray-200 dark:border-[#2A2A2A] overflow-x-auto hide-scrollbar">
-        <button onClick={() => setActiveTab("credentials")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "credentials" ? "border-blue-500 text-blue-600 dark:text-blue-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <Key size={16} /> API & Credentials
-        </button>
-        <button onClick={() => setActiveTab("docs")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "docs" ? "border-purple-500 text-purple-600 dark:text-purple-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <BookOpen size={16} /> API Docs
-        </button>
-        <button onClick={() => setActiveTab("logs")} className={`pb-4 text-sm font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap ${activeTab === "logs" ? "border-orange-500 text-orange-600 dark:text-orange-500" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
-          <Activity size={16} /> Webhook Logs
-        </button>
+    <div className="relative space-y-6">
+      <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none md:grid-cols-3">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
+              }`}
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isActive ? "bg-white/15" : "bg-slate-100 dark:bg-white/[0.06]"}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold">{tab.label}</span>
+                <span className={`block text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{tab.description}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* RENDER SUB-COMPONENTS BERDASARKAN TAB AKTIF */}
       {activeTab === "credentials" && <TabCredentials merchant={merchant} />}
       {activeTab === "docs" && <TabApiDocs />}
       {activeTab === "logs" && <TabWebhookLogs activeTab={activeTab} />}

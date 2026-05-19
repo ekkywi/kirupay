@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Copy, Check, ExternalLink, Search, Filter, ChevronLeft, ChevronRight, Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 
 interface LinkTableProps {
-  links: any[];
+  links: PaymentLinkRow[];
   totalPages: number;
+}
+
+interface PaymentLinkRow {
+  id: string;
+  orderId: string;
+  amount: number;
+  feeAmount?: number | null;
+  netAmount?: number | null;
+  status: string;
+  createdAt: Date | string;
 }
 
 export function LinkTable({ links, totalPages }: LinkTableProps) {
@@ -25,6 +35,22 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchInput, 500);
+
+  const updateURL = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams);
+    
+    if (key === "search" || key === "status") {
+      params.set("page", "1");
+    }
+
+    if (value && value !== "ALL") {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+
+    router.replace(`${pathname}?${params.toString()}`); 
+  }, [pathname, router, searchParams]);
 
   // --- TEMPATKAN FITUR SMART POLLING DI SINI ---
   useEffect(() => {
@@ -46,28 +72,12 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
     if (debouncedSearch !== currentSearch) {
       updateURL("search", debouncedSearch);
     }
-  }, [debouncedSearch]);
+  }, [currentSearch, debouncedSearch, updateURL]);
 
   useEffect(() => {
-    setSearchInput(currentSearch);
+    const frame = requestAnimationFrame(() => setSearchInput(currentSearch));
+    return () => cancelAnimationFrame(frame);
   }, [currentSearch]);
-
-  const updateURL = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams);
-    
-    if (key === "search" || key === "status") {
-      params.set("page", "1");
-    }
-
-    if (value && value !== "ALL") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
-
-    // UBAH DI SINI: Sesuaikan dengan inisialisasi router yang baru
-    router.replace(`${pathname}?${params.toString()}`); 
-  };
 
   const handleCopy = (id: string) => {
     const url = `${window.location.origin}/pay/${id}`;
@@ -81,7 +91,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
     // ... SISA KODE JSX / HTML DI BAWAHNYA SAMA PERSIS SEPERTI SEBELUMNYA ...
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#1E1E1E] p-4 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#0B0F17] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
         <div className="relative w-full sm:w-72">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
@@ -91,7 +101,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search Reference ID..."
-            className="block w-full pl-10 pr-3 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
+            className="block w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
           />
         </div>
 
@@ -100,7 +110,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
           <select
             value={currentStatus}
             onChange={(e) => updateURL("status", e.target.value)}
-            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
           >
             <option value="ALL">All Status</option>
             <option value="PAID">Paid</option>
@@ -110,21 +120,21 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-[#2A2A2A] overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#0B0F17] rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm shadow-slate-200/60 dark:shadow-none">
         {links.length === 0 ? (
            <div className="p-12 flex flex-col items-center justify-center text-center">
-             <div className="w-16 h-16 bg-gray-50 dark:bg-[#151515] rounded-full flex items-center justify-center mb-4">
+             <div className="w-16 h-16 bg-slate-50 dark:bg-white/[0.03] rounded-full flex items-center justify-center mb-4">
                <LinkIcon className="text-gray-400" size={24} />
              </div>
              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No links found</h3>
              <p className="text-xs text-gray-500 max-w-sm">
-               We couldn't find any payment links matching your criteria. Try adjusting your filters or create a new one.
+               No payment links match the current filters. Create a new link or adjust your search.
              </p>
            </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
-              <thead className="bg-gray-50 dark:bg-[#151515] text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-[#2A2A2A]">
+              <thead className="bg-slate-50 dark:bg-white/[0.03] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                 <tr>
                   <th className="p-4 font-black text-[10px] uppercase tracking-widest rounded-tl-xl">Reference ID</th>
                   <th className="p-4 font-black text-[10px] uppercase tracking-widest">Gross</th>
@@ -135,9 +145,9 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
                   <th className="p-4 font-black text-[10px] uppercase tracking-widest text-right rounded-tr-xl">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-[#2A2A2A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                 {links.map((link) => (
-                  <tr key={link.id} className="hover:bg-gray-50/50 dark:hover:bg-[#1A1A1A] transition-colors">
+                  <tr key={link.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors">
                     <td className="p-4 font-mono text-xs font-bold text-gray-900 dark:text-white">
                       {link.orderId}
                     </td>
@@ -192,7 +202,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl shadow-sm">
+        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm shadow-slate-200/60 dark:shadow-none">
           <p className="text-xs text-gray-500 font-medium">
             Page <span className="font-bold text-gray-900 dark:text-white">{currentPage}</span> of <span className="font-bold text-gray-900 dark:text-white">{totalPages}</span>
           </p>

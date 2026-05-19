@@ -3,15 +3,28 @@
 
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { Search, Filter, ChevronLeft, ChevronRight, Activity, ArrowUpRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 
-interface TransactionTableProps {
-  transactions: any[];
-  totalPages: number;
+interface TransactionRow {
+  id: string;
+  orderId: string;
+  amount: number;
+  currency: string;
+  feeAmount?: number | null;
+  netAmount?: number | null;
+  status: string;
+  createdAt: Date | string;
+  txSignature?: string | null;
 }
 
-export function TransactionTable({ transactions, totalPages }: TransactionTableProps) {
+interface TransactionTableProps {
+  transactions: TransactionRow[];
+  totalPages?: number;
+  showControls?: boolean;
+}
+
+export function TransactionTable({ transactions, totalPages = 1, showControls = true }: TransactionTableProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -21,7 +34,7 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchInput, 500);
 
-  const updateURL = (key: string, value: string) => {
+  const updateURL = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
     
     if (key === "search" || key === "status") {
@@ -35,23 +48,24 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
     }
 
     replace(`${pathname}?${params.toString()}`);
-  };
+  }, [pathname, replace, searchParams]);
 
   useEffect(() => {
     if (debouncedSearch !== currentSearch) {
       updateURL("search", debouncedSearch);
     }
-  }, [debouncedSearch]);
+  }, [currentSearch, debouncedSearch, updateURL]);
 
   useEffect(() => {
-    setSearchInput(currentSearch);
+    const frame = requestAnimationFrame(() => setSearchInput(currentSearch));
+    return () => cancelAnimationFrame(frame);
   }, [currentSearch]);
 
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       
       {/* FILTER & SEARCH BAR */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#1E1E1E] p-4 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
+      {showControls && <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#0B0F17] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
         <div className="relative w-full sm:w-72">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
@@ -61,7 +75,7 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search Order ID..."
-            className="block w-full pl-10 pr-3 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
+            className="block w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
           />
         </div>
 
@@ -70,17 +84,17 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
           <select
             value={currentStatus}
             onChange={(e) => updateURL("status", e.target.value)}
-            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
           >
             <option value="ALL">All Status</option>
             <option value="PAID">Paid</option>
             <option value="PENDING">Pending</option>
           </select>
         </div>
-      </div>
+      </div>}
 
       {/* TRANSACTION TABLE */}
-      <div className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden shadow-sm">
+      <div className={`${showControls ? "bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm shadow-slate-200/60 dark:shadow-none" : "bg-transparent"} overflow-hidden`}>
         {transactions.length === 0 ? (
           <div className="p-12 flex flex-col items-center justify-center text-gray-400">
             <Activity className="mb-3 opacity-20" size={48} />
@@ -91,7 +105,7 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-gray-50 dark:bg-[#151515] border-b border-gray-100 dark:border-[#2A2A2A]">
+                <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/10">
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-xl">Order ID</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gross</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fee (0.3%)</th>
@@ -101,9 +115,9 @@ export function TransactionTable({ transactions, totalPages }: TransactionTableP
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right rounded-tr-xl">Explorer</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-[#2A2A2A]">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/50 dark:hover:bg-[#1A1A1A] transition-colors group">
+                  <tr key={tx.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors group">
                     <td className="p-4 text-xs font-bold text-gray-700 dark:text-gray-300">{tx.orderId}</td>
                     
                     {/* Gross */}

@@ -3,7 +3,12 @@
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
-export function PeakHoursChart({ data }: { data: any[] }) {
+interface PeakHourPoint {
+  hour: string;
+  count: number;
+}
+
+export function PeakHoursChart({ data }: { data: PeakHourPoint[] }) {
   return (
     <div className="w-full">
       {/* Ubah height="100%" menjadi height={300} */}
@@ -15,10 +20,10 @@ export function PeakHoursChart({ data }: { data: any[] }) {
               <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#333" opacity={0.3} />
-          <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} dy={10} />
-          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#888' }} />
-          <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', borderColor: '#2A2A2A', borderRadius: '12px' }} itemStyle={{ color: '#f59e0b', fontWeight: 'bold' }} labelFormatter={(label) => `${label}:00`} formatter={(value: number) => [`${value} Transactions`, 'Volume']} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" opacity={0.18} />
+          <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+          <Tooltip contentStyle={{ backgroundColor: '#0B0F17', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }} itemStyle={{ color: '#f59e0b', fontWeight: 'bold' }} labelFormatter={(label) => `${label}:00`} formatter={(value) => [`${Number(value ?? 0)} Transactions`, 'Volume']} />
           <Area type="monotone" dataKey="count" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
         </AreaChart>
       </ResponsiveContainer>

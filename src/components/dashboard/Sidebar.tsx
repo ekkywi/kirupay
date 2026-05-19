@@ -10,11 +10,11 @@ import {
   Settings, 
   LinkIcon, 
   BarChart3,
-  ShieldAlert,
   UserCog,
   Wrench,
   Landmark,
-  Globe
+  Globe,
+  ChevronRight
 } from "lucide-react";
 
 interface SidebarProps {
@@ -75,22 +75,30 @@ export function Sidebar({ role }: SidebarProps) {
   });
 }
 
+  const mobileItems = menuCategories.flatMap((category) => category.items).slice(0, 5);
+
   return (
-    <aside className="w-64 flex flex-col bg-white dark:bg-[#1E1E1E] border-r border-gray-200 dark:border-[#2A2A2A] z-20">
+    <>
+    <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white/95 dark:border-white/10 dark:bg-[#0B0F17]/95 z-20">
       {/* Brand Header */}
-      <div className="h-14 flex items-center px-6 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center mr-2 shadow-sm">
-          <span className="text-white font-bold text-xs">T</span>
+      <div className="h-16 flex items-center px-5 border-b border-slate-200 dark:border-white/10">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-sm shadow-blue-600/20">
+            <span className="text-white font-bold text-sm">T</span>
+          </div>
+          <div className="min-w-0">
+            <span className="block font-bold text-sm tracking-tight text-slate-950 dark:text-white">Trezalink</span>
+            <span className="block text-[10px] uppercase tracking-[0.2em] text-slate-400">Merchant OS</span>
+          </div>
         </div>
-        <span className="font-bold text-sm tracking-tight dark:text-white italic">TREZALINK</span>
       </div>
       
       {/* Navigation List */}
-      <nav className="flex-1 overflow-y-auto py-6 space-y-6 px-3 custom-scrollbar">
+      <nav className="flex-1 overflow-y-auto py-5 space-y-6 px-3 custom-scrollbar">
         {menuCategories.map((category, index) => (
           <div key={index} className="space-y-1">
             {/* Category Title */}
-            <h4 className="px-3 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-2">
+            <h4 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] mb-2">
               {category.title}
             </h4>
             
@@ -107,15 +115,17 @@ export function Sidebar({ role }: SidebarProps) {
                   <Link
                     key={item.href} 
                     href={item.href}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                       isActive 
                         ? isAdminRoute
-                          ? "bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400"
-                          : "bg-blue-50 dark:bg-[#2A2D35] text-blue-600 dark:text-blue-400" 
-                        : "text-gray-500 hover:bg-gray-50 dark:hover:bg-[#2A2A2A] hover:text-gray-900 dark:hover:text-white"
+                          ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                          : "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300" 
+                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-white"
                     }`}
                   >
-                    {item.icon} {item.label}
+                    <span className={isActive ? "" : "text-slate-400 group-hover:text-current"}>{item.icon}</span>
+                    <span className="flex-1">{item.label}</span>
+                    {isActive && <ChevronRight size={14} />}
                   </Link>
                 );
               })}
@@ -123,6 +133,36 @@ export function Sidebar({ role }: SidebarProps) {
           </div>
         ))}
       </nav>
+
+      <div className="m-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+        <p className="text-xs font-semibold text-slate-950 dark:text-white">Production mode</p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+          SOL settlement, live API keys, and signed webhook delivery are active.
+        </p>
+      </div>
     </aside>
+    <nav className="lg:hidden fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-slate-200 bg-white/95 p-1.5 shadow-xl shadow-slate-200/70 backdrop-blur dark:border-white/10 dark:bg-[#0B0F17]/95 dark:shadow-black/30">
+      <div className="grid grid-cols-5 gap-1">
+        {mobileItems.map((item) => {
+          const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold transition-colors ${
+                isActive
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+                  : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.04]"
+              }`}
+            >
+              {item.icon}
+              <span className="max-w-full truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 }

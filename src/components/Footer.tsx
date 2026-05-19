@@ -2,32 +2,60 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-gray-200 dark:border-white/10 bg-transparent pt-12 pb-8 w-full overflow-hidden transition-colors duration-300">
-      
-      <div className="absolute bottom-[-50%] left-1/2 -translate-x-1/2 w-[50%] h-[100%] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[100px] pointer-events-none transition-colors"></div>
-
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
-        
-        <div className="flex flex-col items-center md:items-start gap-2">
-          <div className="text-lg font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-1.5 transition-colors">
-            <div className="w-2 h-2 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500"></div>
-            Trezalink
+    <footer className="relative bg-transparent pt-10 pb-8 w-full">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 pb-8 border-b landing-border">
+          <div className="flex flex-col gap-2">
+            <div className="text-base font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-500" />
+              Trezalink
+            </div>
+            <p className="text-xs landing-muted max-w-xs">
+            Global payments, borderless economy.
+            </p>
           </div>
-          <p className="text-xs text-gray-500 font-medium transition-colors">
-            © {new Date().getFullYear()} Trezalink by Trezanix — Global payments, borderless economy.
-          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-sm">
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white mb-3">Product</p>
+              <ul className="space-y-2 landing-muted">
+                <li><Link href="/pricing" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Pricing</Link></li>
+                <li><Link href="/use-cases" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Use cases</Link></li>
+                <li><Link href="/security" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Security</Link></li>
+                <li><Link href="/status" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Status</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white mb-3">Resources</p>
+              <ul className="space-y-2 landing-muted">
+                <li><Link href="/architecture" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Architecture</Link></li>
+                <li><Link href="/developer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">API</Link></li>
+                <li><Link href="/docs" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</Link></li>
+                <li><Link href="/roadmap" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Roadmap</Link></li>
+                <li><Link href="/faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">FAQ</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white mb-3">Company</p>
+              <ul className="space-y-2 landing-muted">
+                <li><Link href="/register" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Get started</Link></li>
+                <li><Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Sign in</Link></li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-white mb-3">Community</p>
+              <ul className="space-y-2 landing-muted">
+                <li>
+                  <Link href="https://github.com/trezanix" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    GitHub
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
-
-        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 text-sm font-medium text-gray-600 dark:text-gray-400 transition-colors">
-          <Link href="/architecture" className="hover:text-blue-600 dark:hover:text-blue-300 transition-colors">Architecture</Link>
-          <Link href="/developer" className="hover:text-blue-600 dark:hover:text-blue-300 transition-colors">API</Link>
-          <Link href="/docs" className="hover:text-blue-600 dark:hover:text-blue-300 transition-colors">Documentation</Link>
-          <div className="w-[1px] h-5 bg-gray-300 dark:bg-white/10 hidden md:block transition-colors"></div>
-          <Link href="https://github.com/trezanix" target="_blank" className="hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1">
-            GitHub
-          </Link>
-        </div>
-
+        <p className="pt-6 text-xs landing-subtle text-center md:text-left">
+          © {new Date().getFullYear()} Trezalink by Trezanix. All rights reserved.
+        </p>
       </div>
     </footer>
   );

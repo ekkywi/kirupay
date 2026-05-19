@@ -1,17 +1,193 @@
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 
-/* Kustomisasi tema dasar untuk Kirupay */
 @theme {
   --color-background: #000000;
   --color-foreground: #ffffff;
 }
 
-/* Base styling */
 @layer base {
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     antialiased: true;
+  }
+}
+
+@layer utilities {
+  /* ── Landing page shell (light + dark) ── */
+  .landing-root {
+    @apply bg-slate-50 text-slate-900;
+  }
+
+  .dark .landing-root {
+    @apply bg-[#030712] text-slate-50;
+  }
+
+  .landing-grid {
+    background-image:
+      linear-gradient(rgba(100, 116, 139, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100, 116, 139, 0.12) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 10%, transparent 70%);
+  }
+
+  .dark .landing-grid {
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 45%, #4f46e5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .dark .gradient-text {
+    background: linear-gradient(135deg, #ffffff 0%, #93c5fd 45%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+
+  .landing-panel {
+    @apply bg-white border border-slate-200/80 shadow-sm shadow-slate-200/50;
+  }
+
+  .dark .landing-panel {
+    @apply bg-slate-900/90 border-white/10 shadow-none;
+  }
+
+  .landing-panel-muted {
+    @apply bg-slate-50 border border-slate-200/60;
+  }
+
+  .dark .landing-panel-muted {
+    @apply bg-white/[0.03] border-white/8;
+  }
+
+  .landing-label {
+    @apply inline-block text-[0.6875rem] font-semibold uppercase tracking-[0.2em] text-blue-600;
+  }
+
+  .dark .landing-label {
+    @apply text-blue-400;
+  }
+
+  .landing-heading {
+    @apply text-slate-900 font-bold tracking-tight;
+  }
+
+  .dark .landing-heading {
+    @apply text-white;
+  }
+
+  .landing-body {
+    @apply text-slate-600 leading-relaxed;
+  }
+
+  .dark .landing-body {
+    @apply text-slate-400;
+  }
+
+  .landing-border {
+    @apply border-slate-200/80;
+  }
+
+  .dark .landing-border {
+    @apply border-white/10;
+  }
+
+  .landing-muted {
+    @apply text-slate-500;
+  }
+
+  .dark .landing-muted {
+    @apply text-slate-400;
+  }
+
+  .landing-subtle {
+    @apply text-slate-400;
+  }
+
+  .dark .landing-subtle {
+    @apply text-slate-500;
+  }
+
+  .landing-nav {
+    @apply border-slate-200/80 bg-white/85 backdrop-blur-xl shadow-sm shadow-slate-200/40;
+  }
+
+  .dark .landing-nav {
+    @apply border-white/10 bg-slate-950/85 shadow-black/30;
+  }
+
+  .landing-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-3.5 font-semibold text-white hover:bg-blue-700 transition-colors;
+  }
+
+  .landing-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-8 py-3.5 font-semibold text-slate-800 hover:bg-slate-50 transition-colors;
+  }
+
+  .dark .landing-btn-secondary {
+    @apply border-white/15 bg-white/5 text-white hover:bg-white/10;
+  }
+
+  .landing-section {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 600px;
+  }
+
+  /* Minimal scroll-reveal (GPU-friendly transform + opacity) */
+  .scroll-reveal {
+    opacity: 0;
+    transition:
+      opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .scroll-reveal--up {
+    transform: translate3d(0, 22px, 0);
+  }
+
+  .scroll-reveal--left {
+    transform: translate3d(-20px, 0, 0);
+  }
+
+  .scroll-reveal--right {
+    transform: translate3d(20px, 0, 0);
+  }
+
+  .scroll-reveal--fade {
+    transform: none;
+  }
+
+  .scroll-reveal--scale {
+    transform: scale(0.97);
+  }
+
+  .scroll-reveal--visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

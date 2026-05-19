@@ -9,7 +9,20 @@ const COLORS = {
   FAILED: "#ef4444",
 };
 
-export function StatusDonutChart({ data }: { data: any[] }) {
+interface StatusPoint {
+  name: string;
+  value: number;
+}
+
+export function StatusDonutChart({ data }: { data: StatusPoint[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex h-[300px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm text-slate-400 dark:border-white/10">
+        No transaction status data yet.
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       {/* Ubah height="100%" menjadi height={300} */}
@@ -20,7 +33,7 @@ export function StatusDonutChart({ data }: { data: any[] }) {
               <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS] || "#888"} />
             ))}
           </Pie>
-          <Tooltip contentStyle={{ backgroundColor: '#1E1E1E', borderColor: '#2A2A2A', borderRadius: '12px' }} itemStyle={{ color: '#fff' }} />
+          <Tooltip contentStyle={{ backgroundColor: '#0B0F17', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }} itemStyle={{ color: '#fff' }} />
           <Legend verticalAlign="bottom" height={36}/>
         </PieChart>
       </ResponsiveContainer>

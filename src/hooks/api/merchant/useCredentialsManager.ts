@@ -1,7 +1,7 @@
 // src/hooks/api/merchant/useCredentialsManager.ts
 import { useState } from "react";
 
-export function useCredentialsManager(initialApiKey: string, initialWebhookSecret: string) {
+export function useCredentialsManager(initialApiKey?: string | null, initialWebhookSecret?: string | null) {
   const [currentKey, setCurrentKey] = useState(initialApiKey || "API_KEY_NOT_GENERATED");
   const [currentWebhookSecret, setCurrentWebhookSecret] = useState(initialWebhookSecret || "WEBHOOK_SECRET_NOT_GENERATED");
   
@@ -33,7 +33,7 @@ export function useCredentialsManager(initialApiKey: string, initialWebhookSecre
         showToast(data.error || "Failed to update API Key.", "error");
         return false;
       }
-    } catch (error) {
+    } catch {
       showToast("A network error occurred. Please try again.", "error");
       return false;
     } finally {
@@ -55,7 +55,7 @@ export function useCredentialsManager(initialApiKey: string, initialWebhookSecre
         showToast(data.error || "Failed to update Webhook Secret.", "error");
         return false;
       }
-    } catch (error) {
+    } catch {
       showToast("A network error occurred. Please try again.", "error");
       return false;
     } finally {

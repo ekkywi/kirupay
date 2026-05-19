@@ -1,51 +1,104 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Sun, Moon } from "lucide-react";
+import { ArrowRight, ChevronDown, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
+const PRODUCT_LINKS = [
+  { href: "/pricing", label: "Pricing" },
+  { href: "/use-cases", label: "Use cases" },
+  { href: "/security", label: "Security" },
+  { href: "/status", label: "Status" },
+  { href: "/faq", label: "FAQ" },
+];
+
+const RESOURCE_LINKS = [
+  { href: "/architecture", label: "Architecture" },
+  { href: "/developer", label: "Developer" },
+  { href: "/docs", label: "Docs" },
+  { href: "/roadmap", label: "Roadmap" },
+];
+
 export default function Navbar() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
+  const isDark = mounted && resolvedTheme === "dark";
+
   return (
-    <nav className="relative z-50 flex items-center justify-between px-6 py-4 max-w-6xl w-full mx-auto border-b border-gray-200 dark:border-white/10 md:border md:border-gray-200 dark:md:border-white/10 bg-white/60 dark:bg-[#0a0a0f]/60 backdrop-blur-xl md:rounded-full md:mt-6 shadow-sm dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors duration-300">
-      
-      {/* Logo Trezalink Disambung Tanpa Span */}
-      <Link href="/" className="text-xl font-bold tracking-tight text-gray-900 dark:text-white flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-        <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+    <nav className="landing-nav relative z-50 flex items-center justify-between px-5 py-3 max-w-7xl w-full mx-auto rounded-xl">
+      <Link
+        href="/"
+        className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2 hover:opacity-80 transition-opacity"
+      >
+        <span className="inline-flex rounded-full h-2 w-2 bg-blue-600 dark:bg-blue-500" />
         Trezalink
       </Link>
 
-      <div className="hidden md:flex space-x-8 text-sm font-bold text-gray-600 dark:text-gray-400">
-        <Link href="/architecture" className="hover:text-blue-600 dark:hover:text-white transition-colors">Architecture</Link>
-        <Link href="/developer" className="hover:text-blue-600 dark:hover:text-white transition-colors">Developer</Link>
-        <Link href="/docs" className="hover:text-blue-600 dark:hover:text-white transition-colors">Documentation</Link>
+      <div className="hidden md:flex items-center gap-1">
+        <div className="relative group">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+          >
+            Product
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <div className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 absolute left-0 top-full pt-2 transition-all">
+            <div className="w-48 rounded-xl border landing-border bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-2 shadow-lg shadow-slate-200/50 dark:shadow-black/30">
+              {PRODUCT_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative group">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+          >
+            Resources
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+          <div className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0 absolute left-0 top-full pt-2 transition-all">
+            <div className="w-52 rounded-xl border landing-border bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl p-2 shadow-lg shadow-slate-200/50 dark:shadow-black/30">
+              {RESOURCE_LINKS.map((link) => (
+                <Link key={link.href} href={link.href} className="block rounded-lg px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        
-        {/* === SAKELAR LIGHT / DARK MODE DI SINI === */}
+      <div className="flex items-center gap-2">
         {mounted && (
-          <button 
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors focus:outline-none"
-            aria-label="Toggle Dark Mode"
+          <button
+            type="button"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         )}
 
-        <Link 
-          href="/login" 
-          className="bg-blue-600 dark:bg-white/10 border border-transparent dark:border-white/10 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-blue-700 dark:hover:bg-white/20 dark:hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all flex items-center gap-2 group backdrop-blur-md"
+        <Link
+          href="/login"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-semibold px-4 py-2 hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors group"
         >
-          Try Now <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          Sign in
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
       </div>
     </nav>

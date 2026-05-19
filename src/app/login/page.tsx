@@ -1,49 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, Variants, AnimatePresence } from "framer-motion";
-import { 
-  Mail, Lock, Eye, EyeOff, ArrowRight, 
-  Globe, Wallet, Fingerprint, Loader2
-} from "lucide-react";
 import bs58 from "bs58";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Eye,
+  EyeOff,
+  Fingerprint,
+  KeyRound,
+  Loader2,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
+
+type AuthTab = "email" | "wallet";
+
+type SolanaProvider = {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  signMessage: (message: Uint8Array, encoding: string) => Promise<{ signature: Uint8Array }>;
+};
+
+type SolanaWindow = Window & {
+  solana?: SolanaProvider;
+};
+
+const TRUST_POINTS = [
+  "Non-custodial merchant settlement",
+  "API keys and webhook signing",
+  "Payment links and hosted checkout",
+  "Dashboard analytics for every transaction",
+];
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  
-  // UI States
+  const [activeTab, setActiveTab] = useState<AuthTab>("email");
   const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState<"email" | "wallet">("email");
-
-  // Form Data States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Status States
   const [isLoading, setIsLoading] = useState(false);
   const [isWalletLoading, setIsWalletLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const fadeIn: Variants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  const clearStatus = () => {
+    setErrorMsg("");
+    setSuccessMsg("");
   };
 
-  // === FUNGSI EKSEKUSI LOGIN EMAIL ===
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
     if (!email || !password) {
-      setErrorMsg("Email and password are required!");
+      setErrorMsg("Email and password are required.");
       return;
     }
 
     setIsLoading(true);
-    setErrorMsg("");
-    setSuccessMsg("");
+    clearStatus();
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -53,233 +77,221 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to login");
+        throw new Error(data.error || "Failed to sign in.");
       }
 
-      setSuccessMsg("Authentication successful! Redirecting to dashboard...");
-      
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-
-    } catch (error: any) {
-      setErrorMsg(error.message);
+      setSuccessMsg("Signed in successfully. Redirecting to dashboard...");
+      setTimeout(() => router.push("/dashboard"), 900);
+    } catch (error: unknown) {
+      setErrorMsg(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // === FUNGSI EKSEKUSI LOGIN WALLET (WEB3) ===
   const handleWalletLogin = async () => {
     setIsWalletLoading(true);
-    setErrorMsg("");
-    setSuccessMsg("");
+    clearStatus();
 
     try {
-      // 1. Deteksi ekstensi Wallet (Phantom)
-      const provider = (window as any).solana;
-      if (!provider || !provider.isPhantom) {
-        throw new Error("Solana wallet not found! Please install Phantom Wallet.");
+      const provider = (window as SolanaWindow).solana;
+      if (!provider?.isPhantom) {
+        throw new Error("Solana wallet not found. Please install Phantom Wallet.");
       }
 
-      // 2. Hubungkan dompet & ambil kunci publik
       const { publicKey } = await provider.connect();
       const address = publicKey.toString();
-
-      // 3. Buat payload unik untuk ditandatangani
       const message = `Authenticate with Trezalink\n\nWallet: ${address}\nTimestamp: ${Date.now()}`;
       const encodedMessage = new TextEncoder().encode(message);
-
-      // 4. Minta pengguna menandatangani payload menggunakan dompet mereka
       const signedMessage = await provider.signMessage(encodedMessage, "utf8");
       const signature = bs58.encode(signedMessage.signature);
 
-      // 5. Kirim data ke backend untuk verifikasi kriptografi
       const response = await fetch("/api/auth/wallet/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          publicKey: address,
-          signature: signature,
-          message: message,
-        }),
+        body: JSON.stringify({ publicKey: address, signature, message }),
       });
 
       const data = await response.json();
-
       if (!response.ok) {
         throw new Error(data.error || "Wallet authentication failed.");
       }
 
-      setSuccessMsg("Wallet Authenticated! Redirecting...");
-      
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-
-    } catch (error: any) {
-      // Penanganan pembatalan oleh pengguna
-      if (error.message.includes("User rejected")) {
-        setErrorMsg("Authentication request was canceled.");
-      } else {
-        setErrorMsg(error.message);
-      }
+      setSuccessMsg("Wallet authenticated. Redirecting to dashboard...");
+      setTimeout(() => router.push("/dashboard"), 900);
+    } catch (error: unknown) {
+      const message = getErrorMessage(error);
+      setErrorMsg(message.includes("User rejected") ? "Authentication request was canceled." : message);
     } finally {
       setIsWalletLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#FDFDFD] dark:bg-[#030305] transition-colors duration-300">
-      
-      {/* ================= SISI KIRI: PREMIUM BRANDING (TETAP SAMA) ================= */}
-      <section className="hidden md:flex md:w-[45%] lg:w-[55%] bg-[#0A0A0B] relative overflow-hidden p-12 lg:p-20 flex-col justify-between">
-        <div className="absolute top-[-20%] left-[-10%] w-[100%] h-[100%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[80%] h-[80%] bg-purple-600/10 rounded-full blur-[100px]"></div>
+    <div className="landing-root min-h-screen relative overflow-hidden selection:bg-blue-500/20">
+      <div className="absolute inset-0 bg-slate-50 dark:bg-[#030712]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-slate-50 to-slate-100 dark:from-blue-950/25 dark:via-[#030712] dark:to-[#030712]" />
+      <div className="landing-grid absolute inset-0 opacity-35 dark:opacity-20" />
 
-        <Link href="/" className="relative z-10 flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl group-hover:rotate-6 transition-transform">
-             <span className="text-white font-black text-2xl italic">T</span>
-          </div>
-          <span className="text-white font-black text-2xl tracking-tighter italic">Trezalink</span>
-        </Link>
+      <main className="relative z-10 min-h-screen grid lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="hidden lg:flex flex-col justify-between p-12 xl:p-16 border-r landing-border">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold landing-heading w-fit">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-blue-500" />
+            Trezalink
+          </Link>
 
-        <div className="relative z-10">
-          <motion.h2 initial="hidden" animate="visible" variants={fadeIn} className="text-4xl lg:text-6xl font-extrabold text-white leading-tight mb-6">
-            Global payments<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">reimagined.</span>
-          </motion.h2>
-          <p className="text-white/50 text-lg max-w-md">
-            The infrastructure for the next generation of digital commerce. Built on the speed of Solana.
-          </p>
-        </div>
-
-        <div className="relative z-10 mt-8">
-            <div className="text-sm text-white/60">
-              <p className="text-transparent font-bold italic bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Trezalink</p>
-              <p className="text-xs mt-1">&copy; {new Date().getFullYear()} Trezalink by Trezanix — Global payments, borderless economy.</p>
-            </div>
-        </div>
-      </section>
-
-      {/* ================= SISI KANAN: LOGIN CARD ================= */}
-      <section className="flex-1 flex flex-col justify-center items-center px-6 py-12 lg:px-24 bg-white dark:bg-[#030305]">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-          <div className="md:hidden flex justify-center mb-12">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><span className="text-white font-black italic">T</span></div>
-              <span className="text-gray-900 dark:text-white font-black text-xl italic tracking-tighter">Trezalink</span>
-            </Link>
-          </div>
-
-          <div className="mb-10">
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">Access Dashboard</h1>
-            <p className="text-gray-500 dark:text-gray-400">Welcome back! Choose your preferred login method.</p>
-          </div>
-
-          <div className="flex bg-gray-100 dark:bg-white/5 p-1.5 rounded-2xl mb-8">
-            <button 
-              onClick={() => { setActiveTab("email"); setErrorMsg(""); }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "email" ? "bg-white dark:bg-white/10 text-blue-600 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
-            >
-              <Mail className="w-4 h-4" /> Email
-            </button>
-            <button 
-              onClick={() => { setActiveTab("wallet"); setErrorMsg(""); }}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === "wallet" ? "bg-white dark:bg-white/10 text-purple-600 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}
-            >
-              <Wallet className="w-4 h-4" /> Wallet
-            </button>
-          </div>
-
-          {errorMsg && (
-            <div className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm rounded-xl text-center font-medium">
-              {errorMsg}
-            </div>
-          )}
-          {successMsg && (
-            <div className="mb-6 p-3 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400 text-sm rounded-xl text-center font-medium">
-              {successMsg}
-            </div>
-          )}
-
-          <AnimatePresence mode="wait">
-            {activeTab === "email" ? (
-              <motion.form key="email" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-5" onSubmit={handleLogin}>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 ml-1">Merchant or Business Email</label>
-                  <div className="relative group">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                    <input type="email" placeholder="name@company.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:border-blue-500 focus:bg-white dark:focus:bg-transparent text-gray-900 dark:text-white rounded-2xl py-4 pl-12 pr-4 outline-none transition-all"/>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center ml-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">Security Password</label>
-                    <Link href="#" className="text-xs font-bold text-blue-600 hover:underline">Recovery?</Link>
-                  </div>
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                    <input type={showPassword ? "text" : "password"} placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 focus:border-blue-500 focus:bg-white dark:focus:bg-transparent text-gray-900 dark:text-white rounded-2xl py-4 pl-12 pr-12 outline-none transition-all"/>
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                <button type="submit" disabled={isLoading} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black font-black py-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
-                  {!isLoading && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
-                </button>
-              </motion.form>
-            ) : (
-              <motion.div key="wallet" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
-                <div className="p-6 border-2 border-dashed border-gray-200 dark:border-white/10 rounded-[2rem] text-center">
-                  <div className="w-16 h-16 bg-purple-600/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Fingerprint className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">Web3 Authentication</h3>
-                  <p className="text-sm text-gray-500">Sign a unique payload with your Solana wallet to verify ownership.</p>
-                </div>
-                
-                {/* TOMBOL LOGIN WALLET BARU */}
-                <button 
-                  onClick={handleWalletLogin}
-                  disabled={isWalletLoading}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black py-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isWalletLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Wallet className="w-5 h-5" /> Connect & Sign
-                    </>
-                  )}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="mt-12 text-center">
-              <div className="relative flex items-center justify-center mb-8">
-                <div className="absolute w-full border-t border-gray-100 dark:border-white/5"></div>
-                <span className="relative bg-white dark:bg-[#030305] px-4 text-[10px] uppercase font-black tracking-widest text-gray-400">Or continue with</span>
-              </div>
-            <button className="w-full flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/10 transition-all text-xs font-bold">
-              <Globe className="w-4 h-4 text-blue-500" /> Sign in with Google
-            </button>
-            <div className="mt-8 text-sm text-gray-500">
-              Don't have an account? <Link href="/register" className="text-blue-600 font-bold hover:underline">Sign Up</Link>
-            </div>
-            <p className="mt-10 text-xs text-gray-400">
-              By signing in, you agree to our <Link href="#" className="underline">Terms of Protocol</Link> and <Link href="#" className="underline">Privacy Policy</Link>.
+          <div className="max-w-xl">
+            <span className="landing-label">Merchant access</span>
+            <h1 className="mt-4 text-5xl xl:text-6xl font-bold tracking-tight leading-[1.05] landing-heading">
+              Welcome back to your payment command center.
+            </h1>
+            <p className="mt-6 text-lg landing-body">
+              Sign in to manage payment links, API credentials, webhook logs, analytics, and wallet-direct Solana settlement.
             </p>
+            <div className="mt-10 grid sm:grid-cols-2 gap-3">
+              {TRUST_POINTS.map((point) => (
+                <div key={point} className="landing-panel rounded-xl p-4 flex items-start gap-3">
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <p className="text-sm landing-body">{point}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </motion.div>
-      </section>
+
+          <p className="text-xs landing-subtle">Trezalink by Trezanix. Global payments, borderless economy.</p>
+        </section>
+
+        <section className="flex items-center justify-center px-6 py-10">
+          <div className="w-full max-w-md">
+            <div className="lg:hidden mb-10 flex justify-center">
+              <Link href="/" className="flex items-center gap-2 text-lg font-bold landing-heading">
+                <span className="inline-flex h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-blue-500" />
+                Trezalink
+              </Link>
+            </div>
+
+            <div className="landing-panel rounded-2xl p-6 sm:p-8">
+              <div className="mb-8">
+                <span className="landing-label">Sign in</span>
+                <h2 className="mt-3 text-3xl font-bold landing-heading">Access dashboard</h2>
+                <p className="mt-2 landing-body text-sm">Use your merchant email or verify wallet ownership.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5 rounded-xl border landing-border bg-slate-100 dark:bg-white/[0.03] p-1.5 mb-6">
+                {[
+                  { key: "email" as const, label: "Email", icon: Mail },
+                  { key: "wallet" as const, label: "Wallet", icon: Wallet },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      clearStatus();
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      activeTab === tab.key
+                        ? "bg-white text-blue-700 shadow-sm dark:bg-white/10 dark:text-white"
+                        : "landing-muted hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {errorMsg && (
+                <div className="mb-5 flex gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  {errorMsg}
+                </div>
+              )}
+              {successMsg && (
+                <div className="mb-5 flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  <Check className="w-4 h-4 shrink-0 mt-0.5" />
+                  {successMsg}
+                </div>
+              )}
+
+              {activeTab === "email" ? (
+                <form className="space-y-5" onSubmit={handleLogin}>
+                  <label className="block">
+                    <span className="text-xs font-semibold landing-muted">Business email</span>
+                    <span className="relative mt-2 block">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 landing-subtle" />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="name@company.com"
+                        className="w-full rounded-xl border landing-border bg-slate-50 px-4 py-3.5 pl-12 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                      />
+                    </span>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs font-semibold landing-muted">Password</span>
+                    <span className="relative mt-2 block">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 landing-subtle" />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                        placeholder="Enter your password"
+                        className="w-full rounded-xl border landing-border bg-slate-50 px-4 py-3.5 pl-12 pr-12 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((value) => !value)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 landing-muted hover:text-slate-900 dark:hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </span>
+                  </label>
+
+                  <button type="submit" disabled={isLoading} className="landing-btn-primary w-full py-3.5 disabled:opacity-60">
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign in"}
+                    {!isLoading && <ArrowRight className="w-4 h-4" />}
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-5">
+                  <div className="rounded-2xl border landing-border bg-slate-50 p-6 text-center dark:bg-white/[0.03]">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/15">
+                      <Fingerprint className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="font-semibold landing-heading">Wallet authentication</h3>
+                    <p className="mt-2 text-sm landing-body">Sign a one-time message to prove wallet ownership. No transaction is sent.</p>
+                  </div>
+                  <button type="button" onClick={handleWalletLogin} disabled={isWalletLoading} className="landing-btn-primary w-full py-3.5 disabled:opacity-60">
+                    {isWalletLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                    {isWalletLoading ? "Waiting for wallet" : "Connect and sign"}
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-8 border-t landing-border pt-6 text-center">
+                <p className="text-sm landing-body">
+                  New to Trezalink?{" "}
+                  <Link href="/register" className="font-semibold text-blue-600 hover:underline dark:text-blue-400">
+                    Create merchant account
+                  </Link>
+                </p>
+                <div className="mt-5 flex items-center justify-center gap-4 text-xs landing-subtle">
+                  <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Non-custodial</span>
+                  <span className="inline-flex items-center gap-1.5"><KeyRound className="w-3.5 h-3.5" /> Secure access</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

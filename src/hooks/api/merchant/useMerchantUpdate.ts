@@ -1,11 +1,13 @@
 // src/hooks/useMerchantUpdate.ts
 import { useState } from "react";
 
+type MerchantField = "businessName" | "webhookUrl";
+
 export function useMerchantUpdate() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-  const updateField = async (field: string, value: string) => {
+  const updateField = async (field: MerchantField, value: string) => {
     if (!value) return false;
     
     setLoading(true);
@@ -25,7 +27,7 @@ export function useMerchantUpdate() {
       } else {
         throw new Error("Failed to update");
       }
-    } catch (error) {
+    } catch {
       setStatus({ type: 'error', msg: 'Something went wrong. Please try again.' });
       setTimeout(() => setStatus(null), 3000);
       return false;

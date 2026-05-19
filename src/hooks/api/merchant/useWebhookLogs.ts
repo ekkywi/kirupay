@@ -1,12 +1,22 @@
 // src/hooks/api/merchant/useWebhookLogs.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+export interface WebhookLog {
+  id: string;
+  event: string;
+  url?: string | null;
+  status: number | null;
+  payload: string;
+  response?: string | null;
+  createdAt: string | Date;
+}
 
 export function useWebhookLogs(activeTab: string) {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<WebhookLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
-  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
 
-  const fetchLogs = async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
       const res = await fetch("/api/merchant/webhook/logs");
@@ -19,14 +29,17 @@ export function useWebhookLogs(activeTab: string) {
     } finally {
       setIsLoadingLogs(false);
     }
-  };
+  }, []);
 
-  // Otomatis fetch saat tab berubah menjadi "logs"
   useEffect(() => {
     if (activeTab === "logs") {
-      fetchLogs();
+      const frame = requestAnimationFrame(() => {
+        void fetchLogs();
+      });
+
+      return () => cancelAnimationFrame(frame);
     }
-  }, [activeTab]);
+  }, [activeTab, fetchLogs]);
 
   return { logs, isLoadingLogs, selectedLog, setSelectedLog, fetchLogs };
 }

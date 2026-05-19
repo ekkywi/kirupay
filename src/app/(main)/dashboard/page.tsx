@@ -6,8 +6,9 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { getCurrentMerchant } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
-import { Activity, CreditCard, CheckCircle2, LayoutDashboard } from "lucide-react";
+import { Activity, CreditCard, CheckCircle2, LayoutDashboard, ArrowUpRight, ShieldCheck } from "lucide-react";
 import SetupGatekeeper from "@/components/dashboard/SetupGatekeeper";
+import Link from "next/link";
 
 export default async function DashboardPage() {
   const merchant = await getCurrentMerchant();
@@ -82,11 +83,29 @@ export default async function DashboardPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       
       {/* Header */}
-      <div className="w-full pb-4 mb-4 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <h2 className="text-2xl font-bold dark:text-white text-gray-900 flex items-center gap-2">
-          <LayoutDashboard className="text-blue-500" /> Dashboard Overview
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">Welcome back, <strong className="text-gray-700 dark:text-gray-300">{merchant.businessName || "Merchant"}</strong></p>
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+            <LayoutDashboard className="h-4 w-4" />
+            Executive overview
+          </div>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+            Welcome back, {merchant.businessName || "Merchant"}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Monitor wallet settlement, payment conversion, and recent operational activity.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link href="/payment-links" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Payment links
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          <Link href="/developers" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+            API console
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
 
       {/* Baris 1: Stat Cards */}
@@ -99,25 +118,53 @@ export default async function DashboardPage() {
 
       {/* Baris 2: Chart (Kiri) dan Wallet (Kanan) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 dark:text-white text-sm mb-6">Revenue Trajectory (Last 7 Days)</h3>
+        <div className="lg:col-span-8 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-sm shadow-slate-200/60 dark:shadow-none">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h3 className="font-semibold text-slate-950 dark:text-white text-base">Revenue trajectory</h3>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Net paid volume across the last 7 days.</p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">SOL</span>
+          </div>
           <RevenueChart data={chartData} />
         </div>
 
         <div className="lg:col-span-4 space-y-6">
           <WalletOverview initialWallet={merchant.walletAddress} />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <h3 className="font-semibold text-slate-950 dark:text-white">Operational controls</h3>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[
+                { label: "Settlement model", value: "Non-custodial" },
+                { label: "Checkout asset", value: "SOL" },
+                { label: "Webhook signing", value: "HMAC ready" },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center justify-between border-b border-slate-100 pb-3 text-sm last:border-0 last:pb-0 dark:border-white/10">
+                  <span className="text-slate-500 dark:text-slate-400">{row.label}</span>
+                  <span className="font-medium text-slate-950 dark:text-white">{row.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Baris 3: Tabel Transaksi */}
-      <div className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-sm shadow-slate-200/60 dark:shadow-none">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="font-bold text-gray-900 dark:text-white text-sm">Recent Transactions</h3>
-          <a href="/dashboard/payments" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors">
+          <div>
+            <h3 className="font-semibold text-slate-950 dark:text-white text-base">Recent transactions</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Latest payment attempts and settlements.</p>
+          </div>
+          <Link href="/payments" className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 hover:text-blue-700 transition-colors dark:text-blue-400">
             View All
-          </a>
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
-        <TransactionTable transactions={recentTransactions} totalPages={1} />
+        <TransactionTable transactions={recentTransactions} totalPages={1} showControls={false} />
       </div>
 
     </div>

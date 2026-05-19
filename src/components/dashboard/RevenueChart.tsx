@@ -33,7 +33,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
             contentStyle={{ backgroundColor: '#1E1E1E', borderColor: '#2A2A2A', borderRadius: '12px', color: '#fff' }}
             itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
             // UBAH LABEL REVENUE MENJADI NET REVENUE DI SINI
-            formatter={(value: number) => [`${value.toFixed(4)} SOL`, 'Net Revenue']}
+            formatter={(value) => [`${Number(value ?? 0).toFixed(4)} SOL`, 'Net Revenue']}
           />
           <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
         </AreaChart>

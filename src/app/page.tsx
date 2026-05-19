@@ -1,270 +1,456 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowRight, Globe, Zap, Shield, Check, TrendingDown, ArrowUpRight, Link as LinkIcon, QrCode, Copy, Send, LayoutTemplate } from "lucide-react";
-import { motion } from "framer-motion";
+import PageBackground from "@/components/landing/PageBackground";
+import SupportedAssets from "@/components/landing/SupportedAssets";
+import ScrollReveal from "@/components/landing/ScrollReveal";
 import Link from "next/link";
+import {
+  ArrowRight,
+  Globe,
+  Zap,
+  Shield,
+  TrendingDown,
+  ArrowUpRight,
+  Link as LinkIcon,
+  QrCode,
+  Copy,
+  Send,
+  LayoutTemplate,
+  Lock,
+  KeyRound,
+  FileCheck,
+  Check,
+  Code2,
+  Wallet,
+  Building2,
+  Server,
+  BadgeCheck,
+  Headphones,
+} from "lucide-react";
+
+const METRICS = [
+  { value: "0.3%", label: "Flat transaction fee" },
+  { value: "<2s", label: "Median settlement" },
+  { value: "100%", label: "Non-custodial" },
+  { value: "24/7", label: "Platform availability" },
+];
+
+const TRUST_PILLARS = [
+  { icon: Shield, label: "Non-custodial architecture" },
+  { icon: Server, label: "Solana mainnet production" },
+  { icon: FileCheck, label: "HMAC-signed webhooks" },
+  { icon: BadgeCheck, label: "Transparent 0.3% pricing" },
+];
+
+const STEPS = [
+  { step: "01", title: "Create payment link", desc: "Configure amount, description, and branding — no engineering required." },
+  { step: "02", title: "Client settles on-chain", desc: "Payers send SOL from any Solana-compatible wallet worldwide." },
+  { step: "03", title: "Atomic merchant payout", desc: "Net proceeds arrive in your wallet with verifiable on-chain receipts." },
+];
+
+const ENTERPRISE_FEATURES = [
+  "Scoped API keys per environment",
+  "Webhook delivery logs & retries",
+  "Merchant dashboard & analytics",
+  "Role-ready account structure",
+];
+
+const AUDIENCE = ["Freelancers", "Agencies", "SaaS", "Marketplaces", "Remote teams"];
 
 export default function LandingPage() {
-  // --- VARIASI ANIMASI KONTEN ---
-  const popUp = {
-    hidden: { opacity: 0, y: 40, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 80, damping: 15, duration: 0.8 } }
-  };
-  const slideRight = {
-    hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
-  };
-  const slideLeft = {
-    hidden: { opacity: 0, x: 50 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
-  };
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
-  };
-  const staggerItem = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    // PENTING: Kelas utama dibersihkan, warna background diturunkan dari layout.tsx
-    <div className="font-sans selection:bg-blue-200 dark:selection:bg-purple-500/30 selection:text-blue-900 dark:selection:text-purple-200 overflow-hidden h-screen w-full relative transition-colors duration-300">
-      
-      <div className="absolute top-0 w-full z-50">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
+      <PageBackground />
+
+      <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4">
         <Navbar />
       </div>
 
-      <main className="h-screen w-full overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth">
-        
-        {/* =========================================
-            SECTION 1: HERO
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden">
-          {/* Ambient Background - Terang di Light Mode, Gelap di Dark Mode */}
-          <div className="absolute top-[0%] left-[-10%] w-[50%] h-[50%] bg-blue-400/30 dark:bg-blue-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          <div className="absolute bottom-[0%] right-[-10%] w-[50%] h-[50%] bg-purple-400/30 dark:bg-purple-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }}
-            className="max-w-7xl mx-auto px-6 w-full flex flex-col lg:flex-row items-center gap-12 relative z-10 pt-16"
-          >
-            <motion.div variants={slideRight} className="flex-1 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-md text-blue-700 dark:text-blue-300 px-4 py-1.5 rounded-full text-sm font-bold mb-8 shadow-sm transition-colors">
-                <TrendingDown className="w-4 h-4 text-purple-600 dark:text-purple-400" /> 0.3% Flat Fee. Absolute Trust.
-              </div>
-              <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-gray-900 dark:text-white leading-[1.1] mb-6 transition-colors">
-                Global payments.<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-                  Minus the bank fees.
+      <main>
+        {/* HERO */}
+        <section className="landing-section relative min-h-screen flex items-center pt-24 pb-16">
+          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+            <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-12">
+              <ScrollReveal immediate delay={0} className="flex-1 text-center lg:text-left">
+                <span className="inline-flex items-center gap-2 rounded-md border landing-border bg-white/80 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
+                  <Building2 className="w-3.5 h-3.5" />
+                  Enterprise payment infrastructure
                 </span>
-              </h1>
-              <p className="text-xl text-gray-600 dark:text-gray-400 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed transition-colors">
-                The smart way for freelancers and startups to get paid. Accept Digital Dollars (USDC) from anywhere in the world and settle instantly. 
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/register" className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-600 dark:to-blue-800 text-white font-bold text-lg px-8 py-4 rounded-full hover:scale-105 transition-transform shadow-[0_10px_30px_rgba(37,99,235,0.2)] dark:shadow-[0_0_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-2 border border-blue-500/50">
-                  Open an account <ArrowRight className="w-5 h-5" />
-                </Link>
-              </div>
-            </motion.div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.08]">
+                  <span className="gradient-text">Solana-native payments</span>
+                  <br />
+                  <span className="landing-heading">for growing businesses</span>
+                </h1>
+                <p className="mt-6 text-lg md:text-xl landing-body max-w-xl mx-auto lg:mx-0">
+                  Accept cross-border crypto with institutional clarity — direct wallet settlement,
+                  predictable fees, and full fund control.
+                </p>
+                <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <Link href="/register" className="landing-btn-primary">
+                    Open merchant account
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link href="/docs" className="landing-btn-secondary">
+                    View documentation
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <p className="mt-6 text-sm landing-subtle flex items-center justify-center lg:justify-start gap-2">
+                  <Headphones className="w-4 h-4" />
+                  Self-serve onboarding · No setup fees
+                </p>
+              </ScrollReveal>
 
-            {/* Glassmorphic UI Card (White Glass di Light Mode, Dark Glass di Dark Mode) */}
-            <motion.div variants={popUp} className="flex-1 w-full max-w-md mx-auto relative hidden md:block">
-              <div className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-white dark:border-white/10 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative z-10 transform hover:rotate-2 transition-all duration-500">
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-gray-50 dark:bg-white/10 border border-gray-100 dark:border-white/10 rounded-full mx-auto flex items-center justify-center mb-4 backdrop-blur-md transition-colors">
-                    <span className="text-2xl">🇺🇸</span>
+              <ScrollReveal immediate delay={120} variant="right" className="flex-1 w-full max-w-[440px] mx-auto lg:mx-0">
+                <div className="landing-panel rounded-2xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-xs font-semibold landing-subtle uppercase tracking-wider">Settlement preview</span>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Confirmed
+                    </span>
                   </div>
-                  <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm transition-colors">Client sends</h3>
-                  <div className="text-4xl font-extrabold text-gray-900 dark:text-white transition-colors">1,000.00 <span className="text-2xl text-gray-400 dark:text-gray-500">USDC</span></div>
-                </div>
-                <div className="space-y-4 relative">
-                  <div className="absolute left-5 top-8 bottom-8 w-[1px] bg-gray-200 dark:bg-white/10 transition-colors"></div>
-                  <div className="flex items-center gap-4 bg-white/60 dark:bg-white/5 backdrop-blur-md p-4 rounded-2xl relative z-10 border border-gray-100 dark:border-white/10 shadow-sm dark:shadow-none transition-colors">
-                    <div className="bg-purple-100 dark:bg-purple-500/20 p-2 rounded-full border border-purple-200 dark:border-purple-500/30 transition-colors">
-                      <TrendingDown className="w-4 h-4 text-purple-600 dark:text-purple-300" />
+                  <div className="text-center py-6 border-b landing-border">
+                    <p className="text-sm landing-subtle mb-1">Gross payment</p>
+                    <p className="text-4xl font-bold tracking-tight landing-heading">
+                      10<span className="text-2xl font-semibold landing-muted">.00 SOL</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between py-5 border-b landing-border">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-500/15">
+                        <TrendingDown className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                      </div>
+                      <span className="text-sm landing-muted">Platform fee (0.3%)</span>
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-gray-900 dark:text-gray-200 transition-colors">Trezalink Fee (0.3%)</div>
-                    </div>
-                    <div className="font-bold text-gray-900 dark:text-white transition-colors">-3.00</div>
+                    <span className="font-mono text-sm landing-heading">−0.03</span>
+                  </div>
+                  <div className="pt-6 text-center">
+                    <p className="text-sm landing-subtle mb-1">Net to merchant wallet</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">9.97 SOL</p>
                   </div>
                 </div>
-                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 text-center transition-colors">
-                  <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm transition-colors">You receive</h3>
-                  <div className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 transition-colors">997.00 <span className="text-2xl text-blue-400 dark:text-blue-600 transition-colors">USDC</span></div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* =========================================
-            SECTION 2: KEUNGGULAN
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden">
-          <div className="absolute top-[20%] left-[50%] translate-x-[-50%] w-[60%] h-[60%] bg-blue-300/40 dark:bg-blue-900/30 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} 
-            variants={staggerContainer}
-            className="max-w-7xl mx-auto px-6 w-full relative z-10 pt-16"
-          >
-            <motion.div variants={popUp} className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight transition-colors">Everything you need to scale.</h2>
-              <p className="text-xl text-gray-600 dark:text-gray-400 transition-colors">We rebuilt the cross-border payment engine to be faster, cheaper, and strictly non-custodial.</p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-blue-100 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <Globe className="w-7 h-7 text-blue-600 dark:text-blue-300 transition-colors" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Borderless by Default</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Accept payments from anywhere. They pay in Digital Dollars, you receive Digital Dollars. No FX conversions.
-                </p>
-              </motion.div>
-
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <Zap className="w-7 h-7 text-purple-600 dark:text-purple-300 transition-colors" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Millisecond Settlement</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Forget T+2 days. By utilizing high-throughput non-custodial networks, your funds land directly in your wallet.
-                </p>
-              </motion.div>
-
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-indigo-100 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <Shield className="w-7 h-7 text-indigo-600 dark:text-indigo-300 transition-colors" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Chargeback Proof</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Cryptographic finality ensures that once a payment hits your wallet, no central authority can roll it back.
-                </p>
-              </motion.div>
+              </ScrollReveal>
             </div>
-          </motion.div>
-        </section>
 
-        {/* =========================================
-            SECTION 3: NO-CODE INVOICING
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden">
-          <div className="absolute top-[10%] left-[10%] w-[40%] h-[40%] bg-purple-300/40 dark:bg-purple-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }}
-            className="max-w-7xl mx-auto px-6 w-full flex flex-col md:flex-row items-center justify-between gap-16 relative z-10 pt-16"
-          >
-            <motion.div variants={slideRight} className="flex-1">
-              <div className="w-14 h-14 bg-white/80 dark:bg-white/10 border border-gray-200 dark:border-white/20 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-md transition-colors">
-                <LinkIcon className="w-7 h-7 text-blue-600 dark:text-blue-300 transition-colors" />
-              </div>
-              <h2 className="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight text-gray-900 dark:text-white transition-colors">Share a link.<br/>Get paid.</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-xl mb-10 leading-relaxed transition-colors">
-                No technical skills required. Generate professional payment links in seconds and share them via email, WhatsApp, or anywhere your clients are.
+            {/* Trust pillars */}
+            <ScrollReveal delay={80} className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {TRUST_PILLARS.map((item, i) => (
+                <ScrollReveal key={item.label} delay={i * 70} variant="fade" className="flex items-center gap-3 landing-panel rounded-xl px-4 py-3 h-full">
+                  <item.icon className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                  <span className="text-xs font-medium landing-muted leading-snug">{item.label}</span>
+                </ScrollReveal>
+              ))}
+            </ScrollReveal>
+
+            {/* Metrics */}
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
+              {METRICS.map((m, i) => (
+                <ScrollReveal key={m.label} delay={i * 80} className="landing-panel rounded-xl px-5 py-4 h-full">
+                  <p className="text-2xl md:text-3xl font-bold landing-heading">{m.value}</p>
+                  <p className="text-xs landing-subtle mt-0.5 font-medium">{m.label}</p>
+                </ScrollReveal>
+              ))}
+            </div>
+
+            <ScrollReveal delay={100} className="mt-12 pt-8 border-t landing-border">
+              <p className="text-center text-xs landing-subtle uppercase tracking-widest mb-4">
+                Built for teams operating globally
               </p>
-              <ul className="space-y-6 mb-10 text-lg">
-                <li className="flex items-center gap-4">
-                  <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-full border border-blue-200 dark:border-blue-500/30 transition-colors"><LayoutTemplate className="w-5 h-5 text-blue-600 dark:text-blue-300" /></div> 
-                  <span className="text-gray-700 dark:text-gray-300 transition-colors">Customizable Checkout Page</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-full border border-blue-200 dark:border-blue-500/30 transition-colors"><QrCode className="w-5 h-5 text-blue-600 dark:text-blue-300" /></div> 
-                  <span className="text-gray-700 dark:text-gray-300 transition-colors">Instant QR Code Generation</span>
-                </li>
-                <li className="flex items-center gap-4">
-                  <div className="bg-blue-100 dark:bg-blue-500/20 p-1.5 rounded-full border border-blue-200 dark:border-blue-500/30 transition-colors"><Send className="w-5 h-5 text-blue-600 dark:text-blue-300" /></div> 
-                  <span className="text-gray-700 dark:text-gray-300 transition-colors">Automated Client Receipts</span>
-                </li>
-              </ul>
-            </motion.div>
-
-            <motion.div variants={slideLeft} className="flex-1 w-full hidden md:block">
-              <div className="bg-white/80 dark:bg-[#0a0a0f]/60 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_0_50px_rgba(37,99,235,0.2)] relative transform hover:-rotate-1 transition-all duration-500">
-                
-                <div className="flex items-center justify-between mb-6 border-b border-gray-200 dark:border-white/10 pb-4 transition-colors">
-                   <span className="text-gray-900 dark:text-white font-medium flex items-center gap-2 transition-colors">
-                     <span className="w-2 h-2 rounded-full bg-blue-500 dark:bg-blue-400 animate-pulse"></span> Create Payment Link
-                   </span>
-                   <span className="text-xs bg-gray-100 dark:bg-white/10 px-2 py-1 rounded-md text-gray-500 dark:text-gray-400 transition-colors">Step 1 of 2</span>
-                </div>
-
-                <div className="space-y-5">
-                   <div>
-                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider transition-colors">Project Description</div>
-                     <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-3.5 text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2 transition-colors">
-                        UI/UX Mobile App Design
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider transition-colors">Amount to Collect</div>
-                     <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-3.5 text-sm text-gray-900 dark:text-white font-bold flex justify-between items-center transition-colors">
-                        <span className="text-lg">500.00</span>
-                        <div className="flex items-center gap-2 bg-blue-100 dark:bg-blue-500/20 px-2 py-1 rounded text-blue-700 dark:text-blue-300 transition-colors">
-                           <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" className="w-4 h-4 grayscale opacity-80" alt="USDC"/> USDC
-                        </div>
-                     </div>
-                   </div>
-
-                   <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 transition-colors">
-                     <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider transition-colors">Payment Link Ready</div>
-                     <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-3.5 text-xs text-blue-700 dark:text-blue-300 font-mono truncate transition-colors">
-                           trezalink.com/pay/inv-8892x
-                        </div>
-                        <div className="bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer p-3.5 rounded-xl transition-colors border border-transparent dark:border-white/10">
-                           <Copy className="w-4 h-4 text-gray-600 dark:text-white" />
-                        </div>
-                     </div>
-                   </div>
-                </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                {AUDIENCE.map((label) => (
+                  <span
+                    key={label}
+                    className="text-sm font-medium landing-muted px-4 py-2 rounded-full border landing-border bg-white/60 dark:bg-white/[0.02]"
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* =========================================
-            SECTION 4: CTA
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex flex-col justify-between overflow-hidden">
-          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] dark:opacity-10 mix-blend-overlay"></div>
-          <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[80%] h-[80%] bg-gradient-to-r from-blue-300/40 to-purple-300/40 dark:from-blue-900/40 dark:to-purple-900/40 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          
-          <div className="flex-grow flex items-center justify-center pt-16">
-            <motion.div 
-              initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={popUp}
-              className="max-w-4xl mx-auto px-6 w-full text-center relative z-10"
-            >
-              <h2 className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-8 tracking-tighter text-gray-900 dark:text-white transition-colors">Stop leaving money on the table.</h2>
-              <p className="text-xl md:text-2xl text-gray-600 dark:text-blue-200 mb-12 leading-relaxed max-w-3xl mx-auto transition-colors">
-                Join thousands of freelancers, remote developers, and digital agencies who have upgraded their payment stack. 
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl px-12 py-5 rounded-full hover:scale-105 transition-transform shadow-[0_10px_30px_rgba(37,99,235,0.2)] dark:shadow-[0_0_40px_rgba(147,51,234,0.4)] border border-transparent dark:border-white/20 flex items-center justify-center gap-2">
-                  Get Started for Free <ArrowRight className="w-6 h-6" />
-                </Link>
-                <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-xl px-12 py-5 rounded-full hover:scale-105 transition-transform shadow-[0_10px_30px_rgba(37,99,235,0.2)] dark:shadow-[0_0_40px_rgba(147,51,234,0.4)] border border-transparent dark:border-white/20 flex items-center justify-center gap-2">
-                  Documentation<ArrowUpRight className="w-6 h-6 text-gray-400" />
-                </Link>
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="relative z-50 w-full bg-white/60 dark:bg-white/5 backdrop-blur-lg border-t border-gray-200 dark:border-white/10 pb-4 transition-colors">
-            <Footer />
+            </ScrollReveal>
           </div>
         </section>
 
+        <SupportedAssets />
+
+        {/* HOW IT WORKS */}
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal className="max-w-2xl mb-16">
+              <span className="landing-label">How it works</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                Operational flow designed for finance teams
+              </h2>
+              <p className="mt-4 landing-body">
+                A predictable three-step pipeline from invoice to on-chain settlement — auditable,
+                automated, and wallet-direct.
+              </p>
+            </ScrollReveal>
+            <div className="grid md:grid-cols-3 gap-6">
+              {STEPS.map((s, i) => (
+                <ScrollReveal key={s.step} delay={i * 100} className="landing-panel rounded-2xl p-8 relative overflow-hidden h-full">
+                  <span className="text-5xl font-black text-slate-200 dark:text-white/[0.04] absolute top-4 right-6 select-none">
+                    {s.step}
+                  </span>
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/15 border landing-border flex items-center justify-center mb-5 text-sm font-bold text-blue-700 dark:text-blue-400">
+                    {i + 1}
+                  </div>
+                  <h3 className="text-lg font-semibold landing-heading mb-2">{s.title}</h3>
+                  <p className="text-sm landing-body">{s.desc}</p>
+                </ScrollReveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ENTERPRISE */}
+        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <ScrollReveal variant="left">
+                <span className="landing-label">Enterprise ready</span>
+                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
+                  Infrastructure your compliance team can explain
+                </h2>
+                <p className="landing-body mb-8">
+                  Trezalink is built for merchants who need transparent fund flows, signed webhook
+                  events, and production-grade API controls — without taking custody of client assets.
+                </p>
+                <ul className="space-y-3">
+                  {ENTERPRISE_FEATURES.map((feature) => (
+                    <li key={feature} className="flex items-center gap-3 text-sm landing-body">
+                      <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/architecture"
+                  className="inline-flex items-center gap-1.5 mt-8 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Review system architecture
+                  <ArrowUpRight className="w-4 h-4" />
+                </Link>
+              </ScrollReveal>
+              <ScrollReveal variant="right" delay={80} className="landing-panel rounded-2xl p-8 md:p-10">
+                <h3 className="text-lg font-semibold landing-heading mb-6">Security & control matrix</h3>
+                <div className="space-y-4">
+                  {[
+                    { title: "Fund custody", value: "Never held by Trezalink", ok: true },
+                    { title: "Settlement network", value: "Solana Mainnet", ok: true },
+                    { title: "Webhook integrity", value: "HMAC-SHA256 signed", ok: true },
+                    { title: "Chargeback exposure", value: "None after finality", ok: true },
+                    { title: "USDC (SPL)", value: "Roadmap", ok: false },
+                  ].map((row) => (
+                    <div
+                      key={row.title}
+                      className="flex items-center justify-between py-3 border-b landing-border last:border-0"
+                    >
+                      <span className="text-sm landing-muted">{row.title}</span>
+                      <span
+                        className={`text-sm font-medium ${
+                          row.ok
+                            ? "text-slate-900 dark:text-white"
+                            : "text-slate-500 dark:text-slate-500"
+                        }`}
+                      >
+                        {row.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        {/* PLATFORM */}
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal className="mb-12 max-w-2xl">
+              <span className="landing-label">Platform</span>
+              <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight landing-heading">
+                Complete payment stack, one integration
+              </h2>
+            </ScrollReveal>
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+              <ScrollReveal className="md:col-span-4 landing-panel rounded-2xl p-8 md:p-10">
+                <Globe className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-5" />
+                <h3 className="text-2xl font-semibold landing-heading mb-3">Borderless collections</h3>
+                <p className="landing-body max-w-md">
+                  Accept SOL from clients in any jurisdiction. No correspondent banking, no FX spread markup.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {["SOL", "Solana", "Global", "Instant"].map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </ScrollReveal>
+              <ScrollReveal delay={100} className="md:col-span-2 landing-panel rounded-2xl p-8">
+                <Zap className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                <h3 className="text-xl font-semibold landing-heading mt-6 mb-2">Real-time settlement</h3>
+                <p className="text-sm landing-body">Sub-second on-chain finality.</p>
+              </ScrollReveal>
+              <ScrollReveal delay={150} className="md:col-span-2 landing-panel rounded-2xl p-8">
+                <Shield className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mb-5" />
+                <h3 className="text-xl font-semibold landing-heading mb-2">Final settlement</h3>
+                <p className="text-sm landing-body">Irreversible after chain confirmation.</p>
+              </ScrollReveal>
+              <ScrollReveal delay={200} className="md:col-span-4 landing-panel rounded-2xl p-8 md:p-10 flex flex-col md:flex-row md:items-center gap-8">
+                <div className="flex-1">
+                  <Code2 className="w-8 h-8 text-cyan-600 dark:text-cyan-400 mb-5" />
+                  <h3 className="text-2xl font-semibold landing-heading mb-3">REST API & webhooks</h3>
+                  <p className="landing-body">
+                    Production and sandbox keys, idempotent checkout creation, and signed event delivery.
+                  </p>
+                  <Link
+                    href="/developer"
+                    className="inline-flex items-center gap-1.5 mt-5 text-sm font-semibold text-cyan-700 dark:text-cyan-400 hover:underline"
+                  >
+                    API reference <ArrowUpRight className="w-4 h-4" />
+                  </Link>
+                </div>
+                <pre className="flex-1 text-xs font-mono landing-muted bg-slate-100 dark:bg-black/40 rounded-xl p-4 border landing-border overflow-x-auto">
+{`POST /api/v1/checkout
+Authorization: Bearer <API_KEY>
+{
+  "amount": 10,
+  "currency": "SOL",
+  "orderId": "inv-1042"
+}`}
+                </pre>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        {/* SECURITY + PAYMENT LINK */}
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col lg:flex-row gap-14 items-start">
+              <ScrollReveal variant="left" className="flex-1">
+                <span className="landing-label">Security</span>
+                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
+                  Non-custodial by architectural design
+                </h2>
+                <p className="landing-body max-w-lg mb-10">
+                  Payments are orchestrated, not held. Every flow terminates in your designated wallet
+                  with cryptographic proof on Solana.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {[
+                    { icon: Lock, title: "Zero custody", desc: "Wallet-to-wallet settlement" },
+                    { icon: KeyRound, title: "API isolation", desc: "Per-environment credentials" },
+                    { icon: FileCheck, title: "Signed webhooks", desc: "HMAC-SHA256 payloads" },
+                    { icon: Wallet, title: "On-chain receipts", desc: "Verifiable audit trail" },
+                  ].map((item) => (
+                    <div key={item.title} className="flex gap-3 p-4 rounded-xl landing-panel">
+                      <item.icon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-semibold text-sm landing-heading">{item.title}</p>
+                        <p className="text-xs landing-subtle mt-0.5">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <ul className="mt-10 space-y-3">
+                  {[
+                    { icon: LayoutTemplate, label: "Branded checkout pages" },
+                    { icon: QrCode, label: "QR code generation" },
+                    { icon: Send, label: "Automated receipts" },
+                  ].map((item) => (
+                    <li key={item.label} className="flex items-center gap-3 text-sm landing-body">
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <item.icon className="w-4 h-4 landing-subtle" />
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollReveal>
+
+              <ScrollReveal variant="right" delay={100} className="flex-1 w-full">
+                <div className="landing-panel rounded-2xl p-8">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b landing-border">
+                    <span className="flex items-center gap-2 text-sm font-medium landing-heading">
+                      <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      Payment link builder
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider landing-subtle bg-slate-100 dark:bg-white/5 px-2 py-1 rounded">
+                      No code
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Description</p>
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/5 border landing-border px-4 py-3 text-sm landing-body">
+                        Enterprise SaaS — Q2 license
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Amount</p>
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/5 border landing-border px-4 py-3 flex justify-between items-center">
+                        <span className="text-lg font-bold landing-heading">10.00</span>
+                        <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/15 px-2 py-1 rounded border border-blue-200 dark:border-transparent">
+                          SOL
+                        </span>
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Payment URL</p>
+                      <div className="flex gap-2">
+                        <div className="flex-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 px-3 py-3 text-xs font-mono text-blue-800 dark:text-blue-300 truncate">
+                          trezalink.com/pay/inv-8892x
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Copy link"
+                          className="p-3 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors"
+                        >
+                          <Copy className="w-4 h-4 landing-muted" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="landing-section relative py-24">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-16 md:px-16 md:py-20 border-blue-200/50 dark:border-blue-500/20">
+              <span className="landing-label">Get started</span>
+              <h2 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight landing-heading mb-5">
+                Deploy your payment stack this week
+              </h2>
+              <p className="landing-body text-lg max-w-xl mx-auto mb-10">
+                Create a merchant account, connect your wallet, and issue your first payment link —
+                no setup fees or monthly minimums.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/register" className="landing-btn-primary px-10 py-4">
+                  Create merchant account
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link href="/developer" className="landing-btn-secondary px-10 py-4">
+                  Explore API
+                </Link>
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
       </main>
+
+      <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]">
+        <Footer />
+      </footer>
     </div>
   );
 }

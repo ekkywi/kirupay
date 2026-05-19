@@ -1,263 +1,336 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Network, Zap, Lock, Cpu, ArrowRight, Database, Code, ShieldCheck, Box, KeyRound, Globe2 } from "lucide-react";
-import { motion } from "framer-motion";
+import PageBackground from "@/components/landing/PageBackground";
+import ScrollReveal from "@/components/landing/ScrollReveal";
+import Link from "next/link";
+import {
+  Activity,
+  ArrowRight,
+  ArrowUpRight,
+  BadgeCheck,
+  Check,
+  Code2,
+  Database,
+  FileCheck,
+  KeyRound,
+  Layers3,
+  Link as LinkIcon,
+  Lock,
+  Network,
+  Radio,
+  Server,
+  ShieldCheck,
+  Wallet,
+  Zap,
+} from "lucide-react";
+
+const ARCHITECTURE_METRICS = [
+  { value: "0.3%", label: "Platform routing fee" },
+  { value: "<2s", label: "Median confirmation path" },
+  { value: "100%", label: "Merchant wallet settlement" },
+  { value: "HMAC", label: "Signed webhook delivery" },
+];
+
+const FLOW_STEPS = [
+  {
+    icon: LinkIcon,
+    title: "Payment intent",
+    desc: "Checkout links and API requests create a controlled payment session with amount, description, and merchant wallet context.",
+  },
+  {
+    icon: Wallet,
+    title: "Wallet authorization",
+    desc: "The payer approves the transaction from a Solana-compatible wallet. Trezalink never receives private keys.",
+  },
+  {
+    icon: Network,
+    title: "On-chain settlement",
+    desc: "SOL moves directly across Solana with the platform fee separated by the payment route.",
+  },
+  {
+    icon: Radio,
+    title: "Webhook sync",
+    desc: "Final payment state is reflected to the merchant dashboard and delivered to the configured webhook endpoint.",
+  },
+];
+
+const CONTROL_LAYERS = [
+  {
+    icon: Lock,
+    title: "Non-custodial fund path",
+    desc: "Merchant balances are not pooled inside Trezalink. Funds settle to the wallet configured in merchant settings.",
+  },
+  {
+    icon: KeyRound,
+    title: "Scoped credentials",
+    desc: "API keys are regenerated from the merchant console and used to create checkout sessions programmatically.",
+  },
+  {
+    icon: FileCheck,
+    title: "Verifiable events",
+    desc: "Webhook payloads are signed so your backend can validate that status updates came from Trezalink.",
+  },
+  {
+    icon: Activity,
+    title: "Operational visibility",
+    desc: "Dashboard analytics, payment links, transaction tables, and webhook logs keep finance and engineering aligned.",
+  },
+];
+
+const PRODUCT_SURFACES = [
+  "Merchant onboarding and wallet setup",
+  "Payment link builder with hosted checkout",
+  "REST checkout endpoint for integrations",
+  "Dashboard analytics and transaction history",
+  "Webhook logs for delivery inspection",
+  "Admin revenue and merchant oversight",
+];
+
+const SYSTEM_LAYERS = [
+  { label: "Experience", value: "Dashboard, hosted checkout, payment links" },
+  { label: "Application", value: "Next.js routes, auth, merchant APIs" },
+  { label: "Integration", value: "API keys, checkout endpoint, webhooks" },
+  { label: "Settlement", value: "Solana wallet-to-wallet transactions" },
+  { label: "Records", value: "Transactions, revenue, logs, merchant settings" },
+];
 
 export default function ArchitecturePage() {
-  // --- VARIASI ANIMASI KONTEN ---
-  const popUp = {
-    hidden: { opacity: 0, y: 40, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 80, damping: 15, duration: 0.8 } }
-  };
-  const slideRight = {
-    hidden: { opacity: 0, x: -50 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
-  };
-  const slideLeft = {
-    hidden: { opacity: 0, x: 50 },
-    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 70, damping: 20 } }
-  };
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
-  };
-  const staggerItem = {
-    hidden: { opacity: 0, y: 30, scale: 0.95 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 100, damping: 15 } }
-  };
-
   return (
-    <div className="font-sans selection:bg-blue-200 dark:selection:bg-purple-500/30 selection:text-blue-900 dark:selection:text-purple-200 overflow-hidden h-screen w-full relative transition-colors duration-300">
-      
-      {/* Navbar Fixed */}
-      <div className="absolute top-0 w-full z-50">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
+      <PageBackground />
+
+      <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4">
         <Navbar />
       </div>
 
-      {/* Main Container (Scroll Snap) */}
-      <main className="h-screen w-full overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth">
-        
-        {/* =========================================
-            SECTION 1: HERO (Layar 1)
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex items-center justify-center overflow-hidden">
-          {/* Ambient Glowing Orbs */}
-          <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/30 dark:bg-blue-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/30 dark:bg-purple-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} variants={popUp}
-            className="text-center max-w-4xl mx-auto px-6 relative z-10 pt-16"
-          >
-            <div className="inline-flex items-center gap-2 bg-white/70 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-md text-blue-700 dark:text-blue-300 px-4 py-1.5 rounded-full text-sm font-bold mb-8 shadow-sm transition-colors">
-              <Network className="w-4 h-4 text-purple-600 dark:text-purple-400" /> The Underlying Engine
-            </div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-gray-900 dark:text-white leading-[1.1] mb-6 transition-colors">
-              Trust in <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Math</span>,<br/>Not Middlemen.
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed transition-colors">
-              Trezalink is not a bank. It is an open routing protocol built on top of high-performance decentralized ledgers. Discover why cryptographic finality is the most secure way to process global payments.
-            </p>
-          </motion.div>
-        </section>
-
-        {/* =========================================
-            SECTION 2: LAYER 1 - THE FOUNDATION
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex flex-col items-center justify-center overflow-hidden">
-          <div className="absolute top-[20%] left-[50%] translate-x-[-50%] w-[60%] h-[60%] bg-blue-300/40 dark:bg-blue-900/30 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }} 
-            variants={staggerContainer}
-            className="max-w-7xl mx-auto px-6 w-full relative z-10 pt-16"
-          >
-            <motion.div variants={popUp} className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight transition-colors">Layer 1: The Settlement Network</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 transition-colors">The cryptographic foundation that guarantees your funds cannot be frozen or seized.</p>
-            </motion.div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-blue-100 dark:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <Box className="w-7 h-7 text-blue-600 dark:text-blue-300 transition-colors" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Decentralized Ledger</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Instead of a centralized database controlled by one company, transactions are validated by thousands of independent nodes running on the network.
+      <main>
+        <section className="landing-section relative min-h-screen flex items-center pt-28 pb-16">
+          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
+            <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
+              <ScrollReveal immediate className="text-center lg:text-left">
+                <span className="inline-flex items-center gap-2 rounded-md border landing-border bg-white/80 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
+                  <Layers3 className="w-3.5 h-3.5" />
+                  Trezalink architecture
+                </span>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.08]">
+                  <span className="gradient-text">Payment infrastructure</span>
+                  <br />
+                  <span className="landing-heading">built around merchant control</span>
+                </h1>
+                <p className="mt-6 text-lg md:text-xl landing-body max-w-2xl mx-auto lg:mx-0">
+                  Trezalink coordinates hosted checkout, payment links, API credentials,
+                  webhook delivery, and Solana settlement without taking custody of merchant funds.
                 </p>
-              </motion.div>
-
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-purple-100 dark:bg-purple-500/20 border border-purple-200 dark:border-purple-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <KeyRound className="w-7 h-7 text-purple-600 dark:text-purple-300 transition-colors" />
+                <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <Link href="/developer" className="landing-btn-primary">
+                    Explore API
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link href="/register" className="landing-btn-secondary">
+                    Create merchant account
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Link>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Ed25519 Cryptography</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Every transaction is signed using asymmetric keys. Only you possess the private key to your wallet. Without it, moving funds is mathematically impossible.
-                </p>
-              </motion.div>
+              </ScrollReveal>
 
-              <motion.div variants={staggerItem} className="bg-white/80 dark:bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white dark:hover:bg-white/10 transition-colors">
-                <div className="w-14 h-14 bg-indigo-100 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 rounded-2xl flex items-center justify-center mb-6 transition-colors">
-                  <Globe2 className="w-7 h-7 text-indigo-600 dark:text-indigo-300 transition-colors" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 transition-colors">Censorship Resistance</h3>
-                <p className="text-gray-600 dark:text-gray-400 leading-relaxed transition-colors">
-                  Because the underlying blockchain operates permissionlessly, no central authority can arbitrarily freeze your account or decline a valid payment.
-                </p>
-              </motion.div>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* =========================================
-            SECTION 3: LAYER 2 - FLOW DIAGRAM
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex flex-col items-center justify-center overflow-hidden">
-          <div className="absolute top-[10%] left-[10%] w-[40%] h-[40%] bg-purple-300/40 dark:bg-purple-600/20 rounded-full blur-[150px] pointer-events-none transition-colors"></div>
-          
-          <motion.div 
-            initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.3 }}
-            variants={staggerContainer} // Menambahkan orkestrasi berurutan ke parent
-            className="max-w-7xl mx-auto px-6 w-full relative z-10 pt-16"
-          >
-            <motion.div variants={popUp} className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight transition-colors">Layer 2: Protocol Execution</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400 transition-colors">How Trezalink routes your money atomically across the ledger.</p>
-            </motion.div>
-
-            {/* MENGHAPUS transition-all dan menggantinya dengan transition-colors agar tidak bentrok dengan Framer Motion */}
-            <motion.div 
-              variants={popUp}
-              className="relative bg-white/80 dark:bg-[#0a0a0f]/60 backdrop-blur-3xl border border-gray-200 dark:border-white/10 rounded-[2rem] p-8 md:p-16 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_0_50px_rgba(37,99,235,0.2)] transition-colors"
-            >
-              {/* Kontainer baru untuk animasi berurutan di dalam diagram */}
-              <motion.div 
-                initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.5 }} variants={staggerContainer}
-                className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6"
-              >
-                
-                {/* Step 1: Payment Intent (Masuk dari Kiri) */}
-                <motion.div variants={slideRight} className="flex-1 w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6 text-center shadow-sm dark:shadow-xl transition-colors">
-                  <div className="w-12 h-12 mx-auto bg-gray-200 dark:bg-white/10 rounded-xl flex items-center justify-center mb-4 transition-colors">
-                    <Database className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-                  </div>
-                  <h3 className="font-bold mb-2 text-gray-900 dark:text-white">1. Payment Intent</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Client connects wallet and signs a 1,000.00 USDC transaction payload.</p>
-                </motion.div>
-
-                {/* Arrow 1 (Pop Up) */}
-                <motion.div variants={popUp}>
-                  <ArrowRight className="w-8 h-8 text-blue-600 dark:text-blue-400 hidden md:block animate-pulse transition-colors" />
-                  <div className="w-[2px] h-8 bg-blue-600 dark:bg-blue-400 md:hidden animate-pulse transition-colors"></div>
-                </motion.div>
-
-                {/* Step 2: Smart Contract (Pop Up) */}
-                {/* Dibungkus div statis agar class transform md:-translate-y-4 dari tailwind tidak dihapus oleh Framer Motion */}
-                <div className="flex-1 w-full transform md:-translate-y-4">
-                  <motion.div variants={popUp} className="w-full h-full bg-gradient-to-b from-blue-50 dark:from-blue-500/10 to-white dark:to-white/5 border border-blue-200 dark:border-blue-500/30 rounded-2xl p-6 text-center relative shadow-md dark:shadow-[0_0_30px_rgba(59,130,246,0.15)] transition-colors">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider transition-colors shadow-sm">
-                      Smart Contract
+              <ScrollReveal immediate delay={120} variant="right">
+                <div className="landing-panel rounded-2xl p-6 md:p-8">
+                  <div className="flex items-center justify-between border-b landing-border pb-5 mb-6">
+                    <div>
+                      <p className="text-xs font-semibold landing-subtle uppercase tracking-wider">System route</p>
+                      <h2 className="mt-1 text-xl font-semibold landing-heading">Checkout to settlement</h2>
                     </div>
-                    <div className="w-12 h-12 mx-auto bg-blue-100 dark:bg-blue-500/20 rounded-xl flex items-center justify-center mb-4 transition-colors">
-                      <Cpu className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-500/15">
+                      <Server className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h3 className="font-bold text-blue-700 dark:text-blue-300 mb-2 transition-colors">2. Atomic Route</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 transition-colors">Protocol validates signature and splits 0.3% routing fee algorithmically.</p>
-                  </motion.div>
-                </div>
-
-                {/* Arrow 2 (Pop Up) */}
-                <motion.div variants={popUp}>
-                  <ArrowRight className="w-8 h-8 text-purple-600 dark:text-purple-400 hidden md:block animate-pulse transition-colors" />
-                  <div className="w-[2px] h-8 bg-purple-600 dark:bg-purple-400 md:hidden animate-pulse transition-colors"></div>
-                </motion.div>
-
-                {/* Step 3: Finality (Masuk dari Kanan) */}
-                <motion.div variants={slideLeft} className="flex-1 w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6 text-center shadow-sm dark:shadow-xl transition-colors">
-                  <div className="w-12 h-12 mx-auto bg-purple-100 dark:bg-purple-500/10 rounded-xl flex items-center justify-center mb-4 transition-colors">
-                    <ShieldCheck className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <h3 className="font-bold mb-2 text-gray-900 dark:text-white">3. Finality</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">997.00 USDC arrives in your wallet in ~400ms. Webhook fires to server.</p>
-                </motion.div>
 
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        </section>
-
-        {/* =========================================
-            SECTION 4: LAYER 3 (PILLARS) & FOOTER
-        ========================================= */}
-        <section className="h-screen w-full snap-start relative flex flex-col justify-between overflow-hidden">
-          {/* Ambient Glow - Menyesuaikan Mode Terang/Gelap */}
-          <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[80%] h-[80%] bg-gradient-to-r from-blue-300/20 to-purple-300/20 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full blur-[150px] pointer-events-none transition-colors duration-500"></div>
-          
-          <div className="flex-grow flex items-center justify-center pt-24 px-6">
-            {/* Grid Container dengan Staggered Animation */}
-            <motion.div 
-              initial="hidden" whileInView="visible" viewport={{ once: false, amount: 0.2 }} variants={staggerContainer}
-              className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10"
-            >
-              
-              {/* Card 1: Non-Custodial */}
-              <motion.div variants={slideRight} className="group bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:bg-white dark:hover:bg-white/10 transition-colors duration-300">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-blue-500/20 rounded-2xl flex items-center justify-center mb-5 border border-blue-200 dark:border-blue-500/30 transition-colors">
-                  <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  <div className="space-y-3">
+                    {SYSTEM_LAYERS.map((layer, index) => (
+                      <div key={layer.label} className="relative flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 border landing-border flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300">
+                            {index + 1}
+                          </div>
+                          {index < SYSTEM_LAYERS.length - 1 && <div className="w-px flex-1 bg-slate-200 dark:bg-white/10 my-1" />}
+                        </div>
+                        <div className="pb-5">
+                          <p className="text-sm font-semibold landing-heading">{layer.label}</p>
+                          <p className="text-sm landing-body mt-0.5">{layer.value}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white transition-colors">Strictly Non-Custodial</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-colors">
-                  Trezalink operates on a strict non-custodial model. We never hold, pool, or have access to your private keys. The smart contract acts merely as a traffic controller.
-                </p>
-              </motion.div>
+              </ScrollReveal>
+            </div>
 
-              {/* Card 2: Parallel Processing */}
-              <motion.div variants={slideLeft} className="group bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:bg-white dark:hover:bg-white/10 transition-colors duration-300">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-500/20 rounded-2xl flex items-center justify-center mb-5 border border-purple-200 dark:border-purple-500/30 transition-colors">
-                  <Zap className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white transition-colors">Parallel Processing</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-colors">
-                  By utilizing Solana&apos;s architecture that supports parallel transaction processing, we bypass network congestion. Transactions achieve finality in sub-seconds.
-                </p>
-              </motion.div>
-
-              {/* Card 3: Atomic Smart Contracts */}
-              <motion.div variants={slideRight} className="group bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:bg-white dark:hover:bg-white/10 transition-colors duration-300">
-                <div className="w-12 h-12 bg-indigo-100 dark:bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-5 border border-indigo-200 dark:border-indigo-500/30 transition-colors">
-                  <Code className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white transition-colors">Atomic Smart Contracts</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-colors">
-                  The fee-splitting logic is hardcoded into immutable smart contracts. The execution is atomic—if one step fails, the entire transaction reverts safely.
-                </p>
-              </motion.div>
-
-              {/* Card 4: Webhooks */}
-              <motion.div variants={slideLeft} className="group bg-white/80 dark:bg-white/5 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:bg-white dark:hover:bg-white/10 transition-colors duration-300">
-                <div className="w-12 h-12 bg-blue-100 dark:bg-cyan-500/20 rounded-2xl flex items-center justify-center mb-5 border border-blue-200 dark:border-cyan-500/30 transition-colors">
-                  <Network className="w-6 h-6 text-blue-600 dark:text-cyan-400" />
-                </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900 dark:text-white transition-colors">Deterministic Webhooks</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed transition-colors">
-                  A dedicated indexing infrastructure listens to on-chain events. Once finality is reached, an HMAC-secured POST request is dispatched to your backend webhook.
-                </p>
-              </motion.div>
-
-            </motion.div>
-          </div>
-
-          {/* Footer - Menyatu dengan Snap Area Terakhir */}
-          <div className="relative z-50 w-full bg-white/60 dark:bg-white/5 backdrop-blur-lg border-t border-gray-200 dark:border-white/10 pb-4 transition-colors">
-            <Footer />
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+              {ARCHITECTURE_METRICS.map((metric, index) => (
+                <ScrollReveal key={metric.label} delay={index * 70} className="landing-panel rounded-xl px-5 py-4 h-full">
+                  <p className="text-2xl md:text-3xl font-bold landing-heading">{metric.value}</p>
+                  <p className="text-xs landing-subtle mt-0.5 font-medium">{metric.label}</p>
+                </ScrollReveal>
+              ))}
+            </div>
           </div>
         </section>
 
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal className="max-w-2xl mb-14">
+              <span className="landing-label">Execution flow</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                One route for no-code links and API checkout
+              </h2>
+              <p className="mt-4 landing-body">
+                The same architecture supports a merchant creating a payment link from the dashboard
+                or an application creating checkout sessions through the REST endpoint.
+              </p>
+            </ScrollReveal>
+
+            <div className="landing-panel rounded-2xl p-6 md:p-8 lg:p-10">
+              <div className="grid md:grid-cols-4 gap-4">
+                {FLOW_STEPS.map((step, index) => (
+                  <ScrollReveal key={step.title} delay={index * 90} className="relative">
+                    <div className="h-full rounded-xl border landing-border bg-slate-50/80 dark:bg-white/[0.03] p-5">
+                      <step.icon className="w-6 h-6 text-blue-600 dark:text-blue-400 mb-5" />
+                      <p className="text-xs font-semibold landing-subtle uppercase tracking-wider mb-2">
+                        Step {index + 1}
+                      </p>
+                      <h3 className="font-semibold landing-heading mb-2">{step.title}</h3>
+                      <p className="text-sm landing-body">{step.desc}</p>
+                    </div>
+                    {index < FLOW_STEPS.length - 1 && (
+                      <ArrowRight className="hidden md:block absolute top-1/2 -right-5 w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </ScrollReveal>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-12 items-start">
+              <ScrollReveal variant="left">
+                <span className="landing-label">Control plane</span>
+                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
+                  Security boundaries match how the app is used
+                </h2>
+                <p className="landing-body mb-8">
+                  Trezalink separates merchant configuration, payment execution, event delivery,
+                  and reporting so each product surface has a clear operational responsibility.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {CONTROL_LAYERS.map((item) => (
+                    <div key={item.title} className="landing-panel rounded-xl p-5">
+                      <item.icon className="w-5 h-5 text-blue-600 dark:text-blue-400 mb-4" />
+                      <h3 className="text-sm font-semibold landing-heading mb-2">{item.title}</h3>
+                      <p className="text-xs landing-body">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal variant="right" delay={100} className="landing-panel rounded-2xl p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-semibold landing-heading">Product surfaces covered</h3>
+                  <BadgeCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="space-y-4">
+                  {PRODUCT_SURFACES.map((surface) => (
+                    <div key={surface} className="flex items-center gap-3 pb-4 border-b landing-border last:border-0 last:pb-0">
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span className="text-sm landing-body">{surface}</span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 items-center">
+              <ScrollReveal variant="left" className="landing-panel rounded-2xl p-8 md:p-10">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-500/15">
+                    <Code2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Integration contract</p>
+                    <h3 className="text-lg font-semibold landing-heading">API and webhook loop</h3>
+                  </div>
+                </div>
+                <pre className="text-xs font-mono landing-muted bg-slate-100 dark:bg-black/40 rounded-xl p-4 border landing-border overflow-x-auto">
+{`POST /api/v1/checkout
+Authorization: Bearer <API_KEY>
+
+{
+  "amount": 10,
+  "currency": "SOL",
+  "orderId": "inv-1042"
+}`}
+                </pre>
+              </ScrollReveal>
+
+              <ScrollReveal variant="right">
+                <span className="landing-label">Data path</span>
+                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
+                  Every payment creates an auditable trail
+                </h2>
+                <p className="landing-body mb-8">
+                  Checkout creation, wallet confirmation, transaction state, platform fee, and webhook
+                  delivery are visible through the merchant dashboard and supporting admin views.
+                </p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {[
+                    { icon: Database, label: "Transaction records" },
+                    { icon: ShieldCheck, label: "Signed status events" },
+                    { icon: Zap, label: "Real-time dashboards" },
+                  ].map((item) => (
+                    <div key={item.label} className="landing-panel rounded-xl p-5">
+                      <item.icon className="w-5 h-5 text-blue-600 dark:text-blue-400 mb-4" />
+                      <p className="text-sm font-semibold landing-heading">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section relative py-24">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-16 md:px-16">
+              <span className="landing-label">Build on it</span>
+              <h2 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight landing-heading mb-5">
+                Architecture ready for merchants and developers
+              </h2>
+              <p className="landing-body text-lg max-w-xl mx-auto mb-10">
+                Start with payment links, then graduate to API checkout and webhook automation when your
+                workflow needs deeper integration.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/register" className="landing-btn-primary px-10 py-4">
+                  Open merchant account
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link href="/docs" className="landing-btn-secondary px-10 py-4">
+                  Read docs
+                </Link>
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
       </main>
+
+      <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]">
+        <Footer />
+      </footer>
     </div>
   );
 }
