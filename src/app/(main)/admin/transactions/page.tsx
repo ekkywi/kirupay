@@ -1,177 +1,391 @@
 // src/app/(main)/admin/transactions/page.tsx
 import prisma from "@/lib/neon";
-import { Globe, Search, Filter, ArrowUpRight, Activity } from "lucide-react";
+import type { Prisma } from "@prisma/client";
+import {
+  Activity,
+  ArrowUpRight,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Filter,
+  Globe,
+  Landmark,
+  ReceiptText,
+  Search,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
+import Link from "next/link";
+
+const ITEMS_PER_PAGE = 20;
+const STATUSES = ["ALL", "PAID", "PENDING", "FAILED"] as const;
+const SOURCES = ["ALL", "CHECKOUT_API", "PAYMENT_LINK"] as const;
+
+type AdminTransactionSearchParams = {
+  search?: string;
+  status?: string;
+  source?: string;
+  page?: string;
+};
+
+const formatSOL = (value: number | null | undefined, precision = 4) => (value ?? 0).toFixed(precision);
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(value);
+}
+
+function getStatusClasses(status: string) {
+  if (status === "PAID") {
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
+  }
+
+  if (status === "FAILED") {
+    return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
+  }
+
+  return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
+}
+
+function buildPageHref(page: number, search: string, status: string, source: string) {
+  const params = new URLSearchParams();
+
+  if (page > 1) params.set("page", page.toString());
+  if (search) params.set("search", search);
+  if (status !== "ALL") params.set("status", status);
+  if (source !== "ALL") params.set("source", source);
+
+  const query = params.toString();
+  return query ? `/admin/transactions?${query}` : "/admin/transactions";
+}
 
 export default async function AdminTransactionsPage({
   searchParams,
 }: {
-  // 1. UBAH TIPENYA MENJADI PROMISE
-  searchParams: Promise<{ search?: string; status?: string; page?: string }>; 
+  searchParams: Promise<AdminTransactionSearchParams>;
 }) {
-  // 2. AWAIT SEARCHPARAMS DI SINI
   const resolvedSearchParams = await searchParams;
+  const currentPage = Math.max(Number(resolvedSearchParams.page) || 1, 1);
+  const search = resolvedSearchParams.search?.trim() || "";
+  const status = STATUSES.includes(resolvedSearchParams.status as (typeof STATUSES)[number]) ? resolvedSearchParams.status || "ALL" : "ALL";
+  const source = SOURCES.includes(resolvedSearchParams.source as (typeof SOURCES)[number]) ? resolvedSearchParams.source || "ALL" : "ALL";
 
-  // 3. GUNAKAN VARIABEL YANG SUDAH DI-AWAIT
-  const page = Number(resolvedSearchParams.page) || 1;
-  const limit = 20; 
-  const skip = (page - 1) * limit;
+  const whereClause: Prisma.TransactionWhereInput = {};
 
-  const search = resolvedSearchParams.search || "";
-  const status = resolvedSearchParams.status || "ALL";
-
-  // Bangun query dinamis berdasarkan filter
-  const whereClause: any = {};
   if (search) {
-    whereClause.orderId = { contains: search, mode: "insensitive" };
+    whereClause.OR = [
+      { id: { contains: search, mode: "insensitive" } },
+      { orderId: { contains: search, mode: "insensitive" } },
+      { customerEmail: { contains: search, mode: "insensitive" } },
+      { buyerWallet: { contains: search, mode: "insensitive" } },
+      { txSignature: { contains: search, mode: "insensitive" } },
+      {
+        merchant: {
+          OR: [
+            { businessName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        },
+      },
+    ];
   }
+
   if (status !== "ALL") {
     whereClause.status = status;
   }
 
-  // Tarik data secara paralel
-  const [transactions, totalCount] = await Promise.all([
+  if (source !== "ALL") {
+    whereClause.source = source;
+  }
+
+  const skip = (currentPage - 1) * ITEMS_PER_PAGE;
+  const basePaidWhere: Prisma.TransactionWhereInput = { status: "PAID" };
+
+  const [transactions, totalCount, filteredStats, paidStats, pendingCount, failedCount] = await Promise.all([
     prisma.transaction.findMany({
       where: whereClause,
       orderBy: { createdAt: "desc" },
       skip,
-      take: limit,
-      include: { 
-        merchant: { select: { businessName: true, email: true } } 
-      }
+      take: ITEMS_PER_PAGE,
+      include: {
+        merchant: { select: { businessName: true, email: true } },
+      },
     }),
-    prisma.transaction.count({ where: whereClause })
+    prisma.transaction.count({ where: whereClause }),
+    prisma.transaction.aggregate({
+      where: whereClause,
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+    }),
+    prisma.transaction.aggregate({
+      where: basePaidWhere,
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+    }),
+    prisma.transaction.count({ where: { status: "PENDING" } }),
+    prisma.transaction.count({ where: { status: "FAILED" } }),
   ]);
 
-  const totalPages = Math.ceil(totalCount / limit);
+  const totalPages = Math.max(Math.ceil(totalCount / ITEMS_PER_PAGE), 1);
+  const filteredGross = filteredStats._sum.amount || 0;
+  const filteredFees = filteredStats._sum.feeAmount || 0;
+  const paidVolume = paidStats._sum.amount || 0;
+  const paidFees = paidStats._sum.feeAmount || 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-slate-700 to-gray-900 text-white rounded-2xl shadow-lg">
-            <Globe size={24} />
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
+            <Globe className="h-4 w-4" />
+            Global ledger
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Global Ledger</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">Master record of all network transactions ({totalCount} total)</p>
-          </div>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+            Network transaction audit
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Search, filter, and inspect every checkout and payment-link transaction across all merchants.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link href="/admin/overview" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Overview
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          <Link href="/admin/revenue" className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">
+            Treasury
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 
-      {/* FILTER & SEARCH (Versi HTML Native untuk Server Component) */}
-      <div className="bg-white dark:bg-[#1E1E1E] p-4 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
-        <form className="flex flex-col sm:flex-row gap-3">
-          <div className="relative w-full sm:w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {[
+          {
+            icon: ReceiptText,
+            label: "Filtered records",
+            value: totalCount.toString(),
+            detail: `${filteredGross.toFixed(4)} SOL in view`,
+            tone: "blue",
+          },
+          {
+            icon: CheckCircle2,
+            label: "Paid network volume",
+            value: `${formatSOL(paidVolume)} SOL`,
+            detail: `${paidStats._count.id} confirmed payments`,
+            tone: "emerald",
+          },
+          {
+            icon: Landmark,
+            label: "Platform fees",
+            value: `${formatSOL(paidFees)} SOL`,
+            detail: `${filteredFees.toFixed(4)} SOL in filtered set`,
+            tone: "emerald",
+          },
+          {
+            icon: Clock3,
+            label: "Open risk states",
+            value: `${pendingCount} / ${failedCount}`,
+            detail: "pending / failed transactions",
+            tone: failedCount > 0 ? "amber" : "blue",
+          },
+        ].map((metric) => (
+          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <metric.icon
+              className={`mb-4 h-5 w-5 ${
+                metric.tone === "emerald"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : metric.tone === "amber"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-blue-600 dark:text-blue-400"
+              }`}
+            />
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
+            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <form className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_190px_auto]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               name="search"
               defaultValue={search}
-              placeholder="Search by Order ID..."
-              className="w-full pl-10 pr-3 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm outline-none focus:border-blue-500 dark:text-white"
+              placeholder="Search order, merchant, email, wallet, tx signature..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
+
+          <div className="relative">
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              name="status"
+              defaultValue={status}
+              className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
+            >
+              <option value="ALL">All status</option>
+              <option value="PAID">Paid</option>
+              <option value="PENDING">Pending</option>
+              <option value="FAILED">Failed</option>
+            </select>
+          </div>
+
           <select
-            name="status"
-            defaultValue={status}
-            className="w-full sm:w-auto px-4 py-2 bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 outline-none focus:border-blue-500 appearance-none"
+            name="source"
+            defaultValue={source}
+            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
           >
-            <option value="ALL">All Status</option>
-            <option value="PAID">PAID</option>
-            <option value="PENDING">PENDING</option>
-            <option value="FAILED">FAILED</option>
+            <option value="ALL">All sources</option>
+            <option value="CHECKOUT_API">Checkout API</option>
+            <option value="PAYMENT_LINK">Payment link</option>
           </select>
-          <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm transition-colors">
+
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+            <Search className="h-4 w-4" />
             Search
           </button>
         </form>
       </div>
 
-      {/* DATA TABLE */}
-      <div className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-[#151515] border-b border-gray-100 dark:border-[#2A2A2A] text-gray-400 font-black text-[10px] uppercase tracking-widest">
-                <th className="p-4 pl-6">Merchant Entity</th>
-                <th className="p-4">Order Ref</th>
-                <th className="p-4">Gross Vol</th>
-                <th className="p-4">Platform Fee</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Date & Time</th>
-                <th className="p-4 text-right pr-6">Explorer</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-[#2A2A2A]">
-              {transactions.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-12 text-center text-gray-500">
-                    <Activity className="mx-auto mb-2 opacity-20" size={32} />
-                    No transactions found matching your criteria.
-                  </td>
-                </tr>
-              )}
-              {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors group">
-                  <td className="p-4 pl-6">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-900 dark:text-white">{tx.merchant.businessName}</span>
-                      <span className="text-[10px] text-gray-500 font-mono">{tx.merchant.email}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-mono text-[11px] text-gray-500">{tx.orderId}</td>
-                  <td className="p-4 font-mono font-bold text-xs">{tx.amount} SOL</td>
-                  <td className="p-4 font-mono text-xs text-green-600 dark:text-green-500">
-                    {tx.feeAmount ? `+${tx.feeAmount}` : "0"} SOL
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-[9px] font-black uppercase ${
-                      tx.status === "PAID" ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400" :
-                      tx.status === "FAILED" ? "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400" :
-                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400"
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="p-4 text-[11px] text-gray-500">
-                    {new Date(tx.createdAt).toLocaleString()}
-                  </td>
-                  <td className="p-4 text-right pr-6">
-                    <a 
-                      href={tx.txSignature ? `https://explorer.solana.com/tx/${tx.txSignature}?cluster=devnet` : '#'} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex p-2 rounded-lg transition-all ${
-                        tx.txSignature ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50" : "text-gray-300 cursor-not-allowed"
-                      }`}
-                    >
-                      <ArrowUpRight size={16} />
-                    </a>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Audit table</p>
+            <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Transactions</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Showing page {currentPage} of {totalPages}, {totalCount} matching records.
+            </p>
+          </div>
+          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Admin audit mode
+          </span>
         </div>
+
+        {transactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/[0.06]">
+              <Activity className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No transactions found</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Try adjusting the search, source, or status filters.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1120px] text-left text-sm">
+              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+                <tr>
+                  <th className="px-5 py-4">Merchant</th>
+                  <th className="px-5 py-4">Order / Source</th>
+                  <th className="px-5 py-4">Customer</th>
+                  <th className="px-5 py-4">Gross</th>
+                  <th className="px-5 py-4">Fee</th>
+                  <th className="px-5 py-4">Net</th>
+                  <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Created</th>
+                  <th className="px-5 py-4 text-right">Explorer</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                {transactions.map((transaction) => (
+                  <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
+                    <td className="px-5 py-4">
+                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">{transaction.orderId}</p>
+                      <p className="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                        {transaction.source.replace("_", " ")}
+                      </p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="max-w-[180px] truncate text-xs text-slate-600 dark:text-slate-300">{transaction.customerEmail || "No email"}</p>
+                      <p className="mt-0.5 max-w-[180px] truncate font-mono text-[10px] text-slate-400">{transaction.buyerWallet || "No wallet captured"}</p>
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">
+                      {formatSOL(transaction.amount)} {transaction.currency}
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      +{formatSOL(transaction.feeAmount)} {transaction.currency}
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">
+                      {formatSOL(transaction.netAmount)} {transaction.currency}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClasses(transaction.status)}`}>
+                        {transaction.status === "FAILED" ? <XCircle className="h-3.5 w-3.5" /> : transaction.status === "PAID" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Clock3 className="h-3.5 w-3.5" />}
+                        {transaction.status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">{formatDate(transaction.createdAt)}</td>
+                    <td className="px-5 py-4 text-right">
+                      <a
+                        href={transaction.txSignature ? `https://explorer.solana.com/tx/${transaction.txSignature}?cluster=devnet` : "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex rounded-lg p-2 transition-colors ${
+                          transaction.txSignature
+                            ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
+                            : "cursor-not-allowed text-slate-300 dark:text-slate-700"
+                        }`}
+                        title={transaction.txSignature ? "View on Solana Explorer" : "No signature yet"}
+                      >
+                        <ArrowUpRight className="h-4 w-4" />
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* SIMPLE PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex justify-between items-center bg-white dark:bg-[#1E1E1E] p-4 rounded-xl border border-gray-200 dark:border-[#2A2A2A]">
-          <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Page <span className="font-semibold text-slate-950 dark:text-white">{currentPage}</span> of{" "}
+            <span className="font-semibold text-slate-950 dark:text-white">{totalPages}</span>
+          </p>
           <div className="flex gap-2">
-            {page > 1 && (
-              <a href={`?page=${page - 1}&search=${search}&status=${status}`} className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-[#2A2A2A] dark:border-[#2A2A2A]">Previous</a>
-            )}
-            {page < totalPages && (
-              <a href={`?page=${page + 1}&search=${search}&status=${status}`} className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-[#2A2A2A] dark:border-[#2A2A2A]">Next</a>
-            )}
+            <Link
+              href={buildPageHref(currentPage - 1, search, status, source)}
+              aria-disabled={currentPage <= 1}
+              className={`inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-white/10 ${
+                currentPage <= 1
+                  ? "pointer-events-none text-slate-300 dark:text-slate-700"
+                  : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              }`}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Link>
+            <Link
+              href={buildPageHref(currentPage + 1, search, status, source)}
+              aria-disabled={currentPage >= totalPages}
+              className={`inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-white/10 ${
+                currentPage >= totalPages
+                  ? "pointer-events-none text-slate-300 dark:text-slate-700"
+                  : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              }`}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { Activity, LogOut, Search, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 interface TopNavProps {
@@ -15,11 +16,38 @@ interface TopNavProps {
 
 export function TopNav({ merchant }: TopNavProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [transactionSearch, setTransactionSearch] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTransactionSearch = pathname === "/payments" ? searchParams.get("search") || "" : "";
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+  };
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setTransactionSearch(currentTransactionSearch));
+    return () => cancelAnimationFrame(frame);
+  }, [currentTransactionSearch]);
+
+  const handleTransactionSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const search = transactionSearch.trim();
+    const params = new URLSearchParams(pathname === "/payments" ? searchParams : undefined);
+
+    params.delete("page");
+
+    if (search) {
+      params.set("search", search);
+    } else {
+      params.delete("search");
+    }
+
+    const query = params.toString();
+    router.push(query ? `/payments?${query}` : "/payments");
   };
 
   return (
@@ -43,14 +71,16 @@ export function TopNav({ merchant }: TopNavProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="relative hidden md:block">
+        <form onSubmit={handleTransactionSearch} className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
             type="text"
+            value={transactionSearch}
+            onChange={(event) => setTransactionSearch(event.target.value)}
             placeholder="Search transactions..."
             className="w-64 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
           />
-        </div>
+        </form>
         
         <ThemeToggle />
         

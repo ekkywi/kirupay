@@ -21,13 +21,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" className="dark" suppressHydrationWarning>
       <body className={`${poppins.className} antialiased bg-[#F8F9FA] text-gray-900 dark:bg-[#030305] dark:text-white transition-colors duration-300`}>
-        <ThemeProvider 
-          attribute="class" 
-          defaultTheme="dark" 
-          enableSystem
-        >
+        <ThemeProvider defaultTheme="dark" enableSystem>
           <SolanaProvider>
             {children}
           </SolanaProvider>

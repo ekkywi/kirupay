@@ -1,217 +1,406 @@
 // src/app/(main)/admin/overview/page.tsx
 import prisma from "@/lib/neon";
-import { 
-  ShieldCheck, 
-  Users, 
-  Wallet, 
-  Activity, 
-  ArrowUpRight, 
-  Clock,
+import {
+  Activity,
+  AlertTriangle,
+  ArrowUpRight,
+  CheckCircle2,
+  DatabaseZap,
+  Landmark,
+  Radio,
+  ReceiptText,
+  Server,
+  ShieldCheck,
   TrendingUp,
-  Server
+  Users,
+  Wallet,
 } from "lucide-react";
+import Link from "next/link";
 
-// Helper untuk format SOL yang konsisten
-const formatSOL = (val: number | null | undefined) => val ? val.toFixed(4) : "0.0000";
+const formatSOL = (value: number | null | undefined, precision = 4) => (value ?? 0).toFixed(precision);
+
+function formatCompactDate(value: Date) {
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(value);
+}
+
+function getStatusClasses(status: string) {
+  if (status === "PAID") {
+    return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
+  }
+
+  if (status === "FAILED") {
+    return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
+  }
+
+  return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
+}
 
 export default async function AdminOverviewPage() {
-  // Waktu untuk metrik 24 Jam Terakhir
-  const yesterday = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // DATA FETCHING
-  const [globalStats, dailyStats, merchantCount, recentTransactions] = await Promise.all([
+  const [
+    paidStats,
+    dailyStats,
+    weeklyStats,
+    totalTransactions,
+    pendingCount,
+    failedCount,
+    totalMerchants,
+    activeMerchants,
+    verifiedMerchants,
+    walletConnectedMerchants,
+    webhookConfiguredMerchants,
+    webhookTotal,
+    webhookFailed,
+    recentTransactions,
+    recentMerchants,
+    topMerchantStats,
+  ] = await Promise.all([
     prisma.transaction.aggregate({
       where: { status: "PAID" },
-      _sum: { feeAmount: true, amount: true }
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
     }),
     prisma.transaction.aggregate({
-      where: { status: "PAID", createdAt: { gte: yesterday } },
-      _sum: { amount: true, feeAmount: true }
+      where: { status: "PAID", createdAt: { gte: last24Hours } },
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true },
     }),
+    prisma.transaction.aggregate({
+      where: { status: "PAID", createdAt: { gte: last7Days } },
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true },
+    }),
+    prisma.transaction.count(),
+    prisma.transaction.count({ where: { status: "PENDING" } }),
+    prisma.transaction.count({ where: { status: "FAILED" } }),
     prisma.merchant.count(),
+    prisma.merchant.count({ where: { isActive: true } }),
+    prisma.merchant.count({ where: { emailVerified: true } }),
+    prisma.merchant.count({ where: { walletAddress: { not: { contains: "pending" } } } }),
+    prisma.merchant.count({ where: { webhookUrl: { not: null } } }),
+    prisma.webhookLog.count(),
+    prisma.webhookLog.count({ where: { OR: [{ status: null }, { status: { not: 200 } }] } }),
     prisma.transaction.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
-      include: { 
-        merchant: { select: { businessName: true, email: true } } 
-      }
-    })
+      include: {
+        merchant: { select: { businessName: true, email: true } },
+      },
+    }),
+    prisma.merchant.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 5,
+      select: {
+        id: true,
+        businessName: true,
+        email: true,
+        isActive: true,
+        emailVerified: true,
+        createdAt: true,
+      },
+    }),
+    prisma.transaction.groupBy({
+      by: ["merchantId"],
+      where: { status: "PAID" },
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true },
+      orderBy: { _sum: { amount: "desc" } },
+      take: 5,
+    }),
   ]);
 
-  const totalFees = globalStats._sum.feeAmount || 0;
-  const totalVolume = globalStats._sum.amount || 0;
+  const topMerchantProfiles = await prisma.merchant.findMany({
+    where: { id: { in: topMerchantStats.map((item) => item.merchantId) } },
+    select: { id: true, businessName: true, email: true },
+  });
+
+  const merchantProfileById = new Map(topMerchantProfiles.map((merchant) => [merchant.id, merchant]));
+  const paidCount = paidStats._count.id;
+  const totalVolume = paidStats._sum.amount || 0;
+  const totalFees = paidStats._sum.feeAmount || 0;
   const dailyVolume = dailyStats._sum.amount || 0;
   const dailyFees = dailyStats._sum.feeAmount || 0;
+  const weeklyVolume = weeklyStats._sum.amount || 0;
+  const conversionRate = totalTransactions > 0 ? (paidCount / totalTransactions) * 100 : 0;
+  const activeMerchantRate = totalMerchants > 0 ? (activeMerchants / totalMerchants) * 100 : 0;
+  const webhookFailureRate = webhookTotal > 0 ? (webhookFailed / webhookTotal) * 100 : 0;
 
   return (
-    // PERBAIKAN: Menghapus p-4 lg:p-8 dan menyamakan wrapper dengan halaman Dashboard
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      
-      {/* SECTION: ENTERPRISE HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-2xl shadow-lg shadow-blue-500/20 ring-1 ring-blue-500/50">
-            <ShieldCheck size={24} />
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
+            <ShieldCheck className="h-4 w-4" />
+            Administrator overview
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Platform Overview</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">Global Network & Treasury Monitoring</p>
-          </div>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+            Platform command center
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Monitor global volume, platform revenue, merchant readiness, and transaction health across Trezalink.
+          </p>
         </div>
-        
-        {/* Server Status Badge */}
-        <div className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-[#1E1E1E] rounded-full border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
-          <Server size={14} className="text-gray-400" />
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300">Administrator Menu</span>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link href="/admin/transactions" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Global ledger
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          <Link href="/admin/revenue" className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">
+            Treasury
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
 
-      {/* SECTION: GLOBAL METRICS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Treasury (Total Fees) */}
-        <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden group hover:border-green-500/30 transition-colors">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Wallet size={80} />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {[
+          {
+            icon: Landmark,
+            label: "Platform treasury",
+            value: `${formatSOL(totalFees)} SOL`,
+            detail: `+${formatSOL(dailyFees)} SOL last 24h`,
+            tone: "emerald",
+          },
+          {
+            icon: Activity,
+            label: "Paid volume",
+            value: `${formatSOL(totalVolume)} SOL`,
+            detail: `${formatSOL(dailyVolume)} SOL last 24h`,
+            tone: "blue",
+          },
+          {
+            icon: Users,
+            label: "Merchants",
+            value: totalMerchants.toString(),
+            detail: `${activeMerchantRate.toFixed(0)}% active accounts`,
+            tone: "red",
+          },
+          {
+            icon: ReceiptText,
+            label: "Payment success",
+            value: `${conversionRate.toFixed(1)}%`,
+            detail: `${pendingCount} pending, ${failedCount} failed`,
+            tone: conversionRate >= 80 ? "emerald" : "amber",
+          },
+        ].map((metric) => (
+          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <metric.icon
+              className={`mb-4 h-5 w-5 ${
+                metric.tone === "emerald"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : metric.tone === "amber"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : metric.tone === "red"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-blue-600 dark:text-blue-400"
+              }`}
+            />
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
+            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
           </div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-green-500/10 text-green-500 rounded-lg">
-              <Wallet size={16} />
-            </div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Platform Treasury</p>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-mono font-bold text-green-600 dark:text-green-500">{formatSOL(totalFees)}</h3>
-            <span className="text-xs font-bold text-gray-400">SOL</span>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2A2A2A] flex items-center gap-2">
-            <TrendingUp size={14} className="text-green-500" />
-            <span className="text-xs text-gray-500 font-medium">+ {formatSOL(dailyFees)} SOL in last 24h</span>
-          </div>
-        </div>
-
-        {/* Card 2: 24H Volume */}
-        <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden group hover:border-blue-500/30 transition-colors">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Activity size={80} />
-          </div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
-              <Activity size={16} />
-            </div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Network Vol (24H)</p>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-mono font-bold text-blue-600 dark:text-blue-500">{formatSOL(dailyVolume)}</h3>
-            <span className="text-xs font-bold text-gray-400">SOL</span>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2A2A2A] flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">All-time vol: {formatSOL(totalVolume)} SOL</span>
-          </div>
-        </div>
-
-        {/* Card 3: Merchant Base */}
-        <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden group hover:border-purple-500/30 transition-colors">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Users size={80} />
-          </div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
-              <Users size={16} />
-            </div>
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Active Merchants</p>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <h3 className="text-3xl font-mono font-bold text-gray-900 dark:text-white">{merchantCount}</h3>
-            <span className="text-xs font-bold text-gray-400">Businesses</span>
-          </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#2A2A2A] flex items-center gap-2">
-            <span className="text-xs text-gray-500 font-medium">Total registered entities</span>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* SECTION: TRANSACTION LEDGER */}
-      <div className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-[#2A2A2A] flex justify-between items-center bg-transparent">
-          <div className="flex items-center gap-3">
-            <Clock className="text-gray-500" size={18} />
-            <h3 className="font-bold text-sm tracking-tight text-gray-900 dark:text-white">Global Live Ledger</h3>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Network ledger</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Latest global transactions</h2>
+            </div>
+            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+              <Radio className="h-3.5 w-3.5" />
+              10 latest events
+            </span>
           </div>
-          <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-md ring-1 ring-blue-500/20">
-            Real-Time • 10 Latest
-          </span>
+
+          {recentTransactions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/[0.06]">
+                <Activity className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">No network activity</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Global transactions will appear here automatically.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[840px] text-left text-sm">
+                <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+                  <tr>
+                    <th className="px-5 py-4">Merchant</th>
+                    <th className="px-5 py-4">Order</th>
+                    <th className="px-5 py-4">Gross</th>
+                    <th className="px-5 py-4">Fee</th>
+                    <th className="px-5 py-4">Status</th>
+                    <th className="px-5 py-4">Time</th>
+                    <th className="px-5 py-4 text-right">Explorer</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                  {recentTransactions.map((transaction) => (
+                    <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
+                        <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                      </td>
+                      <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{transaction.orderId}</td>
+                      <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">{formatSOL(transaction.amount)} SOL</td>
+                      <td className="px-5 py-4 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                        +{formatSOL(transaction.feeAmount)} SOL
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClasses(transaction.status)}`}>{transaction.status}</span>
+                      </td>
+                      <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">{formatCompactDate(transaction.createdAt)}</td>
+                      <td className="px-5 py-4 text-right">
+                        <a
+                          href={transaction.txSignature ? `https://explorer.solana.com/tx/${transaction.txSignature}?cluster=devnet` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex rounded-lg p-2 transition-colors ${
+                            transaction.txSignature
+                              ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
+                              : "cursor-not-allowed text-slate-300 dark:text-slate-700"
+                          }`}
+                          title={transaction.txSignature ? "View on Solana Explorer" : "No signature yet"}
+                        >
+                          <ArrowUpRight className="h-4 w-4" />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-[#2A2A2A] text-gray-400 font-black text-[10px] uppercase tracking-widest bg-gray-50/50 dark:bg-[#151515]">
-                <th className="p-5">Merchant Entity</th>
-                <th className="p-5">Order Ref</th>
-                <th className="p-5">Gross Vol</th>
-                <th className="p-5">Platform Fee</th>
-                <th className="p-5">Status</th>
-                <th className="p-5 text-right">Explorer</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-[#2A2A2A]">
-              {recentTransactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors group">
-                  <td className="p-5">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-gray-900 dark:text-white">{tx.merchant.businessName || "Unnamed"}</span>
-                      <span className="text-[10px] text-gray-500 font-mono mt-0.5">{tx.merchant.email}</span>
-                    </div>
-                  </td>
-                  <td className="p-5 font-mono text-[11px] text-gray-500">{tx.orderId}</td>
-                  <td className="p-5 font-mono font-bold text-xs text-gray-900 dark:text-gray-300">
-                    {formatSOL(tx.amount)} SOL
-                  </td>
-                  <td className="p-5 font-mono text-xs text-green-600 dark:text-green-500 font-medium">
-                    {tx.feeAmount ? `+${formatSOL(tx.feeAmount)}` : "0.0000"} SOL
-                  </td>
-                  <td className="p-5">
-                    <span className={`px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                      tx.status === "PAID" 
-                        ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400 ring-1 ring-green-500/20" 
-                        : "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400 ring-1 ring-yellow-500/20"
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </td>
-                  <td className="p-5 text-right">
-                    <a 
-                      href={tx.txSignature ? `https://explorer.solana.com/tx/${tx.txSignature}?cluster=devnet` : '#'} 
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex p-2 rounded-lg transition-all ${
-                        tx.txSignature 
-                          ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:hover:text-blue-400" 
-                          : "text-gray-300 dark:text-[#2A2A2A] cursor-not-allowed"
-                      }`}
-                      title={tx.txSignature ? "View on Solana Explorer" : "No signature yet"}
-                    >
-                      <ArrowUpRight size={16} />
-                    </a>
-                  </td>
-                </tr>
+
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Operating health</p>
+                <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Readiness signals</h2>
+              </div>
+              <Server className="h-5 w-5 text-slate-400" />
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {[
+                { label: "Verified merchants", value: `${verifiedMerchants}/${totalMerchants}`, detail: "email verified", ok: verifiedMerchants === totalMerchants && totalMerchants > 0 },
+                { label: "Wallet connected", value: `${walletConnectedMerchants}/${totalMerchants}`, detail: "can receive SOL", ok: walletConnectedMerchants === totalMerchants && totalMerchants > 0 },
+                { label: "Webhook configured", value: `${webhookConfiguredMerchants}/${totalMerchants}`, detail: "event delivery ready", ok: webhookConfiguredMerchants === totalMerchants && totalMerchants > 0 },
+                { label: "Webhook failure rate", value: `${webhookFailureRate.toFixed(1)}%`, detail: `${webhookFailed}/${webhookTotal} failed`, ok: webhookFailureRate < 5 },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950 dark:text-white">{item.label}</p>
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{item.detail}</p>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${item.ok ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                    {item.ok ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
+                    {item.value}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-        
-        {recentTransactions.length === 0 && (
-          <div className="p-16 text-center flex flex-col items-center justify-center">
-            <div className="p-4 bg-gray-50 dark:bg-[#1A1A1A] rounded-full mb-4">
-              <Activity className="text-gray-300 dark:text-[#333]" size={32} />
             </div>
-            <h4 className="text-sm font-bold text-gray-900 dark:text-white">No Network Activity</h4>
-            <p className="text-xs text-gray-500 font-medium mt-1">Global transactions will appear here automatically.</p>
           </div>
-        )}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">7-day platform pulse</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {[
+                { label: "Volume", value: `${formatSOL(weeklyVolume)} SOL`, icon: TrendingUp },
+                { label: "Paid count", value: weeklyStats._count.id.toString(), icon: ReceiptText },
+                { label: "Fee yield", value: `${formatSOL(weeklyStats._sum.feeAmount)} SOL`, icon: Landmark },
+                { label: "Total tx", value: totalTransactions.toString(), icon: DatabaseZap },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <item.icon className="mb-3 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                  <p className="mt-1 font-mono text-sm font-semibold text-slate-950 dark:text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-white/10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Merchant growth</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Newest merchants</h2>
+            </div>
+            <Link href="/admin/merchants" className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]">
+              View all
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+          <div className="divide-y divide-slate-200 dark:divide-white/10">
+            {recentMerchants.map((merchant) => (
+              <div key={merchant.id} className="flex items-center justify-between gap-4 p-5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant.businessName}</p>
+                  <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant.email}</p>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${merchant.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                    {merchant.isActive ? "Active" : "Paused"}
+                  </span>
+                  <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{formatCompactDate(merchant.createdAt)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-white/10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Revenue concentration</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Top merchants by volume</h2>
+            </div>
+            <Wallet className="h-5 w-5 text-slate-400" />
+          </div>
+          <div className="divide-y divide-slate-200 dark:divide-white/10">
+            {topMerchantStats.length === 0 ? (
+              <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No paid merchant volume yet.</div>
+            ) : (
+              topMerchantStats.map((merchantStat, index) => {
+                const merchant = merchantProfileById.get(merchantStat.merchantId);
+
+                return (
+                  <div key={merchantStat.merchantId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.businessName || "Unknown merchant"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.email || merchantStat.merchantId}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-semibold text-slate-950 dark:text-white">{formatSOL(merchantStat._sum.amount)} SOL</p>
+                      <p className="mt-0.5 text-xs text-emerald-600 dark:text-emerald-400">+{formatSOL(merchantStat._sum.feeAmount)} SOL fee</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

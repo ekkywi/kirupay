@@ -31,12 +31,14 @@ export default async function PaymentsPage({
     merchantId: merchant.id,
   };
 
-  // Jika ada pencarian (Search)
   if (search) {
-    whereCondition.orderId = {
-      contains: search,
-      mode: "insensitive",
-    };
+    whereCondition.OR = [
+      { orderId: { contains: search, mode: "insensitive" } },
+      { customerEmail: { contains: search, mode: "insensitive" } },
+      { txSignature: { contains: search, mode: "insensitive" } },
+      { buyerWallet: { contains: search, mode: "insensitive" } },
+      { id: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   // Jika ada filter status (PAID atau PENDING)

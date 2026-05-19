@@ -1,170 +1,330 @@
 // src/app/(main)/admin/revenue/page.tsx
 import prisma from "@/lib/neon";
-import { 
-  Landmark, 
-  Banknote, 
-  CalendarDays, 
-  ArrowDownToLine, 
+import {
+  ArrowDownToLine,
+  ArrowUpRight,
+  Banknote,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Landmark,
+  LineChart,
+  Receipt,
+  ShieldCheck,
   TrendingUp,
-  Receipt
+  WalletCards,
 } from "lucide-react";
+import Link from "next/link";
 
-const formatSOL = (val: number | null | undefined) => val ? val.toFixed(5) : "0.00000";
+const FEE_RATE = 0.003;
+const formatSOL = (value: number | null | undefined, precision = 5) => (value ?? 0).toFixed(precision);
+
+function formatCompactDate(value: Date) {
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(value);
+}
 
 export default async function AdminRevenuePage() {
-  // Setup batasan waktu untuk query
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  // DATA FETCHING: Agregasi Pendapatan
-  const [totalStats, monthStats, dayStats, recentFees] = await Promise.all([
-    // 1. Total Pendapatan Sepanjang Waktu
-    prisma.transaction.aggregate({ 
-      where: { status: "PAID" }, 
-      _sum: { feeAmount: true } 
+  const [
+    totalStats,
+    monthStats,
+    dayStats,
+    weeklyStats,
+    paidTransactionCount,
+    recentFees,
+    topFeeMerchants,
+  ] = await Promise.all([
+    prisma.transaction.aggregate({
+      where: { status: "PAID" },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { feeAmount: true },
     }),
-    // 2. Pendapatan Bulan Ini
-    prisma.transaction.aggregate({ 
-      where: { status: "PAID", createdAt: { gte: startOfMonth } }, 
-      _sum: { feeAmount: true } 
+    prisma.transaction.aggregate({
+      where: { status: "PAID", createdAt: { gte: startOfMonth } },
+      _sum: { amount: true, feeAmount: true },
+      _count: { id: true },
     }),
-    // 3. Pendapatan Hari Ini
-    prisma.transaction.aggregate({ 
-      where: { status: "PAID", createdAt: { gte: startOfDay } }, 
-      _sum: { feeAmount: true } 
+    prisma.transaction.aggregate({
+      where: { status: "PAID", createdAt: { gte: startOfDay } },
+      _sum: { amount: true, feeAmount: true },
+      _count: { id: true },
     }),
-    // 4. Riwayat setoran fee terbaru
+    prisma.transaction.aggregate({
+      where: { status: "PAID", createdAt: { gte: last7Days } },
+      _sum: { amount: true, feeAmount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.count({ where: { status: "PAID" } }),
     prisma.transaction.findMany({
       where: { status: "PAID", feeAmount: { gt: 0 } },
       orderBy: { createdAt: "desc" },
       take: 15,
-      include: { merchant: { select: { businessName: true } } }
-    })
+      include: {
+        merchant: { select: { businessName: true, email: true } },
+      },
+    }),
+    prisma.transaction.groupBy({
+      by: ["merchantId"],
+      where: { status: "PAID", feeAmount: { gt: 0 } },
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true },
+      orderBy: { _sum: { feeAmount: "desc" } },
+      take: 5,
+    }),
   ]);
 
+  const topMerchantProfiles = await prisma.merchant.findMany({
+    where: { id: { in: topFeeMerchants.map((merchant) => merchant.merchantId) } },
+    select: { id: true, businessName: true, email: true },
+  });
+
+  const merchantById = new Map(topMerchantProfiles.map((merchant) => [merchant.id, merchant]));
   const totalRevenue = totalStats._sum.feeAmount || 0;
+  const totalVolume = totalStats._sum.amount || 0;
+  const totalNetSettlement = totalStats._sum.netAmount || 0;
   const monthRevenue = monthStats._sum.feeAmount || 0;
   const dayRevenue = dayStats._sum.feeAmount || 0;
+  const weeklyRevenue = weeklyStats._sum.feeAmount || 0;
+  const weeklyVolume = weeklyStats._sum.amount || 0;
+  const averageFee = totalStats._avg.feeAmount || 0;
+  const realizedFeeRate = totalVolume > 0 ? (totalRevenue / totalVolume) * 100 : 0;
+  const monthContribution = totalRevenue > 0 ? (monthRevenue / totalRevenue) * 100 : 0;
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-700 text-white rounded-2xl shadow-lg shadow-green-500/20 ring-1 ring-green-500/50">
-            <Landmark size={24} />
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
+            <Landmark className="h-4 w-4" />
+            Treasury and revenue
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Treasury & Revenue</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">Platform earnings from 0.3% transaction fees</p>
-          </div>
-        </div>
-        
-        {/* Tombol Simulasi Withdraw */}
-        <button className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
-          <ArrowDownToLine size={16} />
-          Withdraw to Cold Wallet
-        </button>
-      </div>
-
-      {/* METRICS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Hari Ini */}
-        <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-500 rounded-lg">
-              <Banknote size={20} />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Today</span>
-          </div>
-          <h3 className="text-2xl font-mono font-bold text-gray-900 dark:text-white">{formatSOL(dayRevenue)} <span className="text-sm text-gray-400">SOL</span></h3>
-          <p className="text-xs text-gray-500 mt-2 font-medium">Earnings since 00:00</p>
-        </div>
-
-        {/* Bulan Ini */}
-        <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-xl border border-gray-200 dark:border-[#2A2A2A] shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-500 rounded-lg">
-              <CalendarDays size={20} />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">This Month</span>
-          </div>
-          <h3 className="text-2xl font-mono font-bold text-gray-900 dark:text-white">{formatSOL(monthRevenue)} <span className="text-sm text-gray-400">SOL</span></h3>
-          <p className="text-xs text-gray-500 mt-2 font-medium">Earnings this current month</p>
-        </div>
-
-        {/* Total Sepanjang Waktu (Treasury Balance) */}
-        <div className="bg-gradient-to-br from-green-50 to-emerald-100 dark:from-[#111C15] dark:to-[#162B1D] p-6 rounded-xl border border-green-200 dark:border-green-900/30 shadow-sm relative overflow-hidden">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-2 bg-green-500 text-white rounded-lg shadow-sm shadow-green-500/20">
-              <Landmark size={20} />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-green-700 dark:text-green-500">Total Treasury</span>
-          </div>
-          <h3 className="text-3xl font-mono font-bold text-green-700 dark:text-green-400">{formatSOL(totalRevenue)} <span className="text-sm font-bold opacity-70">SOL</span></h3>
-          <p className="text-xs text-green-600 dark:text-green-500 mt-2 font-medium flex items-center gap-1">
-            <TrendingUp size={12} /> All-time collected fees
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
+            Platform earnings command center
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Track fee yield, treasury balance, merchant contribution, and recent revenue deposits from paid transactions.
           </p>
         </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Link href="/admin/transactions" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Audit ledger
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          <button className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white opacity-80 dark:bg-white dark:text-slate-950">
+            <ArrowDownToLine className="h-4 w-4" />
+            Cold wallet queue
+          </button>
+        </div>
       </div>
 
-      {/* FEE LEDGER */}
-      <div className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100 dark:border-[#2A2A2A] flex justify-between items-center bg-transparent">
-          <div className="flex items-center gap-3">
-            <Receipt className="text-gray-500" size={18} />
-            <h3 className="font-bold text-sm tracking-tight text-gray-900 dark:text-white">Recent Fee Deposits</h3>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        {[
+          {
+            icon: Landmark,
+            label: "Total treasury",
+            value: `${formatSOL(totalRevenue)} SOL`,
+            detail: `${paidTransactionCount} paid fee events`,
+            tone: "emerald",
+          },
+          {
+            icon: CalendarDays,
+            label: "This month",
+            value: `${formatSOL(monthRevenue)} SOL`,
+            detail: `${monthContribution.toFixed(1)}% of all-time fees`,
+            tone: "blue",
+          },
+          {
+            icon: Banknote,
+            label: "Today",
+            value: `${formatSOL(dayRevenue)} SOL`,
+            detail: `${dayStats._count.id} paid transactions`,
+            tone: "emerald",
+          },
+          {
+            icon: TrendingUp,
+            label: "Realized fee rate",
+            value: `${realizedFeeRate.toFixed(2)}%`,
+            detail: `target ${(FEE_RATE * 100).toFixed(1)}% platform fee`,
+            tone: Math.abs(realizedFeeRate - FEE_RATE * 100) < 0.05 || totalVolume === 0 ? "emerald" : "amber",
+          },
+        ].map((metric) => (
+          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <metric.icon
+              className={`mb-4 h-5 w-5 ${
+                metric.tone === "emerald"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : metric.tone === "amber"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-blue-600 dark:text-blue-400"
+              }`}
+            />
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
+            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Revenue cadence</p>
+                <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Treasury pulse</h2>
+              </div>
+              <LineChart className="h-5 w-5 text-slate-400" />
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {[
+                { label: "7-day fees", value: `${formatSOL(weeklyRevenue)} SOL`, icon: Clock3 },
+                { label: "7-day volume", value: `${formatSOL(weeklyVolume, 4)} SOL`, icon: TrendingUp },
+                { label: "Net settled", value: `${formatSOL(totalNetSettlement, 4)} SOL`, icon: WalletCards },
+                { label: "Avg fee", value: `${formatSOL(averageFee)} SOL`, icon: Receipt },
+              ].map((item) => (
+                <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <item.icon className="mb-3 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                  <p className="mt-1 font-mono text-sm font-semibold text-slate-950 dark:text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <div>
+                <h3 className="text-sm font-semibold text-slate-950 dark:text-white">Treasury controls</h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  Fee revenue is calculated from confirmed paid transactions. Withdraw execution should remain gated behind operational approval before cold-wallet transfer.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {[
+                { label: "Fee model", value: "0.3% gross", ok: true },
+                { label: "Revenue basis", value: "Paid tx only", ok: true },
+                { label: "Withdrawal status", value: "Manual review", ok: true },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.label}</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-[#2A2A2A] text-gray-400 font-black text-[10px] uppercase tracking-widest bg-gray-50/50 dark:bg-[#151515]">
-                <th className="p-5">Time</th>
-                <th className="p-5">Source Merchant</th>
-                <th className="p-5">Order ID</th>
-                <th className="p-5">Base Gross</th>
-                <th className="p-5 text-right text-green-600 dark:text-green-500">Fee Earned (0.3%)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-[#2A2A2A]">
-              {recentFees.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50 dark:hover:bg-[#1A1A1A] transition-colors">
-                  <td className="p-5 text-xs text-gray-500 font-medium">
-                    {new Date(tx.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute:'2-digit' })}
-                  </td>
-                  <td className="p-5 font-bold text-gray-900 dark:text-white">
-                    {tx.merchant.businessName || "Unnamed"}
-                  </td>
-                  <td className="p-5 font-mono text-[11px] text-gray-500">
-                    {tx.orderId}
-                  </td>
-                  <td className="p-5 font-mono text-xs text-gray-500">
-                    {formatSOL(tx.amount)} SOL
-                  </td>
-                  <td className="p-5 text-right font-mono font-bold text-xs text-green-600 dark:text-green-400">
-                    +{formatSOL(tx.feeAmount)} SOL
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-white/10">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Merchant contribution</p>
+              <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Top fee contributors</h2>
+            </div>
+            <Receipt className="h-5 w-5 text-slate-400" />
+          </div>
+
+          <div className="divide-y divide-slate-200 dark:divide-white/10">
+            {topFeeMerchants.length === 0 ? (
+              <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">No fee contribution has been recorded yet.</div>
+            ) : (
+              topFeeMerchants.map((merchantStat, index) => {
+                const merchant = merchantById.get(merchantStat.merchantId);
+                const contribution = totalRevenue > 0 ? ((merchantStat._sum.feeAmount || 0) / totalRevenue) * 100 : 0;
+
+                return (
+                  <div key={merchantStat.merchantId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.businessName || "Unknown merchant"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.email || merchantStat.merchantId}</p>
+                      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/[0.06]">
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(contribution, 100)}%` }} />
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-semibold text-slate-950 dark:text-white">+{formatSOL(merchantStat._sum.feeAmount)} SOL</p>
+                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{merchantStat._count.id} paid tx</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Fee ledger</p>
+            <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Recent fee deposits</h2>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Latest platform fee entries from paid transactions.</p>
+          </div>
+          <Link href="/admin/transactions?status=PAID" className="inline-flex w-fit items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Paid ledger
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
 
-        {recentFees.length === 0 && (
-          <div className="p-16 text-center flex flex-col items-center justify-center">
-            <div className="p-4 bg-gray-50 dark:bg-[#1A1A1A] rounded-full mb-4">
-              <Landmark className="text-gray-300 dark:text-[#333]" size={32} />
+        {recentFees.length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/[0.06]">
+              <Landmark className="h-6 w-6" />
             </div>
-            <h4 className="text-sm font-bold text-gray-900 dark:text-white">Treasury is Empty</h4>
-            <p className="text-xs text-gray-500 font-medium mt-1">No fees have been collected yet.</p>
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Treasury is empty</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Fee deposits will appear after paid transactions are confirmed.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[780px] text-left text-sm">
+              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+                <tr>
+                  <th className="px-5 py-4">Time</th>
+                  <th className="px-5 py-4">Source merchant</th>
+                  <th className="px-5 py-4">Order ID</th>
+                  <th className="px-5 py-4">Gross volume</th>
+                  <th className="px-5 py-4">Net settlement</th>
+                  <th className="px-5 py-4 text-right">Fee earned</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                {recentFees.map((transaction) => (
+                  <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
+                    <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">{formatCompactDate(transaction.createdAt)}</td>
+                    <td className="px-5 py-4">
+                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{transaction.orderId}</td>
+                    <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">{formatSOL(transaction.amount)} SOL</td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{formatSOL(transaction.netAmount)} SOL</td>
+                    <td className="px-5 py-4 text-right font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      +{formatSOL(transaction.feeAmount)} SOL
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
-
     </div>
   );
 }

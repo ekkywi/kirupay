@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, ChevronDown, Sun, Moon } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/ThemeProvider";
 import { useEffect, useState } from "react";
 
 const PRODUCT_LINKS = [
