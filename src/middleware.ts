@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/request';
+import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
   const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isDashboardPage = pathname.startsWith('/dashboard');
+  const isPrivateAppPage =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/payments') ||
+    pathname.startsWith('/payment-links') ||
+    pathname.startsWith('/analytics') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/developers') ||
+    pathname.startsWith('/admin');
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
   if (token) {
@@ -19,8 +26,8 @@ export async function middleware(request: NextRequest) {
       
       return NextResponse.next();
       
-    } catch (err) {
-      if (isDashboardPage) {
+    } catch {
+      if (isPrivateAppPage) {
         const response = NextResponse.redirect(new URL('/login', request.url));
         response.cookies.delete('auth-token');
         return response;
@@ -28,7 +35,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (!token && isDashboardPage) {
+  if (!token && isPrivateAppPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -36,5 +43,15 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: [
+    '/dashboard/:path*',
+    '/payments/:path*',
+    '/payment-links/:path*',
+    '/analytics/:path*',
+    '/settings/:path*',
+    '/developers/:path*',
+    '/admin/:path*',
+    '/login',
+    '/register',
+  ],
 };

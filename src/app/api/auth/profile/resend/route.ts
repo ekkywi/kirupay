@@ -74,7 +74,7 @@ export async function POST(req: Request) {
                       <tr>
                         <td style="padding: 40px;">
                           <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #11151D; font-weight: 800;">
-                            Welcome to the network, ${businessName}.
+                            Welcome to the network, ${merchant.businessName}.
                           </h2>
                           <p style="margin: 0 0 20px 0; font-size: 15px; color: #4B5563; line-height: 1.6;">
                             Thank you for registering. You are one step away from accessing your dashboard and accepting global crypto payments on the Solana network with zero friction.
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
                             To complete your security setup, please verify your email address by clicking the button below.
                           </p>
                           <div style="text-align: center;">
-                            <a href="${baseUrl}/activate?token=${activationToken}" style="display: inline-block; padding: 16px 32px; background: #2563EB; background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(37,99,235,0.3);">
+                            <a href="${baseUrl}/activate?token=${newActivationToken}" style="display: inline-block; padding: 16px 32px; background: #2563EB; background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(37,99,235,0.3);">
                               Verify Merchant Account
                             </a>
                           </div>

@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
   role?: string;
 }
 
@@ -166,3 +168,6 @@ export function Sidebar({ role }: SidebarProps) {
     </>
   );
 }
+
+// Placeholder to fix type error if Sidebar is meant to handle tabs
+// In a real scenario, Sidebar properties should be updated in the interface.

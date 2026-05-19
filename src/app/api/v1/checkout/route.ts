@@ -1,6 +1,7 @@
 // src/app/api/v1/checkout/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
+import { createMaintenanceJsonResponse, getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -22,6 +23,12 @@ const corsHeaders = {
 
 export async function POST(req: Request) {
     try {
+        const maintenanceBlock = await getPaymentMaintenanceBlock();
+
+        if (maintenanceBlock) {
+            return createMaintenanceJsonResponse(maintenanceBlock, corsHeaders);
+        }
+
         const authHeader = req.headers.get("Authorization");
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -111,10 +118,11 @@ export async function POST(req: Request) {
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         }, { status: 201, headers: corsHeaders });
     
-    } catch (error: any) {
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Checkout API Error:", error);
         return NextResponse.json(
-            { error: "Internal Server Error", details: error.message },
+            { error: "Internal Server Error", details: errorMessage },
             { status: 500, headers: corsHeaders }
         );
     }

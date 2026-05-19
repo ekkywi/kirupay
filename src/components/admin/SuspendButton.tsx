@@ -35,66 +35,61 @@ export function SuspendButton({ merchantId, isActive }: { merchantId: string, is
       <button
         onClick={() => setShowModal(true)}
         disabled={isPending}
-        className={`p-2 rounded-xl transition-all ${
+        className={`rounded-lg p-2 transition-colors ${
           isActive
-            ? "text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-            : "text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-500/10 dark:hover:text-green-400"
-        } ${isPending ? "opacity-50 cursor-not-allowed animate-pulse" : ""}`}
+            ? "text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+            : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+        } ${isPending ? "cursor-not-allowed opacity-50" : ""}`}
         title={isActive ? "Suspend Merchant" : "Re-activate Merchant"}
       >
         {isActive ? <ShieldAlert size={18} /> : <ShieldCheck size={18} />}
       </button>
 
       {showModal && (
-        // Overlay ditambahkan padding p-4 agar modal tidak mentok di pinggir layar kecil
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 p-4">
-          
-          {/* UBAH DI SINI: Tambahkan max-h-[90vh], overflow-y-auto, dan w-full max-w-md */}
-          <div className="bg-white dark:bg-[#1E1E1E] w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl border border-gray-100 dark:border-[#2A2A2A] animate-in zoom-in-95 duration-300 flex flex-col">
-            
-            <div className="p-8 pb-3 text-center relative shrink-0">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/20 dark:border-white/10 dark:bg-[#0B0F17] animate-in zoom-in-95 duration-200">
+            <div className="relative p-6 pb-3 text-center">
               <button 
                 onClick={() => setShowModal(false)}
-                className="absolute top-5 right-5 p-1.5 rounded-full text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition-colors"
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/[0.06] dark:hover:text-white"
               >
                 <X size={18} />
               </button>
               
-              <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6 shadow-lg ${
+              <div className={`mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ${
                 isActive 
-                  ? "bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 ring-8 ring-red-50 dark:ring-red-950/20" 
-                  : "bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400 ring-8 ring-green-50 dark:ring-green-950/20"
+                  ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300" 
+                  : "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300"
               }`}>
                 {isActive ? <AlertTriangle size={32} strokeWidth={2.5} /> : <UserCheck size={32} strokeWidth={2.5} />}
               </div>
 
-              <h3 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+              <h3 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white">
                 {isActive ? "Confirm Account Suspension" : "Confirm Account Reactivation"}
               </h3>
             </div>
 
-            {/* UBAH DI SINI: Tambahkan break-words dan whitespace-normal */}
-            <div className="px-8 pb-8 text-center overflow-y-auto">
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed font-medium break-words whitespace-normal">
+            <div className="px-6 pb-6 text-center">
+              <p className="break-words whitespace-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 {isActive 
                   ? "Are you sure? This will instantly revoke their API access. All existing checkout sessions and future API calls for this merchant will be blocked immediately."
                   : "Are you sure? This will restore their API access. They will be able to process transactions and use the Trezalink network again."}
               </p>
             </div>
 
-            <div className="p-5 border-t border-gray-100 dark:border-[#2A2A2A] bg-gray-50 dark:bg-[#151515] flex flex-col sm:flex-row gap-3 shrink-0 rounded-b-3xl">
+            <div className="flex flex-col gap-3 rounded-b-2xl border-t border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02] sm:flex-row">
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full order-2 sm:order-1 px-5 py-3 text-sm font-bold text-gray-700 dark:text-gray-200 bg-white dark:bg-[#2A2A2A] hover:bg-gray-100 dark:hover:bg-[#333] border border-gray-200 dark:border-[#3A3A3A] rounded-xl transition-all shadow-sm"
+                className="order-2 w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:order-1"
               >
                 Cancel, keep as is
               </button>
               <button
                 onClick={handleConfirm}
-                className={`w-full order-1 sm:order-2 px-5 py-3 text-sm font-black text-white rounded-xl transition-all shadow-lg active:scale-95 ${
+                className={`order-1 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition-colors sm:order-2 ${
                   isActive 
-                    ? "bg-red-600 hover:bg-red-700 shadow-red-500/30" 
-                    : "bg-green-600 hover:bg-green-700 shadow-green-500/30"
+                    ? "bg-red-600 hover:bg-red-700" 
+                    : "bg-emerald-600 hover:bg-emerald-700"
                 }`}
               >
                 {isActive ? "Yes, Suspend Access" : "Yes, Reactivate Access"}

@@ -2,12 +2,23 @@
 import prisma from "@/lib/neon";
 import { notFound } from "next/navigation";
 import { CheckoutCard } from "@/components/checkout/CheckoutCard";
+import { PlatformMaintenanceView } from "@/components/maintenance/PlatformMaintenanceView";
+import { getPlatformMaintenanceState } from "@/lib/platform-maintenance";
 import { ShieldCheck, Lock, ArrowRight, ExternalLink, Link2 } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const maintenance = await getPlatformMaintenanceState();
+
+  if (maintenance.enabled) {
+    return {
+      title: "Maintenance Mode | Trezalink",
+      description: maintenance.message,
+    };
+  }
+
   const transaction = await prisma.transaction.findUnique({
     where: { id },
     include: { merchant: { select: { businessName: true } } }
@@ -23,6 +34,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const maintenance = await getPlatformMaintenanceState();
+
+  if (maintenance.enabled) {
+    return (
+      <PlatformMaintenanceView
+        message={maintenance.message}
+        maintenanceEndsAt={maintenance.maintenanceEndsAt}
+      />
+    );
+  }
 
   const transaction = await prisma.transaction.findUnique({
     where: { id: id },

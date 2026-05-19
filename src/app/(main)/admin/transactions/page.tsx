@@ -17,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 
 const ITEMS_PER_PAGE = 20;
 const STATUSES = ["ALL", "PAID", "PENDING", "FAILED"] as const;
@@ -139,7 +140,7 @@ export default async function AdminTransactionsPage({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+      <AdminSurface className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
             <Globe className="h-4 w-4" />
@@ -163,7 +164,7 @@ export default async function AdminTransactionsPage({
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-      </div>
+      </AdminSurface>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {[
@@ -196,24 +197,18 @@ export default async function AdminTransactionsPage({
             tone: failedCount > 0 ? "amber" : "blue",
           },
         ].map((metric) => (
-          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
-            <metric.icon
-              className={`mb-4 h-5 w-5 ${
-                metric.tone === "emerald"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : metric.tone === "amber"
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-blue-600 dark:text-blue-400"
-              }`}
-            />
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
-            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
-          </div>
+          <AdminMetricCard
+            key={metric.label}
+            icon={metric.icon}
+            label={metric.label}
+            value={metric.value}
+            detail={metric.detail}
+            tone={metric.tone as "blue" | "emerald" | "amber"}
+          />
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+      <AdminSurface padded={false} className="p-4">
         <form className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_190px_auto]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -255,17 +250,15 @@ export default async function AdminTransactionsPage({
             Search
           </button>
         </form>
-      </div>
+      </AdminSurface>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+      <AdminSurface padded={false}>
         <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Audit table</p>
-            <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Transactions</h2>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Showing page {currentPage} of {totalPages}, {totalCount} matching records.
-            </p>
-          </div>
+          <AdminSectionHeader
+            eyebrow="Audit table"
+            title="Transactions"
+            description={`Showing page ${currentPage} of ${totalPages}, ${totalCount} matching records.`}
+          />
           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-white/[0.06] dark:text-slate-300">
             <ShieldCheck className="h-3.5 w-3.5" />
             Admin audit mode
@@ -350,7 +343,7 @@ export default async function AdminTransactionsPage({
             </table>
           </div>
         )}
-      </div>
+      </AdminSurface>
 
       {totalPages > 1 && (
         <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none sm:flex-row sm:items-center sm:justify-between">

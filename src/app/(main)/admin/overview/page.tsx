@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 
 const formatSOL = (value: number | null | undefined, precision = 4) => (value ?? 0).toFixed(precision);
 
@@ -135,7 +136,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+      <AdminSurface className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
             <ShieldCheck className="h-4 w-4" />
@@ -159,7 +160,7 @@ export default async function AdminOverviewPage() {
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
-      </div>
+      </AdminSurface>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {[
@@ -192,32 +193,21 @@ export default async function AdminOverviewPage() {
             tone: conversionRate >= 80 ? "emerald" : "amber",
           },
         ].map((metric) => (
-          <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
-            <metric.icon
-              className={`mb-4 h-5 w-5 ${
-                metric.tone === "emerald"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : metric.tone === "amber"
-                    ? "text-amber-600 dark:text-amber-400"
-                    : metric.tone === "red"
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-blue-600 dark:text-blue-400"
-              }`}
-            />
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
-            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
-          </div>
+          <AdminMetricCard
+            key={metric.label}
+            icon={metric.icon}
+            label={metric.label}
+            value={metric.value}
+            detail={metric.detail}
+            tone={metric.tone as "blue" | "emerald" | "amber" | "red"}
+          />
         ))}
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <AdminSurface padded={false}>
           <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Network ledger</p>
-              <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Latest global transactions</h2>
-            </div>
+            <AdminSectionHeader eyebrow="Network ledger" title="Latest global transactions" />
             <span className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
               <Radio className="h-3.5 w-3.5" />
               10 latest events
@@ -283,7 +273,7 @@ export default async function AdminOverviewPage() {
               </table>
             </div>
           )}
-        </div>
+        </AdminSurface>
 
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">

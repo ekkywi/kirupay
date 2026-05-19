@@ -2,6 +2,7 @@
 "use server";
 
 import prisma from "@/lib/neon";
+import { getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
 import { revalidatePath } from "next/cache";
 
 export async function createManualPaymentLink(formData: {
@@ -11,6 +12,15 @@ export async function createManualPaymentLink(formData: {
   customerEmail?: string;
 }) {
   try {
+    const maintenanceBlock = await getPaymentMaintenanceBlock();
+    if (maintenanceBlock) {
+      return {
+        success: false,
+        error: maintenanceBlock.payload.message,
+        statusCode: maintenanceBlock.status,
+      };
+    }
+
     let finalOrderId = formData.orderId;
 
     if (finalOrderId) {
@@ -44,7 +54,7 @@ export async function createManualPaymentLink(formData: {
 
     revalidatePath("/dashboard/payment-links");
     return { success: true, transactionId: transaction.id };
-  } catch (error) {
+  } catch {
     return { success: false, error: "Failed to create payment link. Internal server error." };
   }
 }

@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
+import { getPlatformMaintenanceState } from "@/lib/platform-maintenance";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Clock, Code2, Globe2, Link as LinkIcon, Radio, Wallet } from "lucide-react";
 
@@ -20,6 +21,7 @@ export default function StatusPage() {
       <PageBackground />
       <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4"><Navbar /></div>
       <main>
+        <MaintenanceStateBanner />
         <section className="landing-section relative min-h-screen flex items-center pt-28 pb-16">
           <div className="max-w-7xl mx-auto px-6 w-full">
             <ScrollReveal immediate className="max-w-3xl text-center mx-auto">
@@ -72,5 +74,30 @@ export default function StatusPage() {
       </main>
       <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]"><Footer /></footer>
     </div>
+  );
+}
+
+async function MaintenanceStateBanner() {
+  const maintenance = await getPlatformMaintenanceState();
+
+  if (!maintenance.enabled) {
+    return null;
+  }
+
+  return (
+    <section className="landing-section relative border-b landing-border bg-red-50/70 pt-24 dark:bg-red-500/5 sm:pt-28">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <div className="rounded-3xl border border-red-200 bg-white/90 p-6 shadow-sm dark:border-red-500/20 dark:bg-white/[0.03]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Active maintenance</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight landing-heading">Payments are temporarily paused</h2>
+              <p className="mt-2 text-sm landing-body max-w-2xl">{maintenance.message}</p>
+            </div>
+            <Link href="/pricing" className="landing-btn-secondary whitespace-nowrap">View pricing</Link>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

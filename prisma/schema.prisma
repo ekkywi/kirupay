@@ -36,6 +36,16 @@ model Merchant {
   updatedAt       DateTime      @updatedAt
 }
 
+model PlatformMaintenance {
+  id               String    @id
+  enabled          Boolean   @default(false)
+  message          String    @default("The system is currently under maintenance. Please try again later.")
+  maintenanceEndsAt DateTime?
+  updatedById      String?
+  updatedByEmail   String?
+  updatedAt        DateTime  @updatedAt
+}
+
 // Transaction
 model Transaction {
   id              String        @id @default(cuid())
