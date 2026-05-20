@@ -4,6 +4,7 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { WalletError } from "@solana/wallet-adapter-base";
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { withRpcFailover } from "@/lib/solana-rpc";
 
 export interface CheckoutTransaction {
   id: string;
@@ -68,17 +69,24 @@ export function useSolanaCheckout(transaction: CheckoutTransaction) {
         );
       }
 
-      const latestBlockhash = await connection.getLatestBlockhash("confirmed");
+      const latestBlockhash = await withRpcFailover("checkout.getLatestBlockhash", async (rpcConnection) => {
+        return rpcConnection.getLatestBlockhash("confirmed");
+      });
       tx.recentBlockhash = latestBlockhash.blockhash;
       tx.feePayer = publicKey;
 
       const signature = await sendTransaction(tx, connection);
 
-      const confirmation = await connection.confirmTransaction({
-        signature: signature,
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-      }, "confirmed");
+      const confirmation = await withRpcFailover("checkout.confirmTransaction", async (rpcConnection) => {
+        return rpcConnection.confirmTransaction(
+          {
+            signature,
+            blockhash: latestBlockhash.blockhash,
+            lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+          },
+          "confirmed",
+        );
+      });
 
       if (confirmation.value.err) {
         throw new Error("Transaction confirmed but resulted in an error on-chain.");

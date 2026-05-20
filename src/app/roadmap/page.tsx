@@ -65,8 +65,8 @@ const ROADMAP_PHASES = [
     desc: "Strengthen payment operations first with better health visibility, safer recovery flows, and clearer incident handling.",
     icon: Radar,
     items: [
-      "RPC health monitoring with latency, error, and rate-limit visibility",
-      "Automatic fallback routing to backup RPC infrastructure",
+      "RPC health monitoring with latency, error, and rate-limit visibility (implemented)",
+      "Automatic fallback routing to backup RPC infrastructure (implemented)",
       "Incident timeline with active and resolved disruption logs",
       "Advanced webhook retry controls built on top of the live baseline tooling",
       "Expanded API error reference and integration diagnostics",

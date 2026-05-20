@@ -1,7 +1,8 @@
 // src/hooks/api/merchant/useWalletConnect.ts
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { withRpcFailover } from "@/lib/solana-rpc";
 
 type SolanaProvider = {
   isPhantom?: boolean;
@@ -33,11 +34,11 @@ export function useWalletConnect(initialWallet: string) {
     
     setIsFetchingBalance(true);
     try {
-      // Catatan: Gunakan "https://api.mainnet-beta.solana.com" jika sudah rilis sungguhan
-      const connection = new Connection("https://api.devnet.solana.com", "confirmed");
       const pubKey = new PublicKey(walletAddress);
-      
-      const lamports = await connection.getBalance(pubKey);
+
+      const lamports = await withRpcFailover("wallet.getBalance", async (connection) => {
+        return connection.getBalance(pubKey, "confirmed");
+      });
       setBalance(lamports / LAMPORTS_PER_SOL);
     } catch (error) {
       console.error("Gagal mengambil saldo", error);
