@@ -1,6 +1,6 @@
 import { AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import AutoRefresh from "@/components/admin/AutoRefresh";
-import { getRpcHealthSummary, type RpcHealthSnapshot } from "@/lib/rpc-health";
+import { getRpcHealthSummary, type IncidentSeverity, type RpcHealthSnapshot } from "@/lib/rpc-health";
 import { Clock3, RefreshCcw, Signal } from "lucide-react";
 import { runRpcHealthCheckAction } from "../actions";
 import { MaintenanceFlash, MaintenanceHeader } from "../_shared";
@@ -29,6 +29,20 @@ function activeEndpointLabel(endpointType: "PRIMARY" | "FALLBACK" | "UNKNOWN") {
   if (endpointType === "PRIMARY") return "Using Primary";
   if (endpointType === "FALLBACK") return "Using Fallback";
   return "Unknown";
+}
+
+function formatDuration(from: Date, to: Date) {
+  const ms = Math.max(0, to.getTime() - from.getTime());
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return remMins === 0 ? `${hours}h` : `${hours}h ${remMins}m`;
+}
+
+function incidentSeverityTone(severity: IncidentSeverity) {
+  if (severity === "CRITICAL") return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
+  return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
 }
 
 export default async function AdminMaintenanceRpcHealthPage({
@@ -164,6 +178,98 @@ export default async function AdminMaintenanceRpcHealthPage({
               <Metric label="Last used" value={formatDateTime(rpcHealth.traffic.lastUsedAt)} />
               <Metric label="Last switched" value={formatDateTime(rpcHealth.traffic.lastFailoverAt)} />
               <Metric label="Last failover reason" value={rpcHealth.traffic.lastFailoverReason ?? "n/a"} />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Active disruptions</p>
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${rpcHealth.activeIncidents.length > 0 ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
+                <Signal className="h-3.5 w-3.5" />
+                {rpcHealth.activeIncidents.length} active
+              </span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+              {rpcHealth.activeIncidents.length === 0 ? (
+                <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No active disruptions.</div>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-white/10">
+                  {rpcHealth.activeIncidents.map((incident) => (
+                    <div key={incident.id} className="p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{incident.title}</p>
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${incidentSeverityTone(incident.severity)}`}>{incident.severity}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{incident.summary}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Started {formatDateTime(incident.startedAt)} · ongoing {formatDuration(incident.startedAt, new Date())}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Incident timeline</p>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
+                <Clock3 className="h-3.5 w-3.5" />
+                {rpcHealth.incidentTimeline.length} events
+              </span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+              {rpcHealth.incidentTimeline.length === 0 ? (
+                <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No incident events yet.</div>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-white/10">
+                  {rpcHealth.incidentTimeline.map((event) => (
+                    <div key={event.id} className="flex flex-col gap-1 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${incidentSeverityTone(event.incidentSeverity)}`}>{event.incidentSeverity}</span>
+                        <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
+                          {event.eventType}
+                        </span>
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{event.incidentTitle}</p>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{event.message}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{formatDateTime(event.createdAt)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Resolved disruptions</p>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <Clock3 className="h-3.5 w-3.5" />
+                {rpcHealth.resolvedIncidents.length} resolved
+              </span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+              {rpcHealth.resolvedIncidents.length === 0 ? (
+                <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No resolved disruptions yet.</div>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-white/10">
+                  {rpcHealth.resolvedIncidents.map((incident) => (
+                    <div key={incident.id} className="p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{incident.title}</p>
+                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${incidentSeverityTone(incident.severity)}`}>{incident.severity}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{incident.summary}</p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Resolved {formatDateTime(incident.resolvedAt)} · duration{" "}
+                        {incident.resolvedAt ? formatDuration(incident.startedAt, incident.resolvedAt) : "n/a"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

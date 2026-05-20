@@ -27,6 +27,26 @@ enum RpcHealthStatus {
   DOWN
 }
 
+enum IncidentSource {
+  RPC_HEALTH
+}
+
+enum IncidentSeverity {
+  WARNING
+  CRITICAL
+}
+
+enum IncidentStatus {
+  ACTIVE
+  RESOLVED
+}
+
+enum IncidentEventType {
+  CREATED
+  UPDATED
+  RESOLVED
+}
+
 // User/Merchant
 model Merchant {
   id              String        @id @default(cuid())
@@ -138,4 +158,40 @@ model RpcTrafficLog {
   @@index([usedAt])
   @@index([endpointType, usedAt])
   @@index([failoverFromEndpointMasked, usedAt])
+}
+
+model OperationalIncident {
+  id                    String              @id @default(cuid())
+  source                IncidentSource
+  severity              IncidentSeverity
+  status                IncidentStatus      @default(ACTIVE)
+  dedupKey              String
+  title                 String
+  summary               String
+  startedAt             DateTime
+  resolvedAt            DateTime?
+  lastObservedAt        DateTime
+  healthyStreak         Int                 @default(0)
+  primaryEndpointMasked String?
+  fallbackEndpointMasked String?
+  triggerMetrics        Json?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  events                OperationalIncidentEvent[]
+
+  @@index([status, lastObservedAt])
+  @@index([source, status, lastObservedAt])
+  @@index([dedupKey, status])
+}
+
+model OperationalIncidentEvent {
+  id          String            @id @default(cuid())
+  incidentId  String
+  incident    OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  eventType   IncidentEventType
+  message     String
+  createdAt   DateTime          @default(now())
+
+  @@index([incidentId, createdAt])
+  @@index([createdAt])
 }

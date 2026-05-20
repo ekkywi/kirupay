@@ -2,71 +2,179 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
-import { getPlatformMaintenanceState } from "@/lib/platform-maintenance";
+import AutoRefresh from "@/components/admin/AutoRefresh";
+import { getPublicStatusSummary, type PublicComponentStatus, type PublicIncident, type PublicSystemStatus } from "@/lib/public-status";
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Clock, Code2, Globe2, Link as LinkIcon, Radio, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowRight, BadgeCheck, Server, ShieldCheck, Waves } from "lucide-react";
 
-const FEATURES = [
-  { name: "SOL payments", status: "Live", icon: Wallet },
-  { name: "Solana settlement", status: "Live", icon: Globe2 },
-  { name: "Payment links", status: "Live", icon: LinkIcon },
-  { name: "Checkout API", status: "Live", icon: Code2 },
-  { name: "Signed webhooks", status: "Live", icon: Radio },
-  { name: "USDC SPL", status: "Planned", icon: Clock },
-];
+function formatDateTime(value: Date | null | undefined) {
+  if (!value) return "n/a";
+  return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(value);
+}
 
-export default function StatusPage() {
+function formatDuration(from: Date, to: Date) {
+  const ms = Math.max(0, to.getTime() - from.getTime());
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return remMins === 0 ? `${hours}h` : `${hours}h ${remMins}m`;
+}
+
+function statusTone(status: PublicSystemStatus) {
+  if (status === "OPERATIONAL") return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
+  if (status === "DEGRADED") return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
+  if (status === "PARTIAL_OUTAGE") return "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300";
+  return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
+}
+
+function statusLabel(status: PublicSystemStatus) {
+  if (status === "OPERATIONAL") return "Operational";
+  if (status === "DEGRADED") return "Degraded";
+  if (status === "PARTIAL_OUTAGE") return "Partial Outage";
+  return "Major Outage";
+}
+
+function componentIcon(name: PublicComponentStatus["name"]) {
+  if (name === "Checkout") return Waves;
+  if (name === "Webhook delivery") return Server;
+  return ShieldCheck;
+}
+
+function incidentImpactTone(impact: PublicIncident["impact"]) {
+  return statusTone(impact === "OPERATIONAL" ? "DEGRADED" : impact);
+}
+
+export default async function StatusPage() {
+  const summary = await getPublicStatusSummary();
+
   return (
     <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
+      <AutoRefresh intervalMs={45000} />
       <PageBackground />
       <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4"><Navbar /></div>
       <main>
-        <MaintenanceStateBanner />
-        <section className="landing-section relative min-h-screen flex items-center pt-28 pb-16">
-          <div className="max-w-7xl mx-auto px-6 w-full">
-            <ScrollReveal immediate className="max-w-3xl text-center mx-auto">
-              <span className="inline-flex items-center gap-2 rounded-md border landing-border bg-white/80 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
-                <BadgeCheck className="w-3.5 h-3.5" /> Supported status
-              </span>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.08]">
-                <span className="gradient-text">What is live today</span>
-                <br />
-                <span className="landing-heading">and what is planned next</span>
-              </h1>
-              <p className="mt-6 text-lg md:text-xl landing-body">
-                A clear snapshot of supported networks, assets, and product capabilities so merchants know exactly what to expect.
-              </p>
+        <section className="landing-section relative pt-28 pb-10">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal immediate className="landing-panel rounded-3xl p-7 md:p-9">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Public system status</p>
+                  <h1 className="mt-2 text-3xl md:text-4xl font-bold landing-heading">Current operational status</h1>
+                  <p className="mt-2 text-sm landing-body">Last updated {formatDateTime(summary.lastUpdated)}.</p>
+                </div>
+                <span className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ${statusTone(summary.systemStatus)}`}>
+                  <BadgeCheck className="w-4 h-4" />
+                  {statusLabel(summary.systemStatus)}
+                </span>
+              </div>
+
+              {summary.maintenance.enabled && (
+                <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300">
+                  <p className="font-semibold">Payments are temporarily paused for maintenance.</p>
+                  <p className="mt-1">{summary.maintenance.message}</p>
+                  <p className="mt-1 text-xs">ETA: {formatDateTime(summary.maintenance.maintenanceEndsAt)}</p>
+                </div>
+              )}
             </ScrollReveal>
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border">
+        <section className="landing-section relative py-12 border-t landing-border">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {FEATURES.map((feature, index) => (
-                <ScrollReveal key={feature.name} delay={index * 70} className="landing-panel rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <feature.icon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${feature.status === "Live" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"}`}>
-                      {feature.status}
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-semibold landing-heading">{feature.name}</h2>
-                </ScrollReveal>
-              ))}
+            <ScrollReveal className="max-w-2xl mb-8">
+              <span className="landing-label">Affected components</span>
+              <h2 className="mt-3 text-2xl md:text-3xl font-bold tracking-tight landing-heading">Live component health</h2>
+            </ScrollReveal>
+            <div className="grid md:grid-cols-3 gap-4">
+              {summary.affectedComponents.map((component, index) => {
+                const Icon = componentIcon(component.name);
+                return (
+                  <ScrollReveal key={component.name} delay={index * 70} className="landing-panel rounded-2xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${statusTone(component.status)}`}>
+                        {statusLabel(component.status)}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-semibold landing-heading">{component.name}</h3>
+                    <p className="mt-2 text-sm landing-body">{component.message}</p>
+                  </ScrollReveal>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+        <section className="landing-section relative py-12 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ScrollReveal className="landing-panel rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold landing-heading">Active incidents</h2>
+                  <span className={`text-xs font-semibold rounded-full px-2.5 py-1 ${summary.activeIncidents.length > 0 ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
+                    {summary.activeIncidents.length} active
+                  </span>
+                </div>
+                {summary.activeIncidents.length === 0 ? (
+                  <p className="text-sm landing-body">No active incidents at the moment.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {summary.activeIncidents.map((incident) => (
+                      <div key={incident.id} className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.02] p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${incidentImpactTone(incident.impact)}`}>{statusLabel(incident.impact)}</span>
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-300">
+                            {incident.phase}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold landing-heading">{incident.title}</p>
+                        <p className="mt-1 text-xs landing-subtle">Started {formatDateTime(incident.startedAt)} · ongoing {formatDuration(incident.startedAt, new Date())}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollReveal>
+
+              <ScrollReveal delay={120} className="landing-panel rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold landing-heading">Recent resolved incidents</h2>
+                  <span className="text-xs font-semibold rounded-full px-2.5 py-1 bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300">
+                    {summary.resolvedIncidents.length} entries
+                  </span>
+                </div>
+                {summary.resolvedIncidents.length === 0 ? (
+                  <p className="text-sm landing-body">No resolved incidents in the recent window.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {summary.resolvedIncidents.map((incident) => (
+                      <div key={incident.id} className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.02] p-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">Resolved</span>
+                          <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-300">{incident.phase}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold landing-heading">{incident.title}</p>
+                        <p className="mt-1 text-xs landing-subtle">
+                          Resolved {formatDateTime(incident.resolvedAt)} · duration {incident.resolvedAt ? formatDuration(incident.startedAt, incident.resolvedAt) : "n/a"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section relative py-20 border-t landing-border">
           <div className="max-w-4xl mx-auto px-6 text-center">
-            <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-16">
-              <span className="landing-label">Current scope</span>
-              <h2 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight landing-heading mb-5">SOL-first by design</h2>
-              <p className="landing-body text-lg max-w-xl mx-auto mb-8">Trezalink is currently focused on SOL checkout reliability before expanding into additional SPL assets.</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-14">
+              <AlertTriangle className="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400" />
+              <h2 className="mt-4 text-3xl font-bold tracking-tight landing-heading">Need implementation details?</h2>
+              <p className="mt-3 landing-body">Engineering-level details, diagnostics, and recovery controls are available in the admin maintenance console.</p>
+              <div className="mt-7 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/roadmap" className="landing-btn-primary">View roadmap <ArrowRight className="w-4 h-4" /></Link>
-                <Link href="/pricing" className="landing-btn-secondary">See pricing</Link>
+                <Link href="/docs" className="landing-btn-secondary">Read docs</Link>
               </div>
             </ScrollReveal>
           </div>
@@ -74,30 +182,5 @@ export default function StatusPage() {
       </main>
       <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]"><Footer /></footer>
     </div>
-  );
-}
-
-async function MaintenanceStateBanner() {
-  const maintenance = await getPlatformMaintenanceState();
-
-  if (!maintenance.enabled) {
-    return null;
-  }
-
-  return (
-    <section className="landing-section relative border-b landing-border bg-red-50/70 pt-24 dark:bg-red-500/5 sm:pt-28">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="rounded-3xl border border-red-200 bg-white/90 p-6 shadow-sm dark:border-red-500/20 dark:bg-white/[0.03]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Active maintenance</p>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight landing-heading">Payments are temporarily paused</h2>
-              <p className="mt-2 text-sm landing-body max-w-2xl">{maintenance.message}</p>
-            </div>
-            <Link href="/pricing" className="landing-btn-secondary whitespace-nowrap">View pricing</Link>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }

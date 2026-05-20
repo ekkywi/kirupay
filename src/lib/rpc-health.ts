@@ -4,6 +4,10 @@ import { getRpcTrafficSummary, type RpcTrafficSummary } from "@/lib/rpc-traffic"
 
 export type RpcHealthStatus = "HEALTHY" | "DEGRADED" | "DOWN";
 export type RpcEndpointType = "PRIMARY" | "FALLBACK";
+export type IncidentSource = "RPC_HEALTH";
+export type IncidentSeverity = "WARNING" | "CRITICAL";
+export type IncidentStatus = "ACTIVE" | "RESOLVED";
+export type IncidentEventType = "CREATED" | "UPDATED" | "RESOLVED";
 
 export type RpcHealthSnapshot = {
   id?: string;
@@ -37,8 +41,34 @@ export type RpcHealthSummary = {
     level: "OK" | "WARNING" | "CRITICAL";
     message: string;
   };
+  activeIncidents: IncidentView[];
+  resolvedIncidents: IncidentView[];
+  incidentTimeline: IncidentEventView[];
   traffic: RpcTrafficSummary;
   configError: string | null;
+};
+
+export type IncidentView = {
+  id: string;
+  source: IncidentSource;
+  severity: IncidentSeverity;
+  status: IncidentStatus;
+  title: string;
+  summary: string;
+  startedAt: Date;
+  resolvedAt: Date | null;
+  lastObservedAt: Date;
+};
+
+export type IncidentEventView = {
+  id: string;
+  incidentId: string;
+  incidentTitle: string;
+  incidentSeverity: IncidentSeverity;
+  incidentStatus: IncidentStatus;
+  eventType: IncidentEventType;
+  message: string;
+  createdAt: Date;
 };
 
 type ProbeInput = {
@@ -58,6 +88,31 @@ type RpcHealthLogRow = {
   errorType: string | null;
   status: RpcHealthStatus;
   checkedAt: Date | string;
+  createdAt: Date | string;
+};
+
+type OperationalIncidentRow = {
+  id: string;
+  source: IncidentSource;
+  severity: IncidentSeverity;
+  status: IncidentStatus;
+  dedupKey: string;
+  title: string;
+  summary: string;
+  startedAt: Date | string;
+  resolvedAt: Date | string | null;
+  lastObservedAt: Date | string;
+  healthyStreak: number;
+};
+
+type IncidentTimelineRow = {
+  eventId: string;
+  incidentId: string;
+  incidentTitle: string;
+  incidentSeverity: IncidentSeverity;
+  incidentStatus: IncidentStatus;
+  eventType: IncidentEventType;
+  message: string;
   createdAt: Date | string;
 };
 
@@ -98,6 +153,7 @@ const DEFAULT_DOWN_MS = 5000;
 const DEFAULT_TIMEOUT_MS = 8000;
 const DEFAULT_RATE_LIMIT_WARN_PERCENT = 5;
 const DEFAULT_RATE_LIMIT_CRITICAL_PERCENT = 15;
+const INCIDENT_SOURCE: IncidentSource = "RPC_HEALTH";
 
 function parsePositiveInt(value: string | undefined, fallback: number) {
   if (!value) return fallback;
@@ -189,6 +245,198 @@ function mapRowToSnapshot(row: RpcHealthLogRow): RpcHealthSnapshot {
     status: row.status,
     checkedAt: new Date(row.checkedAt),
   };
+}
+
+function mapIncidentRow(row: OperationalIncidentRow): IncidentView {
+  return {
+    id: row.id,
+    source: row.source,
+    severity: row.severity,
+    status: row.status,
+    title: row.title,
+    summary: row.summary,
+    startedAt: new Date(row.startedAt),
+    resolvedAt: row.resolvedAt ? new Date(row.resolvedAt) : null,
+    lastObservedAt: new Date(row.lastObservedAt),
+  };
+}
+
+function mapIncidentTimelineRow(row: IncidentTimelineRow): IncidentEventView {
+  return {
+    id: row.eventId,
+    incidentId: row.incidentId,
+    incidentTitle: row.incidentTitle,
+    incidentSeverity: row.incidentSeverity,
+    incidentStatus: row.incidentStatus,
+    eventType: row.eventType,
+    message: row.message,
+    createdAt: new Date(row.createdAt),
+  };
+}
+
+function deriveIncidentSignal(results: ProbeResult[], rateLimitLevel: "OK" | "WARNING" | "CRITICAL") {
+  const downCount = results.filter((result) => result.status === "DOWN").length;
+  const degradedCount = results.filter((result) => result.status === "DEGRADED").length;
+  const hasBothDegraded = results.length >= 2 && degradedCount === results.length;
+  const hasDown = downCount > 0;
+  const isRateLimitCritical = rateLimitLevel === "CRITICAL";
+  const triggerActive = hasDown || isRateLimitCritical || hasBothDegraded;
+
+  if (!triggerActive) return null;
+
+  const dominantSymptom = hasDown ? "DOWN" : isRateLimitCritical ? "RATE_LIMIT_CRITICAL" : "DEGRADED_BOTH";
+  const scope = results.some((result) => result.endpointType === "FALLBACK") ? "DUAL_ENDPOINT" : "PRIMARY_ONLY";
+  const dedupKey = `${INCIDENT_SOURCE}:${dominantSymptom}:${scope}`;
+  const severity: IncidentSeverity = hasDown || isRateLimitCritical ? "CRITICAL" : "WARNING";
+  const title =
+    dominantSymptom === "DOWN"
+      ? "RPC endpoint outage detected"
+      : dominantSymptom === "RATE_LIMIT_CRITICAL"
+        ? "RPC rate-limit pressure is critical"
+        : "RPC performance degradation detected";
+  const summary = `Signal=${dominantSymptom}; down=${downCount}; degraded=${degradedCount}; rateLimit=${rateLimitLevel}.`;
+
+  return { dedupKey, severity, title, summary };
+}
+
+async function createIncidentEvent(incidentId: string, eventType: IncidentEventType, message: string) {
+  const eventId = crypto.randomUUID();
+  await prisma.$executeRaw`
+    INSERT INTO "OperationalIncidentEvent" ("id", "incidentId", "eventType", "message", "createdAt")
+    VALUES (${eventId}, ${incidentId}, ${eventType}::"IncidentEventType", ${message}, now())
+  `;
+}
+
+async function processRpcIncidentLifecycle(
+  results: ProbeResult[],
+  rateLimitLevel: "OK" | "WARNING" | "CRITICAL",
+  primaryEndpointMasked: string,
+  fallbackEndpointMasked: string | null,
+) {
+  const now = new Date();
+  const signal = deriveIncidentSignal(results, rateLimitLevel);
+  const activeIncidents = await prisma.$queryRaw<OperationalIncidentRow[]>`
+    SELECT * FROM "OperationalIncident"
+    WHERE "source" = ${INCIDENT_SOURCE}::"IncidentSource" AND "status" = 'ACTIVE'
+    ORDER BY "lastObservedAt" DESC
+  `;
+
+  if (signal) {
+    const matching = activeIncidents.find((incident) => incident.dedupKey === signal.dedupKey) ?? null;
+    if (matching) {
+      await prisma.$executeRaw`
+        UPDATE "OperationalIncident"
+        SET "severity" = ${signal.severity}::"IncidentSeverity",
+            "title" = ${signal.title},
+            "summary" = ${signal.summary},
+            "lastObservedAt" = ${now},
+            "healthyStreak" = 0,
+            "primaryEndpointMasked" = ${primaryEndpointMasked},
+            "fallbackEndpointMasked" = ${fallbackEndpointMasked},
+            "updatedAt" = now()
+        WHERE "id" = ${matching.id}
+      `;
+      await createIncidentEvent(matching.id, "UPDATED", `Disruption still active (${signal.summary})`);
+    } else {
+      const newId = crypto.randomUUID();
+      await prisma.$executeRaw`
+        INSERT INTO "OperationalIncident"
+        ("id", "source", "severity", "status", "dedupKey", "title", "summary", "startedAt", "lastObservedAt", "healthyStreak", "primaryEndpointMasked", "fallbackEndpointMasked", "createdAt", "updatedAt")
+        VALUES
+        (${newId}, ${INCIDENT_SOURCE}::"IncidentSource", ${signal.severity}::"IncidentSeverity", 'ACTIVE'::"IncidentStatus", ${signal.dedupKey}, ${signal.title}, ${signal.summary}, ${now}, ${now}, 0, ${primaryEndpointMasked}, ${fallbackEndpointMasked}, now(), now())
+      `;
+      await createIncidentEvent(newId, "CREATED", `New disruption detected (${signal.summary})`);
+    }
+
+    const superseded = activeIncidents.filter((incident) => incident.dedupKey !== signal.dedupKey);
+    for (const oldIncident of superseded) {
+      await prisma.$executeRaw`
+        UPDATE "OperationalIncident"
+        SET "status" = 'RESOLVED'::"IncidentStatus",
+            "resolvedAt" = ${now},
+            "lastObservedAt" = ${now},
+            "updatedAt" = now()
+        WHERE "id" = ${oldIncident.id}
+      `;
+      await createIncidentEvent(oldIncident.id, "RESOLVED", "Disruption resolved (superseded by a new signal).");
+    }
+    return;
+  }
+
+  for (const incident of activeIncidents) {
+    const nextStreak = (incident.healthyStreak ?? 0) + 1;
+    if (nextStreak >= 2) {
+      await prisma.$executeRaw`
+        UPDATE "OperationalIncident"
+        SET "status" = 'RESOLVED'::"IncidentStatus",
+            "resolvedAt" = ${now},
+            "lastObservedAt" = ${now},
+            "healthyStreak" = ${nextStreak},
+            "updatedAt" = now()
+        WHERE "id" = ${incident.id}
+      `;
+      await createIncidentEvent(incident.id, "RESOLVED", "Disruption resolved after two consecutive healthy checks.");
+    } else {
+      await prisma.$executeRaw`
+        UPDATE "OperationalIncident"
+        SET "healthyStreak" = ${nextStreak},
+            "lastObservedAt" = ${now},
+            "updatedAt" = now()
+        WHERE "id" = ${incident.id}
+      `;
+      await createIncidentEvent(incident.id, "UPDATED", "Healthy check observed while monitoring for recovery.");
+    }
+  }
+}
+
+async function getIncidentSummary() {
+  try {
+    const [activeRows, resolvedRows, timelineRows] = await Promise.all([
+      prisma.$queryRaw<OperationalIncidentRow[]>`
+        SELECT * FROM "OperationalIncident"
+        WHERE "source" = ${INCIDENT_SOURCE}::"IncidentSource" AND "status" = 'ACTIVE'
+        ORDER BY "lastObservedAt" DESC
+        LIMIT 5
+      `,
+      prisma.$queryRaw<OperationalIncidentRow[]>`
+        SELECT * FROM "OperationalIncident"
+        WHERE "source" = ${INCIDENT_SOURCE}::"IncidentSource" AND "status" = 'RESOLVED'
+        ORDER BY "resolvedAt" DESC NULLS LAST
+        LIMIT 20
+      `,
+      prisma.$queryRaw<IncidentTimelineRow[]>`
+        SELECT
+          e."id" as "eventId",
+          e."incidentId" as "incidentId",
+          i."title" as "incidentTitle",
+          i."severity" as "incidentSeverity",
+          i."status" as "incidentStatus",
+          e."eventType" as "eventType",
+          e."message" as "message",
+          e."createdAt" as "createdAt"
+        FROM "OperationalIncidentEvent" e
+        INNER JOIN "OperationalIncident" i ON i."id" = e."incidentId"
+        WHERE i."source" = ${INCIDENT_SOURCE}::"IncidentSource"
+        ORDER BY e."createdAt" DESC
+        LIMIT 30
+      `,
+    ]);
+
+    return {
+      activeIncidents: activeRows.map(mapIncidentRow),
+      resolvedIncidents: resolvedRows.map(mapIncidentRow),
+      incidentTimeline: timelineRows.map(mapIncidentTimelineRow),
+    };
+  } catch (err) {
+    if (isMissingRelationError(err)) {
+      return {
+        activeIncidents: [] as IncidentView[],
+        resolvedIncidents: [] as IncidentView[],
+        incidentTimeline: [] as IncidentEventView[],
+      };
+    }
+    throw err;
+  }
 }
 
 async function probeEndpoint({ endpointType, endpointUrl }: ProbeInput): Promise<ProbeResult> {
@@ -294,6 +542,16 @@ export async function runRpcHealthChecks() {
 
   try {
     await persistProbeResults(results);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const oneHourLogs = await prisma.$queryRaw<Array<{ status: RpcHealthStatus; latencyMs: number | null; httpStatus: number | null }>>`
+      SELECT "status", "latencyMs", "httpStatus" FROM "RpcHealthLog" WHERE "checkedAt" >= ${oneHourAgo} ORDER BY "checkedAt" DESC
+    `;
+    const rateLimitLevel = buildRateLimitAlert(calculateWindowSummary(oneHourLogs)).level;
+    try {
+      await processRpcIncidentLifecycle(results, rateLimitLevel, maskEndpoint(primary), fallback ? maskEndpoint(fallback) : null);
+    } catch (incidentErr) {
+      if (!isMissingRelationError(incidentErr)) throw incidentErr;
+    }
     return {
       ok: true as const,
       error: primaryResolved.derivedFromCluster
@@ -383,7 +641,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
     const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
 
     if (client.rpcHealthLog && typeof client.rpcHealthLog.findFirst === "function") {
-      const [latestPrimary, latestFallback, oneHourLogs, twentyFourHoursLogs, recentIncidents, traffic] = await Promise.all([
+      const [latestPrimary, latestFallback, oneHourLogs, twentyFourHoursLogs, recentIncidents, traffic, incidentSummary] = await Promise.all([
         client.rpcHealthLog.findFirst({ where: { endpointType: "PRIMARY" }, orderBy: { checkedAt: "desc" } }),
         client.rpcHealthLog.findFirst({ where: { endpointType: "FALLBACK" }, orderBy: { checkedAt: "desc" } }),
         client.rpcHealthLog.findMany({
@@ -402,6 +660,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
           take: 8,
         }) as Promise<RpcHealthLogRow[]>,
         getRpcTrafficSummary(),
+        getIncidentSummary(),
       ]);
 
       return {
@@ -411,12 +670,15 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
         twentyFourHours: calculateWindowSummary(twentyFourHoursLogs),
         recentIncidents: recentIncidents.map(mapRowToSnapshot),
         rateLimitAlert: buildRateLimitAlert(calculateWindowSummary(oneHourLogs)),
+        activeIncidents: incidentSummary.activeIncidents,
+        resolvedIncidents: incidentSummary.resolvedIncidents,
+        incidentTimeline: incidentSummary.incidentTimeline,
         traffic,
         configError,
       };
     }
 
-    const [latestPrimaryRows, latestFallbackRows, oneHourLogs, twentyFourHoursLogs, incidentRows, traffic] = await Promise.all([
+    const [latestPrimaryRows, latestFallbackRows, oneHourLogs, twentyFourHoursLogs, incidentRows, traffic, incidentSummary] = await Promise.all([
       prisma.$queryRaw<RpcHealthLogRow[]>`
         SELECT * FROM "RpcHealthLog" WHERE "endpointType" = 'PRIMARY' ORDER BY "checkedAt" DESC LIMIT 1
       `,
@@ -433,6 +695,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
         SELECT * FROM "RpcHealthLog" WHERE "status" <> 'HEALTHY' ORDER BY "checkedAt" DESC LIMIT 8
       `,
       getRpcTrafficSummary(),
+      getIncidentSummary(),
     ]);
 
     const oneHourSummary = calculateWindowSummary(oneHourLogs);
@@ -445,6 +708,9 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
       twentyFourHours: twentyFourHourSummary,
       recentIncidents: incidentRows.map(mapRowToSnapshot),
       rateLimitAlert: buildRateLimitAlert(oneHourSummary),
+      activeIncidents: incidentSummary.activeIncidents,
+      resolvedIncidents: incidentSummary.resolvedIncidents,
+      incidentTimeline: incidentSummary.incidentTimeline,
       traffic,
       configError,
     };
@@ -457,6 +723,9 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
         twentyFourHours: { totalChecks: 0, successRate: 0, p95LatencyMs: null, downtimeCount: 0, degradedCount: 0, rateLimitedCount: 0, rateLimitedRate: 0 },
         recentIncidents: [],
         rateLimitAlert: { level: "OK", message: "No health checks recorded yet." },
+        activeIncidents: [],
+        resolvedIncidents: [],
+        incidentTimeline: [],
         traffic: await getRpcTrafficSummary(),
         configError: "RpcHealthLog table is not available yet. Run database migrations first.",
       };
@@ -469,6 +738,9 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
       twentyFourHours: { totalChecks: 0, successRate: 0, p95LatencyMs: null, downtimeCount: 0, degradedCount: 0, rateLimitedCount: 0, rateLimitedRate: 0 },
       recentIncidents: [],
       rateLimitAlert: { level: "OK", message: "No health checks recorded yet." },
+      activeIncidents: [],
+      resolvedIncidents: [],
+      incidentTimeline: [],
       traffic: await getRpcTrafficSummary(),
       configError: err instanceof Error ? err.message : "Failed to load RPC health summary.",
     };

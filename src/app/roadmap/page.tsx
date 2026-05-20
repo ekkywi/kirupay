@@ -53,10 +53,10 @@ const ROADMAP_PHASES = [
     desc: "The production foundation for wallet-direct SOL payments and merchant operations.",
     icon: BadgeCheck,
     items: [
-      "Hosted checkout at /pay/:transactionId",
-      "Payment links and API-created checkout sessions",
-      "Merchant wallet settlement with 0.3% fee calculation",
-      "Webhook secret rotation and delivery inspection",
+      { label: "Hosted checkout at /pay/:transactionId", implemented: true },
+      { label: "Payment links and API-created checkout sessions", implemented: true },
+      { label: "Merchant wallet settlement with 0.3% fee calculation", implemented: true },
+      { label: "Webhook secret rotation and delivery inspection", implemented: true },
     ],
   },
   {
@@ -65,12 +65,12 @@ const ROADMAP_PHASES = [
     desc: "Strengthen payment operations first with better health visibility, safer recovery flows, and clearer incident handling.",
     icon: Radar,
     items: [
-      "RPC health monitoring with latency, error, and rate-limit visibility (implemented)",
-      "Automatic fallback routing to backup RPC infrastructure (implemented)",
-      "Incident timeline with active and resolved disruption logs",
-      "Advanced webhook retry controls built on top of the live baseline tooling",
-      "Expanded API error reference and integration diagnostics",
-      "Reconciliation-ready exports for finance operations",
+      { label: "RPC health monitoring with latency, error, and rate-limit visibility", implemented: true },
+      { label: "Automatic fallback routing to backup RPC infrastructure", implemented: true },
+      { label: "Incident timeline with active and resolved disruption logs", implemented: true },
+      { label: "Advanced webhook retry controls built on top of the live baseline tooling", implemented: true },
+      { label: "Expanded API error reference and integration diagnostics", implemented: false },
+      { label: "Reconciliation-ready exports for finance operations", implemented: false },
     ],
   },
   {
@@ -79,11 +79,11 @@ const ROADMAP_PHASES = [
     desc: "Expand the tools around payments so teams can collect, review, and manage revenue faster.",
     icon: Layers3,
     items: [
-      "Customer-facing receipt improvements",
-      "Saved customer references and payment metadata",
-      "Team-ready roles and access boundaries",
-      "Notification settings for payment and webhook events",
-      "Backend integration templates and implementation examples",
+      { label: "Customer-facing receipt improvements", implemented: false },
+      { label: "Saved customer references and payment metadata", implemented: false },
+      { label: "Team-ready roles and access boundaries", implemented: false },
+      { label: "Notification settings for payment and webhook events", implemented: false },
+      { label: "Backend integration templates and implementation examples", implemented: false },
     ],
   },
   {
@@ -92,10 +92,10 @@ const ROADMAP_PHASES = [
     desc: "Broaden settlement options only after observability and reconciliation controls are production-proven.",
     icon: Globe2,
     items: [
-      "USDC SPL support after operations-readiness criteria are met",
-      "Sandbox or test-mode separation",
-      "Partner integration templates",
-      "Advanced risk and compliance reporting",
+      { label: "USDC SPL support after operations-readiness criteria are met", implemented: false },
+      { label: "Sandbox or test-mode separation", implemented: false },
+      { label: "Partner integration templates", implemented: false },
+      { label: "Advanced risk and compliance reporting", implemented: false },
     ],
   },
 ];
@@ -244,9 +244,13 @@ export default function RoadmapPage() {
                   <p className="text-sm landing-body mb-6">{phase.desc}</p>
                   <div className="space-y-3">
                     {phase.items.map((item) => (
-                      <div key={item} className="flex items-start gap-2.5">
-                        <CircleDot className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                        <p className="text-xs landing-body">{item}</p>
+                      <div key={item.label} className="flex items-start gap-2.5">
+                        {item.implemented ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        ) : (
+                          <CircleDot className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                        )}
+                        <p className="text-xs landing-body">{item.label}</p>
                       </div>
                     ))}
                   </div>
