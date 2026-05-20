@@ -123,3 +123,19 @@ model RpcHealthLog {
   @@index([endpointType, checkedAt])
   @@index([status, checkedAt])
 }
+
+model RpcTrafficLog {
+  id                         String          @id @default(cuid())
+  operation                  String
+  runtime                    String
+  endpointType               RpcEndpointType
+  endpointUrlMasked          String
+  usedAt                     DateTime
+  failoverFromEndpointMasked String?
+  failoverReason             String?
+  createdAt                  DateTime        @default(now())
+
+  @@index([usedAt])
+  @@index([endpointType, usedAt])
+  @@index([failoverFromEndpointMasked, usedAt])
+}

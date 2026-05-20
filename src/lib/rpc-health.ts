@@ -1,5 +1,6 @@
 import prisma from "@/lib/neon";
 import crypto from "crypto";
+import { getRpcTrafficSummary, type RpcTrafficSummary } from "@/lib/rpc-traffic";
 
 export type RpcHealthStatus = "HEALTHY" | "DEGRADED" | "DOWN";
 export type RpcEndpointType = "PRIMARY" | "FALLBACK";
@@ -36,6 +37,7 @@ export type RpcHealthSummary = {
     level: "OK" | "WARNING" | "CRITICAL";
     message: string;
   };
+  traffic: RpcTrafficSummary;
   configError: string | null;
 };
 
@@ -381,7 +383,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
     const twentyFourHoursAgo = new Date(now - 24 * 60 * 60 * 1000);
 
     if (client.rpcHealthLog && typeof client.rpcHealthLog.findFirst === "function") {
-      const [latestPrimary, latestFallback, oneHourLogs, twentyFourHoursLogs, recentIncidents] = await Promise.all([
+      const [latestPrimary, latestFallback, oneHourLogs, twentyFourHoursLogs, recentIncidents, traffic] = await Promise.all([
         client.rpcHealthLog.findFirst({ where: { endpointType: "PRIMARY" }, orderBy: { checkedAt: "desc" } }),
         client.rpcHealthLog.findFirst({ where: { endpointType: "FALLBACK" }, orderBy: { checkedAt: "desc" } }),
         client.rpcHealthLog.findMany({
@@ -399,6 +401,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
           orderBy: { checkedAt: "desc" },
           take: 8,
         }) as Promise<RpcHealthLogRow[]>,
+        getRpcTrafficSummary(),
       ]);
 
       return {
@@ -408,11 +411,12 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
         twentyFourHours: calculateWindowSummary(twentyFourHoursLogs),
         recentIncidents: recentIncidents.map(mapRowToSnapshot),
         rateLimitAlert: buildRateLimitAlert(calculateWindowSummary(oneHourLogs)),
+        traffic,
         configError,
       };
     }
 
-    const [latestPrimaryRows, latestFallbackRows, oneHourLogs, twentyFourHoursLogs, incidentRows] = await Promise.all([
+    const [latestPrimaryRows, latestFallbackRows, oneHourLogs, twentyFourHoursLogs, incidentRows, traffic] = await Promise.all([
       prisma.$queryRaw<RpcHealthLogRow[]>`
         SELECT * FROM "RpcHealthLog" WHERE "endpointType" = 'PRIMARY' ORDER BY "checkedAt" DESC LIMIT 1
       `,
@@ -428,6 +432,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
       prisma.$queryRaw<RpcHealthLogRow[]>`
         SELECT * FROM "RpcHealthLog" WHERE "status" <> 'HEALTHY' ORDER BY "checkedAt" DESC LIMIT 8
       `,
+      getRpcTrafficSummary(),
     ]);
 
     const oneHourSummary = calculateWindowSummary(oneHourLogs);
@@ -440,6 +445,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
       twentyFourHours: twentyFourHourSummary,
       recentIncidents: incidentRows.map(mapRowToSnapshot),
       rateLimitAlert: buildRateLimitAlert(oneHourSummary),
+      traffic,
       configError,
     };
   } catch (err) {
@@ -451,6 +457,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
         twentyFourHours: { totalChecks: 0, successRate: 0, p95LatencyMs: null, downtimeCount: 0, degradedCount: 0, rateLimitedCount: 0, rateLimitedRate: 0 },
         recentIncidents: [],
         rateLimitAlert: { level: "OK", message: "No health checks recorded yet." },
+        traffic: await getRpcTrafficSummary(),
         configError: "RpcHealthLog table is not available yet. Run database migrations first.",
       };
     }
@@ -462,6 +469,7 @@ export async function getRpcHealthSummary(): Promise<RpcHealthSummary> {
       twentyFourHours: { totalChecks: 0, successRate: 0, p95LatencyMs: null, downtimeCount: 0, degradedCount: 0, rateLimitedCount: 0, rateLimitedRate: 0 },
       recentIncidents: [],
       rateLimitAlert: { level: "OK", message: "No health checks recorded yet." },
+      traffic: await getRpcTrafficSummary(),
       configError: err instanceof Error ? err.message : "Failed to load RPC health summary.",
     };
   }

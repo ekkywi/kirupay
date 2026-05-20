@@ -25,6 +25,12 @@ function endpointLabel(endpointType: RpcHealthSnapshot["endpointType"]) {
   return endpointType === "PRIMARY" ? "Primary RPC" : "Fallback RPC";
 }
 
+function activeEndpointLabel(endpointType: "PRIMARY" | "FALLBACK" | "UNKNOWN") {
+  if (endpointType === "PRIMARY") return "Using Primary";
+  if (endpointType === "FALLBACK") return "Using Fallback";
+  return "Unknown";
+}
+
 export default async function AdminMaintenanceRpcHealthPage({
   searchParams,
 }: {
@@ -43,6 +49,11 @@ export default async function AdminMaintenanceRpcHealthPage({
       {rpcHealth.configError && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
           {rpcHealth.configError}
+        </div>
+      )}
+      {rpcHealth.traffic.configError && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+          {rpcHealth.traffic.configError}
         </div>
       )}
       <div
@@ -132,6 +143,57 @@ export default async function AdminMaintenanceRpcHealthPage({
                   rateLimited={rpcHealth.twentyFourHours.rateLimitedCount}
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Active RPC (Live Traffic)</p>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Shows which RPC endpoint is currently active for routing traffic, based on the latest health check results and failover logic.
+                </p>
+              </div>
+              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${getRpcStatusTone(rpcHealth.traffic.activeEndpointType === "UNKNOWN" ? null : rpcHealth.traffic.activeEndpointType === "PRIMARY" ? "HEALTHY" : "DEGRADED")}`}>
+                <Signal className="h-3.5 w-3.5" />
+                {activeEndpointLabel(rpcHealth.traffic.activeEndpointType)}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Metric label="Current endpoint" value={rpcHealth.traffic.currentActiveEndpoint ?? "n/a"} />
+              <Metric label="Last used" value={formatDateTime(rpcHealth.traffic.lastUsedAt)} />
+              <Metric label="Last switched" value={formatDateTime(rpcHealth.traffic.lastFailoverAt)} />
+              <Metric label="Last failover reason" value={rpcHealth.traffic.lastFailoverReason ?? "n/a"} />
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Recent failovers</p>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                <Clock3 className="h-3.5 w-3.5" />
+                {rpcHealth.traffic.recentFailovers.length} events
+              </span>
+            </div>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+              {rpcHealth.traffic.recentFailovers.length === 0 ? (
+                <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No failovers recorded yet.</div>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-white/10">
+                  {rpcHealth.traffic.recentFailovers.map((event) => (
+                    <div key={event.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{event.operation}</p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                          {event.fromEndpointMasked} {"->"} {event.toEndpointMasked}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Reason: {event.reason}</p>
+                      </div>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{formatDateTime(event.usedAt)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
