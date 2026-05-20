@@ -12,14 +12,15 @@ function ActivationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const hasToken = Boolean(token);
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Authenticating your token...");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(hasToken ? "loading" : "error");
+  const [message, setMessage] = useState(
+    hasToken ? "Authenticating your token..." : "Invalid activation link. No token provided."
+  );
 
   useEffect(() => {
     if (!token) {
-      setStatus("error");
-      setMessage("Invalid activation link. No token provided.");
       return;
     }
 
@@ -45,9 +46,10 @@ function ActivationContent() {
           router.push("/login");
         }, 3000);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to activate account.";
         setStatus("error");
-        setMessage(error.message);
+        setMessage(errorMessage);
       }
     };
 

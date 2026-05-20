@@ -3,6 +3,18 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
+type SolanaProvider = {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  disconnect: () => Promise<void>;
+  signMessage: (message: Uint8Array, encoding: string) => Promise<{ signature: Uint8Array }>;
+};
+
+type WalletUpdateResponse = {
+  walletAddress: string;
+  error?: string;
+};
+
 export function useWalletConnect(initialWallet: string) {
   const router = useRouter();
   const [wallet, setWallet] = useState(initialWallet);
@@ -36,17 +48,26 @@ export function useWalletConnect(initialWallet: string) {
   };
 
   useEffect(() => {
-    if (!wallet.includes("pending")) {
-      fetchBalance(wallet);
-    } else {
-      setBalance(null);
-    }
+    let cancelled = false;
+
+    const syncBalance = async () => {
+      if (wallet.includes("pending")) {
+        if (!cancelled) setBalance(null);
+        return;
+      }
+      await fetchBalance(wallet);
+    };
+
+    void syncBalance();
+    return () => {
+      cancelled = true;
+    };
   }, [wallet]);
 
   const handleConnect = async () => {
     setIsLoading(true);
     try {
-      const provider = (window as any).solana;
+      const provider = (window as { solana?: SolanaProvider }).solana;
       if (!provider || !provider.isPhantom) {
         throw new Error("Phantom wallet extension not found. Please install it.");
       }
@@ -64,14 +85,15 @@ export function useWalletConnect(initialWallet: string) {
         body: JSON.stringify({ action: "link", publicKey: pubKey, signature: signatureBase58, message })
       });
       
-      const data = await res.json();
+      const data = (await res.json()) as WalletUpdateResponse;
       if (!res.ok) throw new Error(data.error);
 
       setWallet(data.walletAddress);
       router.refresh();
       showToast("Wallet connected successfully!", "success");
-    } catch (error: any) {
-      showToast(error.message || "Failed to connect wallet.", "error");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to connect wallet.";
+      showToast(errorMessage, "error");
     } finally {
       setIsLoading(false);
     }
@@ -86,20 +108,21 @@ export function useWalletConnect(initialWallet: string) {
         body: JSON.stringify({ action: "unlink" })
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as WalletUpdateResponse;
       if (!res.ok) throw new Error(data.error);
 
       setWallet(data.walletAddress);
       setBalance(null);
       
-      const provider = (window as any).solana;
+      const provider = (window as { solana?: SolanaProvider }).solana;
       if (provider) await provider.disconnect();
       
       router.refresh();
       showToast("Wallet unlinked successfully!", "success");
       return true;
-    } catch (error: any) {
-      showToast(error.message || "Failed to disconnect wallet.", "error");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to disconnect wallet.";
+      showToast(errorMessage, "error");
       return false;
     } finally {
       setIsLoading(false);

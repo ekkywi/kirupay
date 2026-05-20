@@ -96,6 +96,14 @@ http://localhost:3000
 | `JWT_SECRET` | Yes | Auth token signing/verification |
 | `NEXT_PUBLIC_BASE_URL` | Yes | Base URL used to generate checkout links |
 | `NEXT_PUBLIC_TREASURY_WALLET` | Yes | Treasury wallet address used in checkout flow |
+| `SOLANA_CLUSTER` | Optional | Cluster label for runtime visibility (`devnet` or `mainnet-beta`) |
+| `SOLANA_RPC_PRIMARY` | Optional* | Primary Solana RPC endpoint for operations health checks |
+| `SOLANA_RPC_FALLBACK` | Optional | Backup Solana RPC endpoint for operations health checks |
+| `RPC_LATENCY_WARN_MS` | Optional | Warning latency threshold for RPC monitor |
+| `RPC_LATENCY_DOWN_MS` | Optional | Down latency threshold for RPC monitor |
+| `RPC_RATE_LIMIT_WARN_PERCENT` | Optional | Warning threshold (%) for 1h rate-limited checks |
+| `RPC_RATE_LIMIT_CRITICAL_PERCENT` | Optional | Critical threshold (%) for 1h rate-limited checks |
+| `RPC_HEALTH_CRON_SECRET` | Optional | Shared secret for internal RPC health cron route |
 | `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows) |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 

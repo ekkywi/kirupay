@@ -5,9 +5,16 @@ import { Sidebar } from "./Sidebar";
 import { StatCard } from "./StatCard";
 import { WalletOverview } from "./WalletOverview";
 import { TransactionTable } from "./TransactionTable";
-import { Activity, Settings as SettingsIcon, Globe, Save } from "lucide-react";
+import { Activity, Globe, Save } from "lucide-react";
+import type { Merchant, Transaction } from "@prisma/client";
 
-export function DashboardContent({ merchant, transactions, totalRevenue }: any) {
+type DashboardContentProps = {
+  merchant: Pick<Merchant, "webhookUrl" | "walletAddress">;
+  transactions: Transaction[];
+  totalRevenue: number;
+};
+
+export function DashboardContent({ merchant, transactions, totalRevenue }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [webhookUrl, setWebhookUrl] = useState(merchant.webhookUrl || "");
   const [saving, setSaving] = useState(false);
@@ -53,9 +60,6 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: any) 
             <TransactionTable transactions={transactions} />
           </div>
         )}
-
-        {/* TAB: API CONSOLE */}
-        {activeTab === "api" && <ApiConsoleView merchant={merchant} />}
 
         {/* TAB: SETTINGS */}
         {activeTab === "settings" && (

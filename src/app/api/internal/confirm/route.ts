@@ -4,7 +4,13 @@ import { confirmTransactionPayment } from "@/lib/payment-recovery";
 
 export async function POST(req: Request) {
   try {
-    const { transactionId, signature, buyerWallet, walletProvider } = await req.json();
+    const body = (await req.json()) as {
+      transactionId?: string;
+      signature?: string;
+      buyerWallet?: string | null;
+      walletProvider?: string | null;
+    };
+    const { transactionId, signature, buyerWallet, walletProvider } = body;
 
     if (!transactionId || !signature) {
       return NextResponse.json({ error: "Missing data" }, { status: 400 });
@@ -28,7 +34,7 @@ export async function POST(req: Request) {
       data: result.transaction 
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Confirmation API Error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },

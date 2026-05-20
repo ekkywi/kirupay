@@ -61,14 +61,16 @@ const ROADMAP_PHASES = [
   },
   {
     status: "Next",
-    title: "Reliability and developer polish",
-    desc: "Make integrations easier to operate, retry, and debug as transaction volume grows.",
+    title: "Operations reliability and observability",
+    desc: "Strengthen payment operations first with better health visibility, safer recovery flows, and clearer incident handling.",
     icon: Radar,
     items: [
-      "Webhook retry controls and richer delivery status",
-      "Improved API error reference and dashboard copy",
-      "Better reconciliation exports for finance teams",
-      "More complete integration examples for backend services",
+      "RPC health monitoring with latency, error, and rate-limit visibility",
+      "Automatic fallback routing to backup RPC infrastructure",
+      "Incident timeline with active and resolved disruption logs",
+      "Advanced webhook retry controls built on top of the live baseline tooling",
+      "Expanded API error reference and integration diagnostics",
+      "Reconciliation-ready exports for finance operations",
     ],
   },
   {
@@ -81,15 +83,16 @@ const ROADMAP_PHASES = [
       "Saved customer references and payment metadata",
       "Team-ready roles and access boundaries",
       "Notification settings for payment and webhook events",
+      "Backend integration templates and implementation examples",
     ],
   },
   {
     status: "Later",
     title: "Multi-asset and ecosystem reach",
-    desc: "Broaden settlement options once the SOL payment path is stable and observable.",
+    desc: "Broaden settlement options only after observability and reconciliation controls are production-proven.",
     icon: Globe2,
     items: [
-      "USDC SPL support evaluation",
+      "USDC SPL support after operations-readiness criteria are met",
       "Sandbox or test-mode separation",
       "Partner integration templates",
       "Advanced risk and compliance reporting",
@@ -107,11 +110,11 @@ const PRIORITIES = [
 ];
 
 const MILESTONE_ROWS = [
-  { area: "Checkout", now: "Hosted SOL checkout", next: "Better receipts and redirects" },
-  { area: "API", now: "Create checkout session", next: "Expanded examples and error docs" },
-  { area: "Webhooks", now: "Signed payment.success", next: "Retry and delivery controls" },
-  { area: "Dashboard", now: "Payments, analytics, settings", next: "Exports and workflow polish" },
-  { area: "Assets", now: "SOL", next: "USDC SPL exploration" },
+  { area: "Checkout", now: "Hosted SOL checkout", next: "Operational safeguards and clearer incident surfaces" },
+  { area: "API", now: "Create checkout session", next: "Error-reference depth and integration diagnostics" },
+  { area: "Webhooks", now: "Signed payment.success + baseline retry", next: "Advanced retry policy and delivery observability" },
+  { area: "Dashboard", now: "Payments, analytics, settings", next: "RPC health, incident logs, and reconciliation exports" },
+  { area: "Assets", now: "SOL", next: "USDC SPL only after reliability readiness" },
 ];
 
 export default function RoadmapPage() {
@@ -138,8 +141,8 @@ export default function RoadmapPage() {
                   <span className="landing-heading">and what gets built next</span>
                 </h1>
                 <p className="mt-6 text-lg md:text-xl landing-body max-w-2xl mx-auto lg:mx-0">
-                  A practical development roadmap for the application: strengthen the live SOL
-                  payment foundation, improve developer operations, then expand merchant workflows.
+                  A practical development roadmap for the application: deepen operational reliability
+                  and observability first, expand merchant workflows next, and widen asset support last.
                 </p>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                   <Link href="/register" className="landing-btn-primary">
@@ -166,8 +169,8 @@ export default function RoadmapPage() {
                     {[
                       "Keep settlement wallet-direct and non-custodial.",
                       "Make every payment state observable in the dashboard.",
-                      "Improve developer reliability before adding more payment assets.",
-                      "Build merchant operations around real transaction records.",
+                      "Advance reliability controls before adding more payment assets.",
+                      "Treat webhook retry as a live baseline, then improve controls and visibility.",
                     ].map((item) => (
                       <div key={item} className="flex items-start gap-3">
                         <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
@@ -263,7 +266,7 @@ export default function RoadmapPage() {
                 </h2>
                 <p className="landing-body mb-8">
                   New features should make Trezalink easier to trust, operate, debug, and reconcile
-                  before expanding the surface area too quickly.
+                  before expanding the asset surface area too quickly.
                 </p>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {PRIORITIES.map((priority) => (
@@ -318,7 +321,8 @@ export default function RoadmapPage() {
                 </div>
                 <p className="landing-body mb-6">
                   The current application supports SOL for checkout and settlement. USDC SPL is a
-                  planned expansion once core reliability, logs, and reporting are stronger.
+                  later-stage expansion once observability, incident response, and reconciliation are
+                  production-proven.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border landing-border bg-slate-50 dark:bg-white/[0.03] p-4">
@@ -339,7 +343,8 @@ export default function RoadmapPage() {
                 </h2>
                 <p className="landing-body mb-8">
                   The highest-value work is the work that reduces payment uncertainty: clearer
-                  statuses, better logs, safer credentials, and reports finance teams can trust.
+                  statuses, stronger incident visibility, safer credentials, and reports finance teams
+                  can trust.
                 </p>
                 <Link href="/developer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                   Review developer capabilities

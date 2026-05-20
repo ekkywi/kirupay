@@ -11,10 +11,12 @@ interface TopNavProps {
   merchant: {
     businessName?: string | null;
     email?: string | null;
+    role?: string | null;
   } | null;
 }
 
 export function TopNav({ merchant }: TopNavProps) {
+  const isAdmin = merchant?.role === "ADMIN";
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [transactionSearch, setTransactionSearch] = useState("");
   const router = useRouter();
@@ -58,7 +60,7 @@ export function TopNav({ merchant }: TopNavProps) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">
-            {merchant?.businessName || "Merchant dashboard"}
+            {merchant?.businessName || (isAdmin ? "Admin console" : "Merchant dashboard")}
           </p>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="hidden sm:inline">Network</span>
@@ -97,7 +99,7 @@ export function TopNav({ merchant }: TopNavProps) {
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 py-2 animate-in fade-in zoom-in duration-150">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Merchant account</p>
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Merchant account"}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white truncate">
                   {merchant?.email || "merchant@trezalink.com"}
                 </p>
@@ -111,7 +113,7 @@ export function TopNav({ merchant }: TopNavProps) {
               </Link>
               <div className="mx-4 my-1 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
                 <Activity size={14} className="text-emerald-500" />
-                Live merchant environment
+                {isAdmin ? "Live admin environment" : "Live merchant environment"}
               </div>
               <button 
                 onClick={handleLogout}

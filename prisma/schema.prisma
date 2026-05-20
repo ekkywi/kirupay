@@ -16,6 +16,17 @@ enum Role {
   MERCHANT
 }
 
+enum RpcEndpointType {
+  PRIMARY
+  FALLBACK
+}
+
+enum RpcHealthStatus {
+  HEALTHY
+  DEGRADED
+  DOWN
+}
+
 // User/Merchant
 model Merchant {
   id              String        @id @default(cuid())
@@ -28,12 +39,27 @@ model Merchant {
   emailVerified   Boolean       @default(false)
   role            Role          @default(MERCHANT)
   activationToken String?       @unique
+  walletIdentities MerchantWalletIdentity[]
   transactions    Transaction[]
   webhookLogs     WebhookLog[]
   webhookUrl      String?
   webhookSecret   String?       @unique 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model MerchantWalletIdentity {
+  id            String   @id @default(cuid())
+  merchantId    String
+  merchant      Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  walletAddress String   @unique
+  isActive      Boolean  @default(true)
+  linkedAt      DateTime @default(now())
+  unlinkedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([merchantId])
 }
 
 model PlatformMaintenance {
@@ -79,4 +105,21 @@ model WebhookLog {
   payload         String
   response        String?
   createdAt       DateTime      @default(now())
+}
+
+model RpcHealthLog {
+  id                String          @id @default(cuid())
+  endpointType      RpcEndpointType
+  endpointUrlMasked String
+  latencyMs         Int?
+  isReachable       Boolean
+  httpStatus        Int?
+  errorType         String?
+  status            RpcHealthStatus
+  checkedAt         DateTime
+  createdAt         DateTime        @default(now())
+
+  @@index([checkedAt])
+  @@index([endpointType, checkedAt])
+  @@index([status, checkedAt])
 }

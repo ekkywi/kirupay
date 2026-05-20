@@ -34,6 +34,13 @@ export async function POST(req: Request) {
             );
         }
 
+        if (merchant.password === "WALLET_AUTH_NO_PASSWORD") {
+            return NextResponse.json(
+                { error: "Please complete your profile setup before using email login." },
+                { status: 403 }
+            );
+        }
+
         const isPasswordValid = await bcrypt.compare(password, merchant.password);
         
         if (!isPasswordValid) {

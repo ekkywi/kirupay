@@ -3,7 +3,6 @@ import { Resend } from "resend";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import prisma from "@/lib/neon";
-import { p } from "framer-motion/client";
 
 export async function POST(req: Request) {
     try {

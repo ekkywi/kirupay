@@ -1,14 +1,29 @@
 // src/components/checkout/CheckoutCard.tsx
 "use client";
 
-import { Wallet, ArrowRight, CheckCircle2, AlertTriangle, Loader2, Copy, ExternalLink, Link2 } from "lucide-react";
+import { Wallet, ArrowRight, CheckCircle2, AlertTriangle, Loader2, Copy } from "lucide-react";
 import { useSolanaCheckout } from "@/hooks/web3/useSolanaCheckout";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import type { Transaction } from "@prisma/client";
 
-export function CheckoutCard({ transaction }: { transaction: any }) {
+type CheckoutTransaction = Pick<Transaction, "amount" | "orderId"> & {
+  merchant: {
+    businessName: string;
+  };
+};
+
+type CheckoutHookResult = {
+  loading: boolean;
+  success: boolean;
+  error: string | null;
+  connected: boolean;
+  handlePayment: () => Promise<void>;
+};
+
+export function CheckoutCard({ transaction }: { transaction: CheckoutTransaction }) {
   const router = useRouter();
-  const { loading, success, error, connected, handlePayment, signature } = useSolanaCheckout(transaction) as any;
+  const { loading, success, error, connected, handlePayment } = useSolanaCheckout(transaction) as CheckoutHookResult;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {

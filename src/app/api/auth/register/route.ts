@@ -18,13 +18,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Password does not meet security requirements" }, { status: 400 });
         }
 
-        const existingMerchant = await prisma.merchant.findFirst({
+        const [existingMerchant, existingWalletIdentity] = await Promise.all([
+            prisma.merchant.findFirst({
             where: {
                 OR: [{ email }, { walletAddress }]
             }
-        });
+            }),
+            prisma.merchantWalletIdentity.findUnique({
+                where: { walletAddress }
+            })
+        ]);
 
-        if (existingMerchant) {
+        if (existingMerchant || existingWalletIdentity) {
             return NextResponse.json({ error: "Merchant with this email or wallet address already exists" }, { status: 409 });
         }
 
@@ -34,7 +39,7 @@ export async function POST(req: Request) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const activationToken = crypto.randomBytes(32).toString('hex');
 
-        const newMerchant = await prisma.merchant.create({
+        await prisma.merchant.create({
             data: {
                 businessName,
                 email,
@@ -43,6 +48,13 @@ export async function POST(req: Request) {
                 activationToken,
                 emailVerified: false,
                 apiKey: `tl_live_${crypto.randomBytes(32).toString('hex')}`,
+                walletIdentities: {
+                    create: {
+                        walletAddress,
+                        isActive: true,
+                        linkedAt: new Date(),
+                    }
+                }
             }
         });
 

@@ -26,7 +26,7 @@ export async function POST() {
             webhookSecret: updatedMerchant.webhookSecret,
         }, { status: 200 });
     
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Webhook secret regeneration error:", error);
         return NextResponse.json(
             { error: "Internal Server Error" },

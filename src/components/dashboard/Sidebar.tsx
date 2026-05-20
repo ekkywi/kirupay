@@ -28,6 +28,10 @@ type MenuItem = {
   href: string;
   label: string;
   icon: React.ReactNode;
+  children?: Array<{
+    href: string;
+    label: string;
+  }>;
 };
 
 type MenuCategory = {
@@ -37,9 +41,9 @@ type MenuCategory = {
 
 export function Sidebar({ role }: SidebarProps) {
   const pathname = usePathname();
+  const isAdmin = role === "ADMIN";
 
-  // 1. Definisikan Kategori Menu Standar (Merchant)
-  const menuCategories: MenuCategory[] = [
+  const merchantMenuCategories: MenuCategory[] = [
     {
       title: "OVERVIEW",
       items: [
@@ -63,19 +67,28 @@ export function Sidebar({ role }: SidebarProps) {
     }
   ];
 
-  // 2. Injeksi Kategori Khusus Admin (Hanya muncul jika Role = ADMIN)
-  if (role === "ADMIN") {
-  menuCategories.push({
+  const adminMenuCategories: MenuCategory[] = [{
     title: "ADMINISTRATION",
     items: [
       { href: "/admin/overview", label: "Overview", icon: <LayoutDashboard size={16}/> },
       { href: "/admin/revenue", label: "Revenue & Treasury", icon: <Landmark size={16}/> },
       { href: "/admin/transactions", label: "Global Ledger", icon: <Globe size={16}/> },
       { href: "/admin/merchants", label: "Merchant List", icon: <UserCog size={16}/> },
-      { href: "/admin/maintenance", label: "Maintenance", icon: <Wrench size={16}/> },
+      {
+        href: "/admin/maintenance",
+        label: "Maintenance",
+        icon: <Wrench size={16}/>,
+        children: [
+          { href: "/admin/maintenance", label: "Overview" },
+          { href: "/admin/maintenance/control", label: "Control" },
+          { href: "/admin/maintenance/rpc-health", label: "RPC Health" },
+          { href: "/admin/maintenance/recovery", label: "Recovery" },
+        ],
+      },
     ]
-  });
-}
+  }];
+
+  const menuCategories = isAdmin ? adminMenuCategories : merchantMenuCategories;
 
   const mobileItems = menuCategories.flatMap((category) => category.items).slice(0, 5);
 
@@ -90,7 +103,7 @@ export function Sidebar({ role }: SidebarProps) {
           </div>
           <div className="min-w-0">
             <span className="block font-bold text-sm tracking-tight text-slate-950 dark:text-white">Trezalink</span>
-            <span className="block text-[10px] uppercase tracking-[0.2em] text-slate-400">Merchant OS</span>
+            <span className="block text-[10px] uppercase tracking-[0.2em] text-slate-400">{isAdmin ? "Admin Console" : "Merchant OS"}</span>
           </div>
         </div>
       </div>
@@ -109,26 +122,52 @@ export function Sidebar({ role }: SidebarProps) {
               {category.items.map((item) => {
                 // Logika aktif yang akurat
                 const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                const isMaintenanceParent = Boolean(item.children && pathname.startsWith("/admin/maintenance"));
                 
                 // Pembeda warna khusus untuk rute Admin agar terlihat eksklusif
                 const isAdminRoute = item.href.startsWith("/admin");
                 
                 return (
-                  <Link
-                    key={item.href} 
-                    href={item.href}
-                    className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      isActive 
-                        ? isAdminRoute
-                          ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
-                          : "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300" 
-                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-white"
-                    }`}
-                  >
-                    <span className={isActive ? "" : "text-slate-400 group-hover:text-current"}>{item.icon}</span>
-                    <span className="flex-1">{item.label}</span>
-                    {isActive && <ChevronRight size={14} />}
-                  </Link>
+                  <div key={item.href} className="space-y-1">
+                    <Link
+                      href={item.href}
+                      className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        isActive 
+                          ? isAdminRoute
+                            ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                            : "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300" 
+                          : "text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-white"
+                      }`}
+                    >
+                      <span className={isActive ? "" : "text-slate-400 group-hover:text-current"}>{item.icon}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {isActive && <ChevronRight size={14} />}
+                    </Link>
+
+                    {item.children && isMaintenanceParent && (
+                      <div className="ml-6 space-y-0.5 border-l border-slate-200 pl-3 dark:border-white/10">
+                        {item.children.map((child) => {
+                          const childIsActive =
+                            pathname === child.href ||
+                            (child.href !== "/admin/maintenance" && pathname.startsWith(child.href));
+
+                          return (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className={`block rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                                childIsActive
+                                  ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300"
+                                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.04] dark:hover:text-slate-100"
+                              }`}
+                            >
+                              {child.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

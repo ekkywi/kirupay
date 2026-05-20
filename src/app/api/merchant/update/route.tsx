@@ -11,8 +11,11 @@ export async function POST(req: Request) {
 
     if (!merchant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { webhookUrl, businessName } = await req.json();
-    const updateData: any = {};
+    const { webhookUrl, businessName } = (await req.json()) as {
+      webhookUrl?: string;
+      businessName?: string;
+    };
+    const updateData: { webhookUrl?: string; businessName?: string; webhookSecret?: string } = {};
 
     if (businessName !== undefined) updateData.businessName = businessName;
     if (webhookUrl !== undefined) updateData.webhookUrl = webhookUrl;
@@ -30,10 +33,11 @@ export async function POST(req: Request) {
       { success: true, data: updated },
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
     console.error("Update merchant Error:", error);
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     )
   };

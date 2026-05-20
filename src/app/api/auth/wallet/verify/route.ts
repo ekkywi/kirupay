@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { SignJWT } from "jose";
 import { cookies } from "next/headers";
-import { PublicKey } from "@solana/web3.js";
 import { sign } from "tweetnacl";
 import bs58 from "bs58";
 import prisma from "@/lib/neon";
@@ -21,18 +20,29 @@ export async function POST(req: Request) {
         { status: 401 });
     }
 
-    let merchant = await prisma.merchant.findUnique({
-      where: { walletAddress: publicKey }
+    const existingIdentity = await prisma.merchantWalletIdentity.findUnique({
+      where: { walletAddress: publicKey },
+      include: { merchant: true }
     });
+
+    let merchant = existingIdentity?.merchant;
 
     if (!merchant) {
       merchant = await prisma.merchant.create({
         data: {
           walletAddress: publicKey,
           businessName: `Merchant ${publicKey.slice(0, 4)}`,
-          email: `${publicKey.slice(0, 8)}@wallet.auth`,
+          email: `${publicKey}@wallet.auth`,
           password: "WALLET_AUTH_NO_PASSWORD",
           apiKey: `tl_live_${crypto.randomBytes(32).toString('hex')}`,
+          walletIdentities: {
+            create: {
+              walletAddress: publicKey,
+              isActive: true,
+              linkedAt: new Date(),
+              unlinkedAt: null,
+            }
+          }
         }
       });
     }
@@ -52,7 +62,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, merchantId: merchant.id });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
         { error: "Authentication failed" },
         { status: 500 });

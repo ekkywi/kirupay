@@ -27,8 +27,9 @@ export function useCreatePaymentLink(merchantId: string) {
         setErrorMsg(result.error || "An error occurred while generating the link.");
         return false;
       }
-    } catch (error: any) {
-      setErrorMsg(error.message || "Network or server error.");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Network or server error.";
+      setErrorMsg(errorMessage);
       return false;
     } finally {
       setLoading(false);

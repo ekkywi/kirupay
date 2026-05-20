@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/internal/rpc-health/cron",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
