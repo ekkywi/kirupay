@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { withRpcFailover } from "@/lib/solana-rpc";
+import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
 type SolanaProvider = {
   isPhantom?: boolean;
@@ -13,7 +14,6 @@ type SolanaProvider = {
 
 type WalletUpdateResponse = {
   walletAddress: string;
-  error?: string;
 };
 
 export function useWalletConnect(initialWallet: string) {
@@ -86,8 +86,12 @@ export function useWalletConnect(initialWallet: string) {
         body: JSON.stringify({ action: "link", publicKey: pubKey, signature: signatureBase58, message })
       });
       
+      if (!res.ok) {
+        const apiError = await parseApiErrorResponse(res);
+        throw new Error(toDiagnosticMessage(apiError));
+      }
+
       const data = (await res.json()) as WalletUpdateResponse;
-      if (!res.ok) throw new Error(data.error);
 
       setWallet(data.walletAddress);
       router.refresh();
@@ -109,8 +113,12 @@ export function useWalletConnect(initialWallet: string) {
         body: JSON.stringify({ action: "unlink" })
       });
 
+      if (!res.ok) {
+        const apiError = await parseApiErrorResponse(res);
+        throw new Error(toDiagnosticMessage(apiError));
+      }
+
       const data = (await res.json()) as WalletUpdateResponse;
-      if (!res.ok) throw new Error(data.error);
 
       setWallet(data.walletAddress);
       setBalance(null);

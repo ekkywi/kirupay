@@ -5,8 +5,11 @@ import { sign } from "tweetnacl";
 import bs58 from "bs58";
 import prisma from "@/lib/neon";
 import crypto from "crypto";
+import { apiError, createRequestId } from "@/lib/api-errors";
 
 export async function POST(req: Request) {
+  const requestId = createRequestId();
+
   try {
     const { publicKey, signature, message } = await req.json();
     const signatureUint8 = bs58.decode(signature);
@@ -15,14 +18,17 @@ export async function POST(req: Request) {
     const isValid = sign.detached.verify(messageUint8, signatureUint8, pubKeyUint8);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 });
+      return apiError(401, {
+        code: "AUTH_WALLET_SIGNATURE_INVALID",
+        message: "Invalid wallet signature.",
+        requestId,
+        retryable: false,
+      });
     }
 
     const existingIdentity = await prisma.merchantWalletIdentity.findUnique({
       where: { walletAddress: publicKey },
-      include: { merchant: true }
+      include: { merchant: true },
     });
 
     let merchant = existingIdentity?.merchant;
@@ -34,16 +40,16 @@ export async function POST(req: Request) {
           businessName: `Merchant ${publicKey.slice(0, 4)}`,
           email: `${publicKey}@wallet.auth`,
           password: "WALLET_AUTH_NO_PASSWORD",
-          apiKey: `tl_live_${crypto.randomBytes(32).toString('hex')}`,
+          apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
           walletIdentities: {
             create: {
               walletAddress: publicKey,
               isActive: true,
               linkedAt: new Date(),
               unlinkedAt: null,
-            }
-          }
-        }
+            },
+          },
+        },
       });
     }
 
@@ -61,10 +67,13 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true, merchantId: merchant.id });
-
-  } catch {
-    return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 500 });
+  } catch (error) {
+    console.error("Wallet verify error", { requestId, error });
+    return apiError(500, {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Authentication failed.",
+      requestId,
+      retryable: true,
+    });
   }
 }

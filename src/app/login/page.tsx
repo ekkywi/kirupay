@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Wallet,
 } from "lucide-react";
+import { throwAuthResponseError } from "@/lib/auth-client-error";
 
 type AuthTab = "email" | "wallet";
 
@@ -76,9 +77,8 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to sign in.");
+        await throwAuthResponseError(response, "Failed to sign in.");
       }
 
       setSuccessMsg("Signed in successfully. Redirecting to dashboard...");
@@ -113,9 +113,8 @@ export default function LoginPage() {
         body: JSON.stringify({ publicKey: address, signature, message }),
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Wallet authentication failed.");
+        await throwAuthResponseError(response, "Wallet authentication failed.");
       }
 
       setSuccessMsg("Wallet authenticated. Redirecting to dashboard...");

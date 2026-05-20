@@ -1,5 +1,6 @@
 // src/hooks/api/merchant/useWebhookLogs.ts
 import { useState, useEffect, useCallback } from "react";
+import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
 export interface WebhookLog {
   id: string;
@@ -20,9 +21,13 @@ export function useWebhookLogs(activeTab: string) {
     setIsLoadingLogs(true);
     try {
       const res = await fetch("/api/merchant/webhook/logs");
+      const errorRes = res.clone();
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && json.success) {
         setLogs(json.data);
+      } else {
+        const apiError = await parseApiErrorResponse(errorRes);
+        console.error("Webhook logs fetch failed", toDiagnosticMessage(apiError));
       }
     } catch (error) {
       console.error("Gagal mengambil log webhook", error);

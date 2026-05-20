@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRpcHealthSummary, runRpcHealthChecks } from "@/lib/rpc-health";
+import { apiError, createRequestId } from "@/lib/api-errors";
 
 function isAuthorized(req: Request) {
   const configured = process.env.RPC_HEALTH_CRON_SECRET?.trim() || process.env.CRON_SECRET?.trim();
@@ -11,8 +12,15 @@ function isAuthorized(req: Request) {
 }
 
 export async function GET(req: Request) {
+  const requestId = createRequestId();
+
   if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError(401, {
+      code: "INTERNAL_CRON_UNAUTHORIZED",
+      message: "Unauthorized cron access.",
+      requestId,
+      retryable: false,
+    });
   }
 
   const probe = await runRpcHealthChecks();

@@ -1,144 +1,94 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import bcrypt from 'bcrypt';
-import crypto from 'crypto';
+import bcrypt from "bcrypt";
+import crypto from "crypto";
 import prisma from "@/lib/neon";
+import { apiError, createRequestId } from "@/lib/api-errors";
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const { businessName, email, password, walletAddress } = body;
+  const requestId = createRequestId();
 
-        if (!businessName || !email || !password || !walletAddress) {
-            return NextResponse.json({ error : "Missing required fields" }, { status: 400 });
-        }
+  try {
+    const body = await req.json();
+    const { businessName, email, password, walletAddress } = body;
 
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
-        if (!passwordRegex.test(password)) {
-            return NextResponse.json({ error: "Password does not meet security requirements" }, { status: 400 });
-        }
-
-        const [existingMerchant, existingWalletIdentity] = await Promise.all([
-            prisma.merchant.findFirst({
-            where: {
-                OR: [{ email }, { walletAddress }]
-            }
-            }),
-            prisma.merchantWalletIdentity.findUnique({
-                where: { walletAddress }
-            })
-        ]);
-
-        if (existingMerchant || existingWalletIdentity) {
-            return NextResponse.json({ error: "Merchant with this email or wallet address already exists" }, { status: 409 });
-        }
-
-        const saltRounds = 12;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const activationToken = crypto.randomBytes(32).toString('hex');
-
-        await prisma.merchant.create({
-            data: {
-                businessName,
-                email,
-                walletAddress,
-                password: hashedPassword,
-                activationToken,
-                emailVerified: false,
-                apiKey: `tl_live_${crypto.randomBytes(32).toString('hex')}`,
-                walletIdentities: {
-                    create: {
-                        walletAddress,
-                        isActive: true,
-                        linkedAt: new Date(),
-                    }
-                }
-            }
-        });
-
-        // DEFINISIKAN BASE URL DI SINI
-        const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-
-        // Kirim Email
-        await resend.emails.send({
-            from: "Kirupay <noreply@kirupay.com>",
-            to: email,
-            subject: "Action Required: Verify Your Kirupay Account",
-            html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Activate your Kirupay Account</title>
-            </head>
-            <body style="margin: 0; padding: 0; background-color: #F4F5F7; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F4F5F7; padding: 40px 20px;">
-                <tr>
-                  <td align="center">
-                    <table width="100%" max-width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                      <tr>
-                        <td style="padding: 40px 40px 20px 40px; text-align: center; border-bottom: 1px solid #F3F4F6;">
-                          <h1 style="margin: 0; font-size: 28px; font-weight: 900; color: #11151D; font-style: italic; letter-spacing: -1px;">
-                            <span style="color: #2563EB;">KIRU</span>PAY
-                          </h1>
-                          <p style="margin: 8px 0 0 0; font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;">
-                            Merchant Onboarding
-                          </p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 40px;">
-                          <h2 style="margin: 0 0 20px 0; font-size: 20px; color: #11151D; font-weight: 800;">
-                            Welcome to the network, ${businessName}.
-                          </h2>
-                          <p style="margin: 0 0 20px 0; font-size: 15px; color: #4B5563; line-height: 1.6;">
-                            Thank you for registering. You are one step away from accessing your dashboard and accepting global crypto payments on the Solana network with zero friction.
-                          </p>
-                          <p style="margin: 0 0 35px 0; font-size: 15px; color: #4B5563; line-height: 1.6;">
-                            To complete your security setup, please verify your email address by clicking the button below.
-                          </p>
-                          <div style="text-align: center;">
-                            <a href="${baseUrl}/activate?token=${activationToken}" style="display: inline-block; padding: 16px 32px; background: #2563EB; background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(37,99,235,0.3);">
-                              Verify Merchant Account
-                            </a>
-                          </div>
-                          <div style="margin-top: 45px; padding-top: 24px; border-top: 1px dashed #E5E7EB;">
-                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #6B7280;">
-                              <strong style="color: #11151D;">Security Notice:</strong> This link is uniquely tied to your registration and will expire in 24 hours. Do not share this email.
-                            </p>
-                            <p style="margin: 0; font-size: 13px; color: #6B7280;">
-                              If you did not initiate this request, please ignore this email or contact <a href="mailto:security@kirupay.com" style="color: #2563EB; text-decoration: none;">security@kirupay.com</a> immediately.
-                            </p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="background-color: #0A0A0C; padding: 30px 40px; text-align: center;">
-                          <p style="margin: 0; font-size: 12px; color: #6B7280;">
-                            &copy; ${new Date().getFullYear()} Kirupay Global Payments.<br/>All rights reserved.
-                          </p>
-                          <p style="margin: 12px 0 0 0; font-size: 10px; color: #4B5563; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">
-                            Built on Solana ⚡
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>
-            `
-        });
-
-        return NextResponse.json(
-            { message: "Merchant registered successfully. Please check your email." },
-            { status: 201 }
-        );
-    } catch (error) {
-        console.error("Error registering merchant:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    if (!businessName || !email || !password || !walletAddress) {
+      return apiError(400, {
+        code: "AUTH_MISSING_REQUIRED_FIELDS",
+        message: "Missing required fields.",
+        requestId,
+        retryable: false,
+        details: { fields: ["businessName", "email", "password", "walletAddress"] },
+      });
     }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+    if (!passwordRegex.test(password)) {
+      return apiError(400, {
+        code: "CHECKOUT_VALIDATION_FAILED",
+        message: "Password does not meet security requirements.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    const [existingMerchant, existingWalletIdentity] = await Promise.all([
+      prisma.merchant.findFirst({ where: { OR: [{ email }, { walletAddress }] } }),
+      prisma.merchantWalletIdentity.findUnique({ where: { walletAddress } }),
+    ]);
+
+    if (existingMerchant || existingWalletIdentity) {
+      return apiError(409, {
+        code: "AUTH_PROFILE_EMAIL_CONFLICT",
+        message: "Merchant with this email or wallet address already exists.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const activationToken = crypto.randomBytes(32).toString("hex");
+
+    await prisma.merchant.create({
+      data: {
+        businessName,
+        email,
+        walletAddress,
+        password: hashedPassword,
+        activationToken,
+        emailVerified: false,
+        apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
+        walletIdentities: {
+          create: {
+            walletAddress,
+            isActive: true,
+            linkedAt: new Date(),
+          },
+        },
+      },
+    });
+
+    const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+    await resend.emails.send({
+      from: "Kirupay <noreply@kirupay.com>",
+      to: email,
+      subject: "Action Required: Verify Your Kirupay Account",
+      html: `<!DOCTYPE html><html><body><p>Hello ${businessName}, verify your account:</p><a href="${baseUrl}/activate?token=${activationToken}">Verify</a></body></html>`,
+    });
+
+    return NextResponse.json(
+      { message: "Merchant registered successfully. Please check your email." },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Error registering merchant", { requestId, error });
+    return apiError(500, {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Internal server error.",
+      requestId,
+      retryable: true,
+    });
+  }
 }

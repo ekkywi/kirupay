@@ -69,7 +69,7 @@ const ROADMAP_PHASES = [
       { label: "Automatic fallback routing to backup RPC infrastructure", implemented: true },
       { label: "Incident timeline with active and resolved disruption logs", implemented: true },
       { label: "Advanced webhook retry controls built on top of the live baseline tooling", implemented: true },
-      { label: "Expanded API error reference and integration diagnostics", implemented: false },
+      { label: "Expanded API error reference and integration diagnostics", implemented: true },
       { label: "Reconciliation-ready exports for finance operations", implemented: false },
     ],
   },

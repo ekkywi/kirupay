@@ -1,20 +1,29 @@
-// app/api/merchant/update/route.ts
-
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
 import { getCurrentMerchant } from "@/lib/auth-service";
 import crypto from "crypto";
+import { apiError, createRequestId } from "@/lib/api-errors";
 
 export async function POST(req: Request) {
+  const requestId = createRequestId();
+
   try {
     const merchant = await getCurrentMerchant();
 
-    if (!merchant) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!merchant) {
+      return apiError(401, {
+        code: "MERCHANT_UNAUTHORIZED",
+        message: "Unauthorized.",
+        requestId,
+        retryable: false,
+      });
+    }
 
     const { webhookUrl, businessName } = (await req.json()) as {
       webhookUrl?: string;
       businessName?: string;
     };
+
     const updateData: { webhookUrl?: string; businessName?: string; webhookSecret?: string } = {};
 
     if (businessName !== undefined) updateData.businessName = businessName;
@@ -29,16 +38,14 @@ export async function POST(req: Request) {
       data: updateData,
     });
 
-    return NextResponse.json(
-      { success: true, data: updated },
-    );
-
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
-    console.error("Update merchant Error:", error);
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    )
-  };
+    return NextResponse.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Update merchant error", { requestId, error });
+    return apiError(500, {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Internal server error.",
+      requestId,
+      retryable: true,
+    });
+  }
 }

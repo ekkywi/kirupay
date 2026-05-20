@@ -1,5 +1,6 @@
 // src/hooks/useMerchantUpdate.ts
 import { useState } from "react";
+import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
 type MerchantField = "businessName" | "webhookUrl";
 
@@ -25,10 +26,12 @@ export function useMerchantUpdate() {
         setTimeout(() => setStatus(null), 3000);
         return true;
       } else {
-        throw new Error("Failed to update");
+        const apiError = await parseApiErrorResponse(res);
+        throw new Error(toDiagnosticMessage(apiError));
       }
-    } catch {
-      setStatus({ type: 'error', msg: 'Something went wrong. Please try again.' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
+      setStatus({ type: 'error', msg: message });
       setTimeout(() => setStatus(null), 3000);
       return false;
     } finally {

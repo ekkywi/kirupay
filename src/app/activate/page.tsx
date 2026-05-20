@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { throwApiResponseError } from "@/lib/client-api-error";
 
 // Komponen Utama yang memproses logika
 function ActivationContent() {
@@ -32,10 +33,8 @@ function ActivationContent() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await res.json();
-
         if (!res.ok) {
-          throw new Error(data.error || "Failed to activate account.");
+          await throwApiResponseError(res, "Failed to activate account.");
         }
 
         setStatus("success");

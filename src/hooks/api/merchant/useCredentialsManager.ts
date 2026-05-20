@@ -1,5 +1,6 @@
 // src/hooks/api/merchant/useCredentialsManager.ts
 import { useState } from "react";
+import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
 export function useCredentialsManager(initialApiKey?: string | null, initialWebhookSecret?: string | null) {
   const [currentKey, setCurrentKey] = useState(initialApiKey || "API_KEY_NOT_GENERATED");
@@ -23,14 +24,16 @@ export function useCredentialsManager(initialApiKey?: string | null, initialWebh
     setIsRollingKey(true);
     try {
       const res = await fetch("/api/merchant/apikey/regenerate", { method: "POST" });
+      const errorRes = res.clone();
       const data = await res.json();
-      
-      if (data.success) {
+
+      if (res.ok && data.success) {
         setCurrentKey(data.apiKey);
         showToast("API Key updated successfully!", "success");
         return true;
       } else {
-        showToast(data.error || "Failed to update API Key.", "error");
+        const apiError = await parseApiErrorResponse(errorRes);
+        showToast(toDiagnosticMessage(apiError), "error");
         return false;
       }
     } catch {
@@ -45,14 +48,16 @@ export function useCredentialsManager(initialApiKey?: string | null, initialWebh
     setIsRollingWebhook(true);
     try {
       const res = await fetch("/api/merchant/webhook/regenerate", { method: "POST" });
+      const errorRes = res.clone();
       const data = await res.json();
-      
-      if (data.success) {
+
+      if (res.ok && data.success) {
         setCurrentWebhookSecret(data.webhookSecret);
         showToast("Webhook Secret updated successfully!", "success");
         return true;
       } else {
-        showToast(data.error || "Failed to update Webhook Secret.", "error");
+        const apiError = await parseApiErrorResponse(errorRes);
+        showToast(toDiagnosticMessage(apiError), "error");
         return false;
       }
     } catch {

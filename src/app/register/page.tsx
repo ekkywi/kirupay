@@ -19,6 +19,7 @@ import {
   Wallet,
   Webhook,
 } from "lucide-react";
+import { throwAuthResponseError } from "@/lib/auth-client-error";
 
 type RegisterTab = "email" | "wallet";
 
@@ -98,9 +99,8 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to register. Please try again.");
+        await throwAuthResponseError(response, "Failed to register. Please try again.");
       }
 
       setSuccessMsg("Registration successful. Please check your email to activate the account.");
@@ -135,9 +135,8 @@ export default function RegisterPage() {
         body: JSON.stringify({ publicKey: address, signature, message }),
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Wallet authentication failed.");
+        await throwAuthResponseError(response, "Wallet authentication failed.");
       }
 
       setSuccessMsg("Wallet authenticated. Redirecting to dashboard...");

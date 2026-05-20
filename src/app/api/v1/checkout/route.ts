@@ -1,7 +1,9 @@
 // src/app/api/v1/checkout/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { createMaintenanceJsonResponse, getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
+import { getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
+import { apiError, createRequestId } from "@/lib/api-errors";
+import { recordObservation, startObservation } from "@/lib/observability";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -22,19 +24,54 @@ const corsHeaders = {
 }
 
 export async function POST(req: Request) {
+    const requestId = createRequestId();
+    const obs = startObservation(requestId, "POST /api/v1/checkout");
     try {
         const maintenanceBlock = await getPaymentMaintenanceBlock();
 
         if (maintenanceBlock) {
-            return createMaintenanceJsonResponse(maintenanceBlock, corsHeaders);
+            recordObservation(obs, {
+                outcome: "error",
+                status: maintenanceBlock.status,
+                errorCode: "MAINTENANCE_MODE_ACTIVE",
+            });
+            return apiError(
+                maintenanceBlock.status,
+                {
+                    code: "MAINTENANCE_MODE_ACTIVE",
+                    message: maintenanceBlock.payload.message,
+                    requestId,
+                    retryable: true,
+                    details: {
+                        maintenanceEndsAt: maintenanceBlock.payload.maintenanceEndsAt,
+                    },
+                },
+                {
+                    headers: {
+                        ...corsHeaders,
+                        "Retry-After": maintenanceBlock.retryAfter,
+                    },
+                },
+            );
         }
 
         const authHeader = req.headers.get("Authorization");
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return NextResponse.json(
-                { error: "Missing or invalid Authorization header. Format: Bearer <YOUR_API_KEY>" },
-                { status: 401, headers: corsHeaders }
+            recordObservation(obs, {
+                outcome: "error",
+                status: 401,
+                errorCode: "AUTH_MISSING_BEARER_TOKEN",
+            });
+            return apiError(
+                401,
+                {
+                    code: "AUTH_MISSING_BEARER_TOKEN",
+                    message: "Missing or invalid Authorization header. Format: Bearer <YOUR_API_KEY>.",
+                    requestId,
+                    retryable: false,
+                },
+                { headers: corsHeaders },
             );
         }
 
@@ -44,16 +81,38 @@ export async function POST(req: Request) {
         });
 
         if (!merchant || !merchant.isActive) {
-            return NextResponse.json(
-                { error: "Invalid or inactive API Key" },
-                { status: 401, headers: corsHeaders }
+            recordObservation(obs, {
+                outcome: "error",
+                status: 401,
+                errorCode: "AUTH_INVALID_API_KEY",
+            });
+            return apiError(
+                401,
+                {
+                    code: "AUTH_INVALID_API_KEY",
+                    message: "Invalid or inactive API key.",
+                    requestId,
+                    retryable: false,
+                },
+                { headers: corsHeaders },
             );
         }
 
         if (!merchant.walletAddress || merchant.walletAddress.includes("pending")) {
-            return NextResponse.json(
-                { error: "Merchant has not linked a settlement wallet yet." },
-                { status: 400, headers: corsHeaders }
+            recordObservation(obs, {
+                outcome: "error",
+                status: 400,
+                errorCode: "MERCHANT_WALLET_NOT_LINKED",
+            });
+            return apiError(
+                400,
+                {
+                    code: "MERCHANT_WALLET_NOT_LINKED",
+                    message: "Merchant has not linked a settlement wallet yet.",
+                    requestId,
+                    retryable: false,
+                },
+                { headers: corsHeaders },
             );
         }
 
@@ -61,9 +120,21 @@ export async function POST(req: Request) {
         const validation = checkoutSchema.safeParse(body);
 
         if (!validation.success) {
-            return NextResponse.json(
-                { error: "Invalid format data", details: validation.error.format() },
-                { status: 400, headers: corsHeaders }
+            recordObservation(obs, {
+                outcome: "error",
+                status: 400,
+                errorCode: "CHECKOUT_VALIDATION_FAILED",
+            });
+            return apiError(
+                400,
+                {
+                    code: "CHECKOUT_VALIDATION_FAILED",
+                    message: "Request payload failed validation.",
+                    requestId,
+                    retryable: false,
+                    details: validation.error.format() as Record<string, unknown>,
+                },
+                { headers: corsHeaders },
             );
         }
 
@@ -84,12 +155,23 @@ export async function POST(req: Request) {
         });
 
         if (existingTransaction) {
-            return NextResponse.json(
+            recordObservation(obs, {
+                outcome: "error",
+                status: 409,
+                errorCode: "CHECKOUT_DUPLICATE_ORDER_ID",
+            });
+            return apiError(
+                409,
                 {
-                    error: "Duplicate Order ID",
-                    details: `Transaction with orderID '${orderId}' already exists. Please use a unique orderId.`
+                    code: "CHECKOUT_DUPLICATE_ORDER_ID",
+                    message: "Order ID already exists for this merchant. Please use a unique orderId.",
+                    requestId,
+                    retryable: false,
+                    details: {
+                        orderId,
+                    },
                 },
-                { status: 409, headers: corsHeaders }
+                { headers: corsHeaders },
             );
         }
 
@@ -111,6 +193,11 @@ export async function POST(req: Request) {
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
         const checkoutUrl = `${baseUrl}/pay/${transaction.id}`;
 
+        recordObservation(obs, {
+            outcome: "success",
+            status: 201,
+        });
+
         return NextResponse.json({
             message: "Checkout session created successfully",
             transactionId: transaction.id,
@@ -120,10 +207,22 @@ export async function POST(req: Request) {
     
     } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        console.error("Checkout API Error:", error);
-        return NextResponse.json(
-            { error: "Internal Server Error", details: errorMessage },
-            { status: 500, headers: corsHeaders }
+        console.error("Checkout API Error", { requestId, error });
+        recordObservation(obs, {
+            outcome: "error",
+            status: 500,
+            errorCode: "INTERNAL_SERVER_ERROR",
+        });
+        return apiError(
+            500,
+            {
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Unexpected server error.",
+                requestId,
+                retryable: true,
+                details: { reason: errorMessage },
+            },
+            { headers: corsHeaders },
         );
     }
 }

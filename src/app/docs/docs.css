@@ -1,0 +1,75 @@
+.docs-shell {
+  --docs-shell-max-width: 1600px;
+  --docs-sidebar-width: 336px;
+  --docs-content-max: 920px;
+  --docs-toc-width: 248px;
+  --docs-gutter-x: clamp(1rem, 2vw, 2rem);
+}
+
+.docs-shell .docs-container {
+  width: 100%;
+  max-width: var(--docs-shell-max-width);
+  margin-inline: auto;
+  padding-inline: var(--docs-gutter-x);
+}
+
+.docs-shell .docs-main-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .docs-shell .docs-main-grid {
+    grid-template-columns: minmax(320px, var(--docs-sidebar-width)) minmax(0, 1fr);
+  }
+}
+
+.docs-shell .docs-header-card {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, rgb(148 163 184) 35%, white);
+  background: color-mix(in oklab, white 90%, rgb(240 249 255));
+  padding: 1rem 1.25rem;
+}
+
+.dark .docs-shell .docs-header-card {
+  border-color: color-mix(in oklab, rgb(255 255 255) 14%, transparent);
+  background: color-mix(in oklab, rgb(17 24 39) 92%, rgb(8 145 178) 8%);
+}
+
+.docs-shell .docs-article-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1536px) {
+  .docs-shell .docs-article-grid {
+    grid-template-columns: minmax(0, var(--docs-content-max)) minmax(220px, var(--docs-toc-width));
+  }
+}
+
+.docs-shell .docs-body {
+  max-width: 82ch;
+}
+
+.docs-shell .docs-body p,
+.docs-shell .docs-body li {
+  line-height: 1.78;
+}
+
+.docs-shell .docs-body pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.docs-shell .docs-sidebar-card,
+.docs-shell .docs-toc-card {
+  border-radius: 1rem;
+  border: 1px solid color-mix(in oklab, rgb(148 163 184) 35%, white);
+  background: color-mix(in oklab, white 92%, rgb(248 250 252));
+}
+
+.dark .docs-shell .docs-sidebar-card,
+.dark .docs-shell .docs-toc-card {
+  border-color: color-mix(in oklab, rgb(255 255 255) 14%, transparent);
+  background: color-mix(in oklab, rgb(17 24 39) 94%, rgb(30 41 59) 6%);
+}

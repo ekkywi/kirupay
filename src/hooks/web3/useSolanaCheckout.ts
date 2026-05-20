@@ -5,6 +5,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { WalletError } from "@solana/wallet-adapter-base";
 import { PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { withRpcFailover } from "@/lib/solana-rpc";
+import { throwApiResponseError } from "@/lib/client-api-error";
 
 export interface CheckoutTransaction {
   id: string;
@@ -104,7 +105,10 @@ export function useSolanaCheckout(transaction: CheckoutTransaction) {
       });
 
       if (!res.ok) {
-        throw new Error("Transaction recorded on the blockchain, but failed to sync with the server.");
+        await throwApiResponseError(
+          res,
+          "Transaction recorded on the blockchain, but failed to sync with the server.",
+        );
       }
 
       setSuccess(true);

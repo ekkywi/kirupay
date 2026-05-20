@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:error-contract": "node scripts/check-error-contract-legacy.mjs",
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration",
+    "test:smoke": "vitest run tests/smoke"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -45,6 +49,7 @@
     "eslint-config-next": "16.2.4",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

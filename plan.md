@@ -9,6 +9,7 @@ The objective is to keep maintenance operations reliable for payments while pres
 - Phase 1: **8 / 8 completed** (100%)
 - Phase 2: **0 / 6 completed** (0%)
 - Phase 3: **0 / 6 completed** (0%)
+- Phase 4: **3 / 3 completed** (100%)
 
 ## Current Status
 - Admin maintenance dashboard is implemented and active.
@@ -22,6 +23,29 @@ The objective is to keep maintenance operations reliable for payments while pres
 - Middleware hardening and route-protection sync are completed.
 - End-to-end test matrix is defined in this file.
 - Phase 1 end-to-end matrix execution is complete (A1–D2 passed).
+- Automated hardening baseline is active:
+  - Integration tests for checkout + internal/merchant error contracts.
+  - Smoke checkout flow tests (success + maintenance-block path).
+  - Structured observability logs with request-level metrics-lite snapshots.
+  - Docs diagnostics sweep aligned with runtime error contract.
+
+## Phase 4 — Hardening (Completed)
+1. [x] API integration + smoke test foundation.
+2. [x] Structured observability with requestId and metrics-lite counters.
+3. [x] Docs final sweep for contract and integration diagnostics.
+
+### Phase 4 Validation Evidence
+- `npm run test:integration` covers:
+  - `POST /api/v1/checkout`: `201`, `400`, `401`, `409`, `503 + Retry-After`.
+  - Internal confirm and internal telemetry contract failures.
+  - Merchant unauthorized contract path for credential regeneration.
+- `npm run test:smoke` covers:
+  - Checkout session creation success with `/pay/:transactionId` URL shape.
+  - Maintenance-mode block on same checkout flow with `503` contract.
+- Structured observability is emitted under `[obs]` with:
+  - `requestId`, endpoint/action target, outcome, status, duration, latency bucket.
+  - Error counters by `target:errorCode` and aggregate endpoint stats.
+- Metrics-lite snapshot endpoint: `GET /api/internal/observability/metrics`.
 
 ## Feature Structure
 1. Maintenance Mode: emergency control to pause critical payment traffic.

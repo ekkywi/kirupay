@@ -1,5 +1,6 @@
 // src/hooks/auth/useGatekeeper.ts
 import { useState } from "react";
+import { throwAuthResponseError } from "@/lib/auth-client-error";
 
 type CompleteProfilePayload = {
   email: string;
@@ -34,8 +35,7 @@ export function useGatekeeper(merchantId: string, currentEmail: string) {
         })
       });
 
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error);
+      if (!res.ok) await throwAuthResponseError(res, "Failed to complete profile.");
 
       setStatusMsg({ type: "success", text: "Verification email sent! Please check your inbox." });
     } catch (error: unknown) {
@@ -57,8 +57,7 @@ export function useGatekeeper(merchantId: string, currentEmail: string) {
         body: JSON.stringify({ merchantId, email: currentEmail })
       });
 
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error);
+      if (!res.ok) await throwAuthResponseError(res, "Failed to resend email.");
 
       setStatusMsg({ type: "success", text: "Verification email re-sent! Please check your inbox." });
     } catch (error: unknown) {

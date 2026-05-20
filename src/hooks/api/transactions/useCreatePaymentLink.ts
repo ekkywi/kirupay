@@ -24,7 +24,10 @@ export function useCreatePaymentLink(merchantId: string) {
         setGeneratedLink(url);
         return true;
       } else {
-        setErrorMsg(result.error || "An error occurred while generating the link.");
+        const diagnostic = result.diagnostics
+          ? `${result.error} (requestId: ${result.diagnostics.requestId})`
+          : result.error;
+        setErrorMsg(diagnostic || "An error occurred while generating the link.");
         return false;
       }
     } catch (error: unknown) {

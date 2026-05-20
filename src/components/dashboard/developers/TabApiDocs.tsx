@@ -13,10 +13,25 @@ const checkoutExample = `curl -X POST https://trezalink.com/api/v1/checkout \\
   }'`;
 
 const responseExample = `{
-  "success": true,
-  "checkoutId": "chk_7K29...",
-  "paymentUrl": "https://trezalink.com/checkout/chk_7K29...",
-  "status": "PENDING"
+  "message": "Checkout session created successfully",
+  "transactionId": "txn_7K29...",
+  "checkoutUrl": "https://trezalink.com/pay/txn_7K29...",
+  "expiresAt": "2026-05-21T10:00:00.000Z"
+}`;
+
+const errorExample = `{
+  "error": {
+    "code": "CHECKOUT_VALIDATION_FAILED",
+    "message": "Request payload failed validation.",
+    "requestId": "req_0f8f7a7b-...",
+    "retryable": false,
+    "docsUrl": "/docs/error-reference#error-checkout_validation_failed",
+    "details": {
+      "amount": {
+        "_errors": ["Amount must be a positive number"]
+      }
+    }
+  }
 }`;
 
 const fields = [
@@ -124,6 +139,16 @@ export function TabApiDocs() {
             </div>
             <pre className="overflow-x-auto rounded-xl bg-black/30 p-4 text-[11px] leading-relaxed text-emerald-200">
               <code>{responseExample}</code>
+            </pre>
+          </div>
+
+          <div className="rounded-2xl border border-slate-900 bg-[#0B0F17] p-5 text-white shadow-sm dark:border-white/10">
+            <div className="mb-4 flex items-center gap-2 text-slate-400">
+              <ShieldCheck className="h-4 w-4" />
+              <h4 className="text-xs font-bold uppercase tracking-[0.18em]">Error Contract</h4>
+            </div>
+            <pre className="overflow-x-auto rounded-xl bg-black/30 p-4 text-[11px] leading-relaxed text-amber-200">
+              <code>{errorExample}</code>
             </pre>
           </div>
 
