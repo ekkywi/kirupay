@@ -8,6 +8,9 @@ const checkoutExample = `curl -X POST https://trezalink.com/api/v1/checkout \\
     "amount": 0.5,
     "currency": "SOL",
     "customerEmail": "buyer@example.com",
+    "customerReference": "CUST-REF-001",
+    "customerName": "Avery Stone",
+    "notes": "Priority support customer",
     "successUrl": "https://merchant.com/success",
     "cancelUrl": "https://merchant.com/cancel"
   }'`;
@@ -39,6 +42,9 @@ const fields = [
   { name: "amount", type: "number", requirement: "Required", description: "Payment amount in the selected currency." },
   { name: "currency", type: "string", requirement: "Required", description: "Currently optimized for SOL checkout settlement." },
   { name: "customerEmail", type: "string", requirement: "Optional", description: "Customer identifier for receipts and support lookup." },
+  { name: "customerReference", type: "string", requirement: "Optional", description: "Merchant-defined customer reference for support and reconciliation." },
+  { name: "customerName", type: "string", requirement: "Optional", description: "Display-friendly customer name for receipt and support context." },
+  { name: "notes", type: "string", requirement: "Optional", description: "Free-form payment context note, capped for operational safety." },
   { name: "successUrl", type: "url", requirement: "Optional", description: "Redirect destination after successful payment." },
   { name: "cancelUrl", type: "url", requirement: "Optional", description: "Redirect destination when the checkout is cancelled." },
 ];

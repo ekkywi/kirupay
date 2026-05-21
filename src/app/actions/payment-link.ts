@@ -26,6 +26,9 @@ export async function createManualPaymentLink(formData: {
   amount: number;
   orderId?: string;
   customerEmail?: string;
+  customerReference?: string;
+  customerName?: string;
+  notes?: string;
 }): Promise<ManualLinkActionResult> {
   const requestId = createRequestId();
   const obs = startObservation(requestId, "action:createManualPaymentLink");
@@ -96,6 +99,9 @@ export async function createManualPaymentLink(formData: {
         amount: formData.amount,
         currency: "SOL",
         customerEmail: formData.customerEmail || null,
+        customerReference: formData.customerReference?.trim() || null,
+        customerName: formData.customerName?.trim() || null,
+        notes: formData.notes?.trim() || null,
         status: "PENDING",
       },
     });

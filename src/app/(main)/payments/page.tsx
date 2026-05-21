@@ -36,6 +36,7 @@ export default async function PaymentsPage({
     whereCondition.OR = [
       { orderId: { contains: search, mode: "insensitive" } },
       { customerEmail: { contains: search, mode: "insensitive" } },
+      { customerReference: { contains: search, mode: "insensitive" } },
       { txSignature: { contains: search, mode: "insensitive" } },
       { buyerWallet: { contains: search, mode: "insensitive" } },
       { id: { contains: search, mode: "insensitive" } },

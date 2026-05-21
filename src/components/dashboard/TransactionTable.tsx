@@ -9,6 +9,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 interface TransactionRow {
   id: string;
   orderId: string;
+  customerReference?: string | null;
   amount: number;
   currency: string;
   feeAmount?: number | null;
@@ -74,7 +75,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search Order ID..."
+            placeholder="Search order or customer ref..."
             className="block w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
           />
         </div>
@@ -118,7 +119,12 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
               <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                 {transactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.03] transition-colors group">
-                    <td className="p-4 text-xs font-bold text-gray-700 dark:text-gray-300">{tx.orderId}</td>
+                    <td className="p-4">
+                      <p className="text-xs font-bold text-gray-700 dark:text-gray-300">{tx.orderId}</p>
+                      <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
+                        {tx.customerReference || "No customer ref"}
+                      </p>
+                    </td>
                     
                     {/* Gross */}
                     <td className="p-4 text-xs font-mono font-medium text-gray-500 dark:text-gray-400">

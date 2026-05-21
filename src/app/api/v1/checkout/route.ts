@@ -13,9 +13,18 @@ const checkoutSchema = z.object({
         errorMap: () => ({ message: "Only SOL currency is supported" })
     }),
     customerEmail: z.string().email("Invalid email address format").optional().nullable(),
+    customerReference: z.string().min(1, "Customer reference cannot be empty").max(80, "Customer reference cannot exceed 80 characters").optional().nullable(),
+    customerName: z.string().min(1, "Customer name cannot be empty").max(80, "Customer name cannot exceed 80 characters").optional().nullable(),
+    notes: z.string().min(1, "Notes cannot be empty").max(300, "Notes cannot exceed 300 characters").optional().nullable(),
     successUrl: z.string().url("Invalid URL format").optional().nullable(),
     cancelUrl: z.string().url("Invalid URL format").optional().nullable(),
 });
+
+function cleanOptionalText(value: string | null | undefined) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    return trimmed.length ? trimmed : null;
+}
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -143,6 +152,9 @@ export async function POST(req: Request) {
             amount,
             currency,
             customerEmail,
+            customerReference,
+            customerName,
+            notes,
             successUrl,
             cancelUrl,
         } = validation.data;
@@ -182,6 +194,9 @@ export async function POST(req: Request) {
                 amount: amount,
                 currency: currency,
                 customerEmail: customerEmail || null,
+                customerReference: cleanOptionalText(customerReference),
+                customerName: cleanOptionalText(customerName),
+                notes: cleanOptionalText(notes),
                 successUrl: successUrl || null,
                 cancelUrl: cancelUrl || null,
                 status: "PENDING",

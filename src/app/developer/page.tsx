@@ -58,6 +58,9 @@ const REQUEST_BODY = [
   { field: "amount", type: "number", required: true, note: "Positive SOL amount" },
   { field: "currency", type: '"SOL"', required: true, note: "Only SOL is accepted today" },
   { field: "customerEmail", type: "string", required: false, note: "Optional receipt and reconciliation data" },
+  { field: "customerReference", type: "string", required: false, note: "Optional customer lookup reference for support teams" },
+  { field: "customerName", type: "string", required: false, note: "Optional display name for customer context" },
+  { field: "notes", type: "string", required: false, note: "Optional internal note with bounded length" },
   { field: "successUrl", type: "url", required: false, note: "Optional redirect after payment" },
   { field: "cancelUrl", type: "url", required: false, note: "Optional redirect when payer exits" },
 ];
@@ -77,6 +80,9 @@ const CHECKOUT_SNIPPET = `curl -X POST https://trezalink.com/api/v1/checkout \\
     "amount": 10,
     "currency": "SOL",
     "customerEmail": "buyer@example.com",
+    "customerReference": "CUST-REF-001",
+    "customerName": "Avery Stone",
+    "notes": "Priority support customer",
     "successUrl": "https://yourstore.com/success",
     "cancelUrl": "https://yourstore.com/cart"
   }'`;

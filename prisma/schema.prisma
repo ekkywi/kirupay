@@ -105,6 +105,9 @@ model Transaction {
   status          String        @default("PENDING")
   txSignature     String?       @unique
   customerEmail   String?
+  customerReference String?
+  customerName    String?
+  notes           String?
   successUrl      String?
   cancelUrl       String?
   source          String        @default("PAYMENT_LINK")

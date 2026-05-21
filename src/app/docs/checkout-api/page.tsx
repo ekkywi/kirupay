@@ -1,6 +1,6 @@
 import DocsArticle from "@/components/docs/DocsArticle";
 
-const REQUEST_SNIPPET = `POST /api/v1/checkout\nAuthorization: Bearer <API_KEY>\nContent-Type: application/json\n\n{\n  "orderId": "INV-2026-001",\n  "amount": 10,\n  "currency": "SOL",\n  "customerEmail": "buyer@example.com",\n  "successUrl": "https://yourstore.com/success",\n  "cancelUrl": "https://yourstore.com/cart"\n}`;
+const REQUEST_SNIPPET = `POST /api/v1/checkout\nAuthorization: Bearer <API_KEY>\nContent-Type: application/json\n\n{\n  "orderId": "INV-2026-001",\n  "amount": 10,\n  "currency": "SOL",\n  "customerEmail": "buyer@example.com",\n  "customerReference": "CUST-REF-001",\n  "customerName": "Avery Stone",\n  "notes": "Priority support customer",\n  "successUrl": "https://yourstore.com/success",\n  "cancelUrl": "https://yourstore.com/cart"\n}`;
 
 const SUCCESS_SNIPPET = `{\n  "message": "Checkout session created successfully",\n  "transactionId": "txn_7K29...",\n  "checkoutUrl": "https://trezalink.com/pay/txn_7K29...",\n  "expiresAt": "2026-05-21T10:00:00.000Z"\n}`;
 
@@ -27,10 +27,12 @@ export default function DocsCheckoutApiPage() {
         <li><code>orderId</code>: required, unique per merchant.</li>
         <li><code>amount</code>: required, positive number.</li>
         <li><code>currency</code>: required, currently only <code>SOL</code>.</li>
-        <li><code>customerEmail</code>, <code>successUrl</code>, <code>cancelUrl</code>: optional.</li>
+        <li><code>customerEmail</code>, <code>customerReference</code>, <code>customerName</code>, <code>notes</code>, <code>successUrl</code>, <code>cancelUrl</code>: optional.</li>
       </ul>
       <h2 id="responses">Responses</h2>
       <p>Success returns <code>201</code>. Errors return structured payload with <code>error.code</code> and diagnostics.</p>
+      <p>After settlement, customer checkout page shows a structured paid receipt with order reference and on-chain verification link.</p>
+      <p>During payment, checkout also provides a QR code so customers can scan and continue the same hosted session on mobile wallets.</p>
       <h3>Success 201</h3>
       <pre><code>{SUCCESS_SNIPPET}</code></pre>
       <h3>Error contract</h3>

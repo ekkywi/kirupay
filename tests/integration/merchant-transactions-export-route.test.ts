@@ -63,7 +63,7 @@ describe("GET /api/merchant/transactions/export", () => {
     expect(res.headers.get("Content-Disposition")).toContain(
       'attachment; filename="transactions-reconciliation-20260521.csv"',
     );
-    expect(csv.startsWith("transactionId,merchantId,orderId,status,currency,grossAmount,feeAmount,netAmount,txSignature,source,buyerWallet,customerEmail,createdAtUtc,updatedAtUtc")).toBe(true);
+    expect(csv.startsWith("transactionId,merchantId,orderId,status,currency,grossAmount,feeAmount,netAmount,txSignature,source,buyerWallet,customerEmail,customerReference,customerName,notes,createdAtUtc,updatedAtUtc")).toBe(true);
 
     expect(prismaMock.transaction.findMany).toHaveBeenCalledTimes(1);
     const callArg = prismaMock.transaction.findMany.mock.calls[0][0] as {
@@ -96,6 +96,9 @@ describe("GET /api/merchant/transactions/export", () => {
         source: "API",
         buyerWallet: null,
         customerEmail: "buyer@example.com",
+        customerReference: "CUST-REF-001",
+        customerName: "Avery Stone",
+        notes: "Priority support customer",
         createdAt: new Date("2026-05-20T01:02:03.000Z"),
         updatedAt: new Date("2026-05-20T04:05:06.000Z"),
       },
@@ -117,7 +120,10 @@ describe("GET /api/merchant/transactions/export", () => {
     expect(row[7]).toBe("1.24625");
     expect(row[8]).toBe("");
     expect(row[10]).toBe("");
-    expect(row[12]).toBe("2026-05-20T01:02:03.000Z");
-    expect(row[13]).toBe("2026-05-20T04:05:06.000Z");
+    expect(row[12]).toBe("CUST-REF-001");
+    expect(row[13]).toBe("Avery Stone");
+    expect(row[14]).toBe("Priority support customer");
+    expect(row[15]).toBe("2026-05-20T01:02:03.000Z");
+    expect(row[16]).toBe("2026-05-20T04:05:06.000Z");
   });
 });

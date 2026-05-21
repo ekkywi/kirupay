@@ -63,6 +63,18 @@ export function CreateLinkButton({ merchantId }: { merchantId: string }) {
                   <label className="text-xs font-bold text-gray-500 block mb-1">Reference / Order ID (Optional)</label>
                   <input name="orderId" type="text" className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white" placeholder="e.g. INV-001" />
                 </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Customer reference (Optional)</label>
+                  <input name="customerReference" type="text" maxLength={80} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white" placeholder="e.g. CUST-REF-001" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Customer name (Optional)</label>
+                  <input name="customerName" type="text" maxLength={80} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white" placeholder="e.g. Avery Stone" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Notes (Optional)</label>
+                  <textarea name="notes" maxLength={300} rows={3} className="w-full bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white resize-none" placeholder="Internal context for support/reconciliation" />
+                </div>
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={closeAndReset} className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors">Cancel</button>
                   <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors shadow-lg shadow-blue-600/20">

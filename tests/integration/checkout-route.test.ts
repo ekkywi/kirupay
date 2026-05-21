@@ -72,6 +72,37 @@ describe("POST /api/v1/checkout", () => {
     expect(json.error.details).toBeDefined();
   });
 
+  it("returns 400 when metadata exceeds allowed length", async () => {
+    prismaMock.merchant.findUnique.mockResolvedValue({
+      id: "m1",
+      isActive: true,
+      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({
+        orderId: "INV-META-TOO-LONG",
+        amount: 10,
+        currency: "SOL",
+        notes: "x".repeat(301),
+      }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string; details?: Record<string, unknown> } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("CHECKOUT_VALIDATION_FAILED");
+    expect(json.error.details).toBeDefined();
+  });
+
   it("returns 409 when duplicate order id exists", async () => {
     prismaMock.merchant.findUnique.mockResolvedValue({
       id: "m1",

@@ -84,6 +84,7 @@ export default async function AdminTransactionsPage({
       { id: { contains: search, mode: "insensitive" } },
       { orderId: { contains: search, mode: "insensitive" } },
       { customerEmail: { contains: search, mode: "insensitive" } },
+      { customerReference: { contains: search, mode: "insensitive" } },
       { buyerWallet: { contains: search, mode: "insensitive" } },
       { txSignature: { contains: search, mode: "insensitive" } },
       {
@@ -216,7 +217,7 @@ export default async function AdminTransactionsPage({
               type="text"
               name="search"
               defaultValue={search}
-              placeholder="Search order, merchant, email, wallet, tx signature..."
+            placeholder="Search order, reference, merchant, email, wallet, tx signature..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
@@ -304,6 +305,9 @@ export default async function AdminTransactionsPage({
                     </td>
                     <td className="px-5 py-4">
                       <p className="max-w-[180px] truncate text-xs text-slate-600 dark:text-slate-300">{transaction.customerEmail || "No email"}</p>
+                      <p className="mt-0.5 max-w-[180px] truncate text-[10px] text-slate-500 dark:text-slate-400">
+                        {transaction.customerReference || "No customer ref"}
+                      </p>
                       <p className="mt-0.5 max-w-[180px] truncate font-mono text-[10px] text-slate-400">{transaction.buyerWallet || "No wallet captured"}</p>
                     </td>
                     <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">

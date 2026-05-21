@@ -16,7 +16,10 @@ export function useCreatePaymentLink(merchantId: string) {
         merchantId,
         amount: parseFloat(formData.get("amount") as string),
         orderId: formData.get("orderId") as string,
-        // customerEmail: formData.get("email") as string, 
+        customerReference: formData.get("customerReference") as string,
+        customerName: formData.get("customerName") as string,
+        notes: formData.get("notes") as string,
+        // customerEmail: formData.get("email") as string,
       });
 
       if (result.success) {
