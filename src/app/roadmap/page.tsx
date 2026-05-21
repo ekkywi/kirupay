@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
-  BadgeCheck,
   BarChart3,
   BellRing,
   Check,
@@ -15,14 +14,11 @@ import {
   CreditCard,
   FileCheck,
   Flag,
-  Globe2,
   KeyRound,
-  Layers3,
   Link as LinkIcon,
   ListChecks,
   Lock,
   Network,
-  Radar,
   RefreshCw,
   Rocket,
   ShieldCheck,
@@ -46,60 +42,6 @@ const CURRENT_FOUNDATION = [
   { icon: ShieldCheck, title: "Admin oversight", desc: "Admin views for merchants, transactions, platform revenue, and activity." },
 ];
 
-const ROADMAP_PHASES = [
-  {
-    status: "Live now",
-    title: "Core merchant payment stack",
-    desc: "The production foundation for wallet-direct SOL payments and merchant operations.",
-    icon: BadgeCheck,
-    items: [
-      { label: "Hosted checkout at /pay/:transactionId", implemented: true },
-      { label: "Payment links and API-created checkout sessions", implemented: true },
-      { label: "Merchant wallet settlement with 0.3% fee calculation", implemented: true },
-      { label: "Webhook secret rotation and delivery inspection", implemented: true },
-    ],
-  },
-  {
-    status: "Next",
-    title: "Operations reliability and observability",
-    desc: "Strengthen payment operations first with better health visibility, safer recovery flows, and clearer incident handling.",
-    icon: Radar,
-    items: [
-      { label: "RPC health monitoring with latency, error, and rate-limit visibility", implemented: true },
-      { label: "Automatic fallback routing to backup RPC infrastructure", implemented: true },
-      { label: "Incident timeline with active and resolved disruption logs", implemented: true },
-      { label: "Advanced webhook retry controls built on top of the live baseline tooling", implemented: true },
-      { label: "Expanded API error reference and integration diagnostics", implemented: true },
-      { label: "Reconciliation-ready exports for finance operations", implemented: false },
-    ],
-  },
-  {
-    status: "Planned",
-    title: "Merchant workflow expansion",
-    desc: "Expand the tools around payments so teams can collect, review, and manage revenue faster.",
-    icon: Layers3,
-    items: [
-      { label: "Customer-facing receipt improvements", implemented: false },
-      { label: "Saved customer references and payment metadata", implemented: false },
-      { label: "Team-ready roles and access boundaries", implemented: false },
-      { label: "Notification settings for payment and webhook events", implemented: false },
-      { label: "Backend integration templates and implementation examples", implemented: false },
-    ],
-  },
-  {
-    status: "Later",
-    title: "Multi-asset and ecosystem reach",
-    desc: "Broaden settlement options only after observability and reconciliation controls are production-proven.",
-    icon: Globe2,
-    items: [
-      { label: "USDC SPL support after operations-readiness criteria are met", implemented: false },
-      { label: "Sandbox or test-mode separation", implemented: false },
-      { label: "Partner integration templates", implemented: false },
-      { label: "Advanced risk and compliance reporting", implemented: false },
-    ],
-  },
-];
-
 const PRIORITIES = [
   { icon: Lock, label: "Non-custodial by default" },
   { icon: RefreshCw, label: "Observable operational flows" },
@@ -115,6 +57,105 @@ const MILESTONE_ROWS = [
   { area: "Webhooks", now: "Signed payment.success + baseline retry", next: "Advanced retry policy and delivery observability" },
   { area: "Dashboard", now: "Payments, analytics, settings", next: "RPC health, incident logs, and reconciliation exports" },
   { area: "Assets", now: "SOL", next: "USDC SPL only after reliability readiness" },
+];
+
+const ROADMAP_TIMELINE = [
+  {
+    year: "2026",
+    quarters: [
+      {
+        quarter: "Q1 2026",
+        status: "Completed Discovery",
+        title: "Discovery & business design",
+        summary: "Brainstorming, problem validation, business-flow design, and operational logic planning.",
+        items: [
+          { label: "Problem framing and use-case mapping for merchant/payment operations", implemented: true },
+          { label: "SOL-first business logic design with non-custodial constraints", implemented: true },
+          { label: "Transaction lifecycle, status model, and webhook behavior definition", implemented: true },
+          { label: "Baseline reconciliation requirements design for finance operations", implemented: true },
+          { label: "Roadmap prioritization for Q2 hardening, Q3 USDC focus, and Q4 expansion", implemented: true },
+        ],
+      },
+      {
+        quarter: "Q2 2026",
+        status: "In Progress",
+        title: "Foundation & operations hardening",
+        summary: "Core SOL foundation, operational reliability controls, and merchant workflow readiness were delivered in this phase.",
+        items: [
+          { label: "Hosted checkout at /pay/:transactionId", implemented: true },
+          { label: "Payment links and API-created checkout sessions", implemented: true },
+          { label: "Merchant wallet settlement with 0.3% fee calculation", implemented: true },
+          { label: "Webhook secret rotation and delivery inspection", implemented: true },
+          { label: "RPC health monitoring with fallback routing", implemented: true },
+          { label: "Incident timeline with active and resolved logs", implemented: true },
+          { label: "Advanced webhook retry controls", implemented: true },
+          { label: "Expanded API error reference and diagnostics", implemented: true },
+          { label: "Reconciliation-ready exports for finance operations", implemented: true },
+          { label: "Customer-facing receipt improvements", implemented: false },
+          { label: "Saved customer references and payment metadata", implemented: false },
+          { label: "Team-ready roles and access boundaries", implemented: false },
+          { label: "Notification settings for payment and webhook events", implemented: false },
+          { label: "Backend integration templates and implementation examples", implemented: false },
+        ],
+      },
+      {
+        quarter: "Q3 2026",
+        status: "Planned",
+        title: "USDC integration sprint",
+        summary: "Primary milestone for thesis-aligned USDC capability rollout.",
+        items: [
+          { label: "USDC checkout + API currency support", implemented: false },
+          { label: "USDC webhook + reconciliation parity", implemented: false },
+          { label: "Feature grant control + global kill switch", implemented: false },
+          { label: "Pilot rollout strategy and validation", implemented: false },
+        ],
+      },
+      {
+        quarter: "Q4 2026",
+        status: "Planned",
+        title: "Expansion & hardening",
+        summary: "Scale product surface after USDC foundation is validated.",
+        items: [
+          { label: "Sandbox/test-mode separation", implemented: false },
+          { label: "Partner integration templates", implemented: false },
+          { label: "Risk/compliance reporting baseline", implemented: false },
+        ],
+      },
+    ],
+  },
+  {
+    year: "2027",
+    quarters: [
+      {
+        quarter: "Q1 2027",
+        status: "To Be Planned",
+        title: "To Be Planned",
+        summary: "Future scope will be finalized based on production feedback and priorities.",
+        items: ["To Be Planned"],
+      },
+      {
+        quarter: "Q2 2027",
+        status: "To Be Planned",
+        title: "To Be Planned",
+        summary: "Future scope will be finalized based on production feedback and priorities.",
+        items: ["To Be Planned"],
+      },
+      {
+        quarter: "Q3 2027",
+        status: "To Be Planned",
+        title: "To Be Planned",
+        summary: "Future scope will be finalized based on production feedback and priorities.",
+        items: ["To Be Planned"],
+      },
+      {
+        quarter: "Q4 2027",
+        status: "To Be Planned",
+        title: "To Be Planned",
+        summary: "Future scope will be finalized based on production feedback and priorities.",
+        items: ["To Be Planned"],
+      },
+    ],
+  },
 ];
 
 export default function RoadmapPage() {
@@ -220,38 +261,106 @@ export default function RoadmapPage() {
 
         <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-6">
-            <ScrollReveal className="max-w-2xl mb-14">
-              <span className="landing-label">Development phases</span>
+            <ScrollReveal className="max-w-3xl mb-14">
+              <span className="landing-label">Quarterly Focus Summary</span>
               <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
-                Roadmap by product maturity
+                Quarterly Focus Summary
               </h2>
               <p className="mt-4 landing-body">
-                These phases are intentionally outcome-based, so the team can prioritize reliability
-                and merchant value without over-promising release dates.
+                Our roadmap is built to scale with confidence: a proven foundation in place, focused execution on
+                the highest-impact priorities, and clear momentum toward broader payment and operations capabilities.
               </p>
             </ScrollReveal>
 
-            <div className="grid lg:grid-cols-4 gap-4">
-              {ROADMAP_PHASES.map((phase, index) => (
-                <ScrollReveal key={phase.title} delay={index * 90} className="landing-panel rounded-2xl p-6 h-full">
-                  <div className="flex items-center justify-between mb-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  quarter: "Q1 2026",
+                  title: "Discovery foundation",
+                  desc: "Problem framing, business logic design, and operational model definition.",
+                },
+                {
+                  quarter: "Q2 2026",
+                  title: "Baseline delivery",
+                  desc: "Core SOL foundation, reliability hardening, and merchant workflow readiness.",
+                },
+                {
+                  quarter: "Q3 2026",
+                  title: "USDC integration sprint",
+                  desc: "USDC checkout/API/webhook parity, access control, and pilot validation.",
+                },
+                {
+                  quarter: "Q4 2026",
+                  title: "Expansion hardening",
+                  desc: "Sandbox separation, partner templates, and risk/compliance baseline growth.",
+                },
+              ].map((phase, index) => (
+                <ScrollReveal key={phase.quarter} delay={index * 90} className="landing-panel rounded-2xl p-6 h-full">
+                  <div className="flex items-center justify-between mb-4">
                     <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full border landing-border px-2.5 py-1 landing-muted">
-                      {phase.status}
+                      {phase.quarter}
                     </span>
-                    <phase.icon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <ListChecks className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-lg font-semibold landing-heading mb-2">{phase.title}</h3>
-                  <p className="text-sm landing-body mb-6">{phase.desc}</p>
-                  <div className="space-y-3">
-                    {phase.items.map((item) => (
-                      <div key={item.label} className="flex items-start gap-2.5">
-                        {item.implemented ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                        ) : (
-                          <CircleDot className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                        )}
-                        <p className="text-xs landing-body">{item.label}</p>
-                      </div>
+                  <h3 className="text-base font-semibold landing-heading mb-2">{phase.title}</h3>
+                  <p className="text-sm landing-body">{phase.desc}</p>
+                </ScrollReveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="landing-section relative py-24 border-t landing-border">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal className="max-w-3xl mb-12">
+              <span className="landing-label">Quarterly timeline</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                Execution Timeline (2026) and Planning Horizon (2027)
+              </h2>
+              <p className="mt-4 landing-body">
+                This timeline reflects disciplined execution: what is already delivered, what is actively advancing now,
+                and what is planned next to expand reliability, merchant value, and ecosystem reach through 2027.
+              </p>
+            </ScrollReveal>
+
+            <div className="space-y-8">
+              {ROADMAP_TIMELINE.map((yearBlock) => (
+                <ScrollReveal key={yearBlock.year} className="landing-panel rounded-2xl p-6 md:p-8">
+                  <div className="flex items-center justify-between mb-6 border-b landing-border pb-4">
+                    <h3 className="text-2xl font-semibold landing-heading">{yearBlock.year}</h3>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full border landing-border px-2.5 py-1 landing-muted">
+                      Roadmap
+                    </span>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    {yearBlock.quarters.map((qtr) => (
+                      <article key={qtr.quarter} className="rounded-xl border landing-border bg-slate-50 dark:bg-white/[0.03] p-4">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-wider landing-subtle">{qtr.quarter}</p>
+                            <h4 className="mt-1 text-sm font-semibold landing-heading">{qtr.title}</h4>
+                          </div>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider rounded-full border landing-border px-2 py-0.5 landing-muted">
+                            {qtr.status}
+                          </span>
+                        </div>
+                        <p className="text-xs landing-body mb-4">{qtr.summary}</p>
+                        <div className="space-y-2">
+                          {qtr.items.map((item) => {
+                            const itemValue = typeof item === "string" ? { label: item, implemented: false } : item;
+                            return (
+                            <div key={itemValue.label} className="flex items-start gap-2">
+                              {itemValue.implemented ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                              ) : (
+                                <CircleDot className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                              )}
+                              <p className="text-xs landing-body">{itemValue.label}</p>
+                            </div>
+                          )})}
+                        </div>
+                      </article>
                     ))}
                   </div>
                 </ScrollReveal>

@@ -1,5 +1,6 @@
 // src/app/dashboard/payments/page.tsx
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
+import { ExportTransactionsButton } from "@/components/dashboard/ExportTransactionsButton";
 import { getCurrentMerchant } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { Activity, ArrowUpRight, CheckCircle2, Clock3, ReceiptText, TrendingUp } from "lucide-react";
@@ -96,6 +97,7 @@ export default async function PaymentsPage({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
+          <ExportTransactionsButton />
           <Link href="/payment-links" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
             Payment links
             <ArrowUpRight className="h-4 w-4" />

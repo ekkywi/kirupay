@@ -32,6 +32,7 @@ const ERROR_GROUPS = [
     heading: "Merchant",
     items: [
       { id: "error-merchant_unauthorized", code: "MERCHANT_UNAUTHORIZED", status: 401, action: "Authenticate first and ensure auth-token cookie is valid." },
+      { id: "error-merchant_export_validation_failed", code: "MERCHANT_EXPORT_VALIDATION_FAILED", status: 400, action: "Use valid export query values (`status`, `from`, `to`) with ISO date format." },
       { id: "error-merchant_invalid_action", code: "MERCHANT_INVALID_ACTION", status: 400, action: "Use supported action values (`link` or `unlink`)." },
       { id: "error-merchant_missing_crypto_proofs", code: "MERCHANT_MISSING_CRYPTO_PROOFS", status: 400, action: "Provide `publicKey`, `signature`, and `message` for wallet linking." },
       { id: "error-merchant_wallet_signature_invalid", code: "MERCHANT_WALLET_SIGNATURE_INVALID", status: 401, action: "Regenerate wallet signature and retry with matching key." },
