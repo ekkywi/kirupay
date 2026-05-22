@@ -107,6 +107,8 @@ http://localhost:3000
 | `RPC_RATE_LIMIT_WARN_PERCENT` | Optional | Warning threshold (%) for 1h rate-limited checks |
 | `RPC_RATE_LIMIT_CRITICAL_PERCENT` | Optional | Critical threshold (%) for 1h rate-limited checks |
 | `RPC_HEALTH_CRON_SECRET` | Optional | Shared secret for internal RPC health cron route |
+| `PAYMENT_LIFECYCLE_CRON_SECRET` | Optional | Shared secret for internal payment lifecycle cron route (`/api/internal/payment-lifecycle/cron`) |
+| `CRON_SECRET` | Optional | Fallback shared secret for internal cron routes when route-specific secret is not set |
 | `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows) |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 
@@ -178,6 +180,20 @@ Admin maintenance page includes:
 - Manual transaction resync
 - Failed webhook retry
 - Pending transaction queue with prefill support
+
+## Cron Operations
+- Production (Vercel):
+  - Vercel Cron runs every 5 minutes for:
+    - `/api/internal/rpc-health/cron`
+    - `/api/internal/payment-lifecycle/cron`
+  - Configure `PAYMENT_LIFECYCLE_CRON_SECRET` (or fallback `CRON_SECRET`) in Vercel environment variables.
+- Development (local):
+  - Vercel Cron does not run in local `npm run dev`.
+  - Trigger lifecycle cron manually when needed (Postman or curl), for example:
+```bash
+curl -H "x-cron-secret: <PAYMENT_LIFECYCLE_CRON_SECRET>" \
+  http://localhost:3000/api/internal/payment-lifecycle/cron
+```
 
 ## Troubleshooting
 ### 1) `relation "PlatformMaintenance" does not exist`

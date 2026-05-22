@@ -6,6 +6,7 @@ import { ReceiptActions } from "@/components/checkout/ReceiptActions";
 import { PlatformMaintenanceView } from "@/components/maintenance/PlatformMaintenanceView";
 import { getPlatformMaintenanceState } from "@/lib/platform-maintenance";
 import { resolveSolanaRpcConfig } from "@/lib/solana-rpc";
+import { evaluateCheckoutSessionState } from "@/lib/checkout-session";
 import { ShieldCheck, Lock, ArrowRight, ExternalLink, BadgeCheck, CalendarDays, ReceiptText, Network, Clock3, CircleCheckBig } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
@@ -75,10 +76,10 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
     notFound();
   }
 
-  // eslint-disable-next-line react-hooks/purity
-  const now = Date.now();
-  const isExpired = new Date(transaction.expiresAt).getTime() <= now;
-  const isFailed = transaction.status === "FAILED";
+  const checkoutState = evaluateCheckoutSessionState({
+    status: transaction.status,
+    expiresAt: transaction.expiresAt,
+  });
 
   if (transaction.status === "PAID") {
     const rpcCluster = resolveSolanaRpcConfig("server").cluster;
@@ -257,11 +258,19 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  if (isFailed || isExpired) {
-    const expiredAtLocal = new Intl.DateTimeFormat("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(transaction.expiresAt));
+  if (checkoutState.isInactive) {
+    const inactiveTitle = checkoutState.inactiveReason === "FAILED"
+      ? "Payment session closed"
+      : "Checkout expired";
+    const inactiveReasonText = checkoutState.inactiveReason === "FAILED"
+      ? "Payment failed or this session has been closed by the system."
+      : "This payment session has reached its time limit and is no longer active.";
+    const expiredAtLocal = checkoutState.expiresAtDate
+      ? new Intl.DateTimeFormat("en-US", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }).format(checkoutState.expiresAtDate)
+      : "Expiration time unavailable";
 
     return (
       <div className="min-h-screen relative flex items-center justify-center bg-[#FAFAFA] dark:bg-[#0A0A0A] p-4 overflow-hidden">
@@ -269,12 +278,12 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
           <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-5 text-red-600 dark:text-red-300">
             <Clock3 size={30} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Checkout expired</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Session inactive</h1>
           <p className="mt-3 text-sm text-center text-gray-600 dark:text-gray-300">
-            This payment session is no longer active and cannot be paid.
+            {inactiveReasonText}
           </p>
           <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
-            Expired at: <span className="font-semibold">{expiredAtLocal}</span>
+            {inactiveTitle}: <span className="font-semibold">{expiredAtLocal}</span>
           </div>
           <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
             Please create a new checkout from merchant app or API to continue payment.

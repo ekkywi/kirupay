@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
 export type MerchantNotification = {
@@ -12,6 +12,8 @@ export type MerchantNotification = {
   readAt?: string | null;
   createdAt: string;
 };
+
+const POLL_INTERVAL_MS = 10_000;
 
 function severityRank(severity: MerchantNotification["severity"]) {
   if (severity === "ERROR") return 3;
@@ -27,25 +29,35 @@ function sortNotifications(items: MerchantNotification[]) {
   });
 }
 
-export function useNotifications() {
+export function useNotifications(options?: { isPanelOpen?: boolean }) {
+  const isPanelOpen = Boolean(options?.isPanelOpen);
   const [items, setItems] = useState<MerchantNotification[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const unreadInFlightRef = useRef(false);
+  const listInFlightRef = useRef(false);
 
   const refreshUnread = useCallback(async () => {
+    if (unreadInFlightRef.current) return false;
+    unreadInFlightRef.current = true;
     try {
       const res = await fetch("/api/merchant/notifications/unread-count", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch unread count");
       const json = (await res.json()) as { data: { unread: number } };
       setUnread(json.data.unread || 0);
+      return true;
     } catch {
-      setUnread(0);
+      return false;
+    } finally {
+      unreadInFlightRef.current = false;
     }
   }, []);
 
-  const fetchNotifications = useCallback(async (nextCursor?: string | null) => {
+  const fetchNotifications = useCallback(async (nextCursor?: string | null, opts?: { silent?: boolean }) => {
+    if (listInFlightRef.current) return false;
+    listInFlightRef.current = true;
     setLoading(true);
     try {
       const query = new URLSearchParams({ limit: "20" });
@@ -63,14 +75,23 @@ export function useNotifications() {
       };
 
       const incoming = json.data || [];
-      const merged = nextCursor ? [...items, ...incoming] : incoming;
-      setItems(sortNotifications(merged));
+      setItems((prev) => {
+        const merged = nextCursor ? [...prev, ...incoming] : incoming;
+        return sortNotifications(merged);
+      });
       setCursor(json.pagination?.nextCursor || null);
       setHasMore(Boolean(json.pagination?.hasMore));
+      return true;
+    } catch (error) {
+      if (!opts?.silent) {
+        console.error("Fetch notifications failed", error);
+      }
+      return false;
     } finally {
+      listInFlightRef.current = false;
       setLoading(false);
     }
-  }, [items]);
+  }, []);
 
   const markRead = useCallback(async (notificationId: string) => {
     await fetch("/api/merchant/notifications/mark-read", {
@@ -95,6 +116,31 @@ export function useNotifications() {
   }, []);
 
   const unreadItems = useMemo(() => items.filter((item) => !item.readAt), [items]);
+
+  useEffect(() => {
+    const initialTick = window.setTimeout(() => {
+      void refreshUnread();
+    }, 0);
+    const intervalId = window.setInterval(() => {
+      void refreshUnread();
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      window.clearTimeout(initialTick);
+      window.clearInterval(intervalId);
+    };
+  }, [refreshUnread]);
+
+  useEffect(() => {
+    if (!isPanelOpen) return;
+    const intervalId = window.setInterval(() => {
+      void fetchNotifications(undefined, { silent: true });
+    }, POLL_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [fetchNotifications, isPanelOpen]);
 
   return {
     items,
