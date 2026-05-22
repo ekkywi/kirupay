@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/dashboard/payments/page.tsx
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { ExportTransactionsButton } from "@/components/dashboard/ExportTransactionsButton";
@@ -7,6 +8,10 @@ import { Activity, ArrowUpRight, CheckCircle2, Clock3, ReceiptText, TrendingUp }
 import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Payments",
+};
 
 // Tentukan berapa banyak baris per halaman
 const ITEMS_PER_PAGE = 10;
@@ -26,6 +31,7 @@ export default async function PaymentsPage({
   const page = Number(params.page) || 1;
   const search = typeof params.search === "string" ? params.search : "";
   const statusFilter = typeof params.status === "string" ? params.status : "ALL";
+  const sourceFilter = typeof params.source === "string" ? params.source : "ALL";
 
   // 2. Buat kondisi filter untuk Prisma (WHERE clause dinamis)
   const whereCondition: Prisma.TransactionWhereInput = {
@@ -46,6 +52,10 @@ export default async function PaymentsPage({
   // Jika ada filter status (PAID atau PENDING)
   if (statusFilter !== "ALL") {
     whereCondition.status = statusFilter;
+  }
+
+  if (sourceFilter === "API" || sourceFilter === "PAYMENT_LINK") {
+    whereCondition.source = sourceFilter;
   }
 
   const baseWhere: Prisma.TransactionWhereInput = { merchantId: merchant.id };

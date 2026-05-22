@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
@@ -23,6 +24,10 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Architecture",
+};
 
 const ARCHITECTURE_METRICS = [
   { value: "0.3%", label: "Platform routing fee" },

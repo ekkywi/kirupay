@@ -47,6 +47,25 @@ enum IncidentEventType {
   RESOLVED
 }
 
+enum NotificationSource {
+  PAYMENT
+  WEBHOOK
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+enum NotificationType {
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  PAYMENT_PENDING_TOO_LONG
+  WEBHOOK_DELIVERY_FAILED
+  WEBHOOK_RECOVERED
+}
+
 // User/Merchant
 model Merchant {
   id              String        @id @default(cuid())
@@ -62,6 +81,8 @@ model Merchant {
   walletIdentities MerchantWalletIdentity[]
   transactions    Transaction[]
   webhookLogs     WebhookLog[]
+  notifications   MerchantNotification[]
+  notificationPreference MerchantNotificationPreference?
   webhookUrl      String?
   webhookSecret   String?       @unique 
   createdAt       DateTime      @default(now())
@@ -113,6 +134,7 @@ model Transaction {
   source          String        @default("PAYMENT_LINK")
   buyerWallet     String?
   walletProvider  String?
+  expiresAt       DateTime      @default(dbgenerated("(CURRENT_TIMESTAMP + interval '30 minutes')"))
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -197,4 +219,37 @@ model OperationalIncidentEvent {
 
   @@index([incidentId, createdAt])
   @@index([createdAt])
+}
+
+model MerchantNotification {
+  id         String               @id @default(cuid())
+  merchantId String
+  merchant   Merchant             @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  source     NotificationSource
+  severity   NotificationSeverity @default(INFO)
+  title      String
+  message    String
+  metadata   Json?
+  sourceRefId String?
+  readAt     DateTime?
+  createdAt  DateTime             @default(now())
+
+  @@index([merchantId, createdAt])
+  @@index([merchantId, readAt, createdAt])
+  @@index([merchantId, severity, createdAt])
+  @@index([merchantId, sourceRefId, type, createdAt])
+}
+
+model MerchantNotificationPreference {
+  id                     String   @id @default(cuid())
+  merchantId             String   @unique
+  merchant               Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  paymentSuccess         Boolean  @default(true)
+  paymentFailed          Boolean  @default(true)
+  paymentPendingTooLong  Boolean  @default(true)
+  webhookDeliveryFailed  Boolean  @default(true)
+  webhookRecovered       Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }

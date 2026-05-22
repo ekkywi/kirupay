@@ -5,10 +5,12 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { Search, Filter, ChevronLeft, ChevronRight, Activity, ArrowUpRight } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { formatLocalDateTime } from "@/lib/local-time";
 
 interface TransactionRow {
   id: string;
   orderId: string;
+  source?: string | null;
   customerReference?: string | null;
   amount: number;
   currency: string;
@@ -32,13 +34,14 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
   const currentPage = Number(searchParams.get("page")) || 1;
   const currentSearch = searchParams.get("search") || "";
   const currentStatus = searchParams.get("status") || "ALL";
+  const currentSource = searchParams.get("source") || "ALL";
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchInput, 500);
 
   const updateURL = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
     
-    if (key === "search" || key === "status") {
+    if (key === "search" || key === "status" || key === "source") {
       params.set("page", "1");
     }
 
@@ -62,6 +65,36 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
     return () => cancelAnimationFrame(frame);
   }, [currentSearch]);
 
+  const getSourceBadge = (source?: string | null) => {
+    if (source === "API") {
+      return {
+        label: "API",
+        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
+      };
+    }
+
+    if (source === "PAYMENT_LINK") {
+      return {
+        label: "Payment Link",
+        className: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300",
+      };
+    }
+
+    return {
+      label: "Other",
+      className: "bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300",
+    };
+  };
+
+  const renderSourceBadge = (source?: string | null) => {
+    const badge = getSourceBadge(source);
+    return (
+      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${badge.className}`}>
+        {badge.label}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       
@@ -81,7 +114,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="h-4 w-4 text-gray-400" />
+          <Filter className="h-4 w-4 text-gray-400 shrink-0" />
           <select
             value={currentStatus}
             onChange={(e) => updateURL("status", e.target.value)}
@@ -90,6 +123,15 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             <option value="ALL">All Status</option>
             <option value="PAID">Paid</option>
             <option value="PENDING">Pending</option>
+          </select>
+          <select
+            value={currentSource}
+            onChange={(e) => updateURL("source", e.target.value)}
+            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+          >
+            <option value="ALL">All Sources</option>
+            <option value="API">API</option>
+            <option value="PAYMENT_LINK">Payment Link</option>
           </select>
         </div>
       </div>}
@@ -108,6 +150,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
               <thead>
                 <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/10">
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-xl">Order ID</th>
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Source</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gross</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Fee (0.3%)</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Net</th>
@@ -124,6 +167,9 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                       <p className="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
                         {tx.customerReference || "No customer ref"}
                       </p>
+                    </td>
+                    <td className="p-4">
+                      {renderSourceBadge(tx.source)}
                     </td>
                     
                     {/* Gross */}
@@ -150,7 +196,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                     
                     {/* Date */}
                     <td className="p-4 text-[11px] text-gray-500 font-medium">
-                      {new Date(tx.createdAt).toLocaleDateString()}
+                      {formatLocalDateTime(tx.createdAt, { preset: "date" })}
                     </td>
 
                     {/* Explorer Link (NEW) */}

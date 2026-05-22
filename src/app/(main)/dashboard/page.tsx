@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/dashboard/page.tsx
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WalletOverview } from "@/components/dashboard/WalletOverview";
@@ -9,6 +10,10 @@ import { redirect } from "next/navigation";
 import { Activity, CreditCard, CheckCircle2, LayoutDashboard, ArrowUpRight, ShieldCheck } from "lucide-react";
 import SetupGatekeeper from "@/components/dashboard/SetupGatekeeper";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 export default async function DashboardPage() {
   const merchant = await getCurrentMerchant();

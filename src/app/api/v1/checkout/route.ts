@@ -31,6 +31,7 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
+const CHECKOUT_TTL_MS = 30 * 60 * 1000;
 
 export async function POST(req: Request) {
     const requestId = createRequestId();
@@ -187,6 +188,9 @@ export async function POST(req: Request) {
             );
         }
 
+        const now = new Date();
+        const expiresAt = new Date(now.getTime() + CHECKOUT_TTL_MS);
+
         const transaction = await prisma.transaction.create({
             data: {
                 merchantId: merchant.id,
@@ -201,7 +205,8 @@ export async function POST(req: Request) {
                 cancelUrl: cancelUrl || null,
                 status: "PENDING",
                 source: "API",
-                createdAt: new Date(),
+                createdAt: now,
+                expiresAt,
             },
         });
 
@@ -217,7 +222,7 @@ export async function POST(req: Request) {
             message: "Checkout session created successfully",
             transactionId: transaction.id,
             checkoutUrl: checkoutUrl,
-            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            expiresAt: transaction.expiresAt,
         }, { status: 201, headers: corsHeaders });
     
     } catch (error: unknown) {

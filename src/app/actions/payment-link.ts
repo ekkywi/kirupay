@@ -30,6 +30,7 @@ export async function createManualPaymentLink(formData: {
   customerName?: string;
   notes?: string;
 }): Promise<ManualLinkActionResult> {
+  const CHECKOUT_TTL_MS = 30 * 60 * 1000;
   const requestId = createRequestId();
   const obs = startObservation(requestId, "action:createManualPaymentLink");
 
@@ -92,6 +93,8 @@ export async function createManualPaymentLink(formData: {
       finalOrderId = `TZL-LINK-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
     }
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CHECKOUT_TTL_MS);
     const transaction = await prisma.transaction.create({
       data: {
         merchantId: formData.merchantId,
@@ -103,6 +106,8 @@ export async function createManualPaymentLink(formData: {
         customerName: formData.customerName?.trim() || null,
         notes: formData.notes?.trim() || null,
         status: "PENDING",
+        createdAt: now,
+        expiresAt,
       },
     });
 

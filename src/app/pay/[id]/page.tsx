@@ -75,6 +75,11 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
     notFound();
   }
 
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
+  const isExpired = new Date(transaction.expiresAt).getTime() <= now;
+  const isFailed = transaction.status === "FAILED";
+
   if (transaction.status === "PAID") {
     const rpcCluster = resolveSolanaRpcConfig("server").cluster;
     const clusterLabel = rpcCluster === "mainnet-beta" ? "Solana Mainnet" : rpcCluster === "testnet" ? "Solana Testnet" : "Solana Devnet";
@@ -247,6 +252,33 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
               You may now safely close this window.
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (isFailed || isExpired) {
+    const expiredAtLocal = new Intl.DateTimeFormat("en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(transaction.expiresAt));
+
+    return (
+      <div className="min-h-screen relative flex items-center justify-center bg-[#FAFAFA] dark:bg-[#0A0A0A] p-4 overflow-hidden">
+        <div className="relative z-10 bg-white/90 dark:bg-[#111111]/90 backdrop-blur-xl p-7 sm:p-9 rounded-[2rem] shadow-2xl border border-white/20 dark:border-white/5 max-w-xl w-full">
+          <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-5 text-red-600 dark:text-red-300">
+            <Clock3 size={30} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white text-center">Checkout expired</h1>
+          <p className="mt-3 text-sm text-center text-gray-600 dark:text-gray-300">
+            This payment session is no longer active and cannot be paid.
+          </p>
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+            Expired at: <span className="font-semibold">{expiredAtLocal}</span>
+          </div>
+          <p className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+            Please create a new checkout from merchant app or API to continue payment.
+          </p>
         </div>
       </div>
     );

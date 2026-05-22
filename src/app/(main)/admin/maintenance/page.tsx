@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { AdminMetricCard, AdminSurface } from "@/components/admin/AdminUI";
 import { getPlatformMaintenanceState, getPlatformOperationsSnapshot } from "@/lib/platform-maintenance";
 import { AlertTriangle, CheckCircle2, DatabaseZap, RefreshCcw, Server, Users, Wrench } from "lucide-react";
 import Link from "next/link";
 import { MaintenanceFlash, MaintenanceHeader } from "./_shared";
+
+export const metadata: Metadata = {
+  title: "Admin Maintenance",
+};
 
 export default async function AdminMaintenanceOverviewPage({
   searchParams,

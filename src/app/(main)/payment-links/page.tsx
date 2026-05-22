@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/dashboard/payment-links/page.tsx
 import { getCurrentMerchant } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
@@ -7,6 +8,10 @@ import { LinkTable } from "@/components/dashboard/LinkTable";
 import { ArrowUpRight, CheckCircle2, Clock3, LinkIcon, ReceiptText, Send } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Payment Links",
+};
 
 // Tentukan jumlah data per halaman
 const ITEMS_PER_PAGE = 10;

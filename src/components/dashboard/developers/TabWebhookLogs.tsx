@@ -2,6 +2,7 @@
 
 import { Activity, CheckCircle2, Clock, RefreshCw, Search, XCircle } from "lucide-react";
 import { useWebhookLogs, type WebhookLog } from "@/hooks/api/merchant/useWebhookLogs";
+import { formatLocalDateTime } from "@/lib/local-time";
 
 function formatPayload(payload: string) {
   try {
@@ -39,7 +40,7 @@ export function TabWebhookLogs({ activeTab }: { activeTab: string }) {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Webhook delivery</p>
                 <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{selectedLog.event}</h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{new Date(selectedLog.createdAt).toLocaleString()}</p>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatLocalDateTime(selectedLog.createdAt)}</p>
               </div>
               <button
                 type="button"
@@ -116,6 +117,7 @@ export function TabWebhookLogs({ activeTab }: { activeTab: string }) {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Delivery History</p>
             <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Webhook events</h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Latest 50 webhook attempts sent to your configured endpoint.</p>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Displayed in local time.</p>
           </div>
           <button
             type="button"
@@ -160,7 +162,7 @@ export function TabWebhookLogs({ activeTab }: { activeTab: string }) {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                         <Clock className="h-4 w-4 text-slate-400" />
-                        <span>{new Date(log.createdAt).toLocaleString()}</span>
+                        <span>{formatLocalDateTime(log.createdAt)}</span>
                       </div>
                     </td>
                     <td className="px-5 py-4">

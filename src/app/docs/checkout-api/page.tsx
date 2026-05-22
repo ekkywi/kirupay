@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import DocsArticle from "@/components/docs/DocsArticle";
+
+export const metadata: Metadata = {
+  title: "Docs Checkout API",
+};
 
 const REQUEST_SNIPPET = `POST /api/v1/checkout\nAuthorization: Bearer <API_KEY>\nContent-Type: application/json\n\n{\n  "orderId": "INV-2026-001",\n  "amount": 10,\n  "currency": "SOL",\n  "customerEmail": "buyer@example.com",\n  "customerReference": "CUST-REF-001",\n  "customerName": "Avery Stone",\n  "notes": "Priority support customer",\n  "successUrl": "https://yourstore.com/success",\n  "cancelUrl": "https://yourstore.com/cart"\n}`;
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/dashboard/analytics/page.tsx
 import { getCurrentMerchant } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
@@ -21,6 +22,10 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Analytics",
+};
 
 type HistoricalRow = {
   month: string;

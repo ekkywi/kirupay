@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import Link from "next/link";
 import { ArrowRight, HelpCircle } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "FAQ",
+};
 
 const FAQS = [
   ["Does Trezalink hold merchant funds?", "No. Trezalink is designed around wallet-direct settlement. Funds move to the merchant wallet after the payer completes checkout."],

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/(main)/admin/transactions/page.tsx
 import prisma from "@/lib/neon";
 import type { Prisma } from "@prisma/client";
@@ -18,6 +19,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
+
+export const metadata: Metadata = {
+  title: "Admin Transactions",
+};
 
 const ITEMS_PER_PAGE = 20;
 const STATUSES = ["ALL", "PAID", "PENDING", "FAILED"] as const;

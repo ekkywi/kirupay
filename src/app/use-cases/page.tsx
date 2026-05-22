@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Building2, Check, Globe2, Layers3, Store, Users } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Use Cases",
+};
 
 const USE_CASES = [
   { icon: BriefcaseBusiness, title: "Freelancers", desc: "Collect cross-border SOL payments with a hosted payment link and direct wallet settlement.", points: ["No-code payment links", "Customer email reference", "Simple gross-to-net records"] },

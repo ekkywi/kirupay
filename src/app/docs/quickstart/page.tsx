@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import DocsArticle from "@/components/docs/DocsArticle";
+
+export const metadata: Metadata = {
+  title: "Docs Quickstart",
+};
 
 export default function DocsQuickstartPage() {
   return (

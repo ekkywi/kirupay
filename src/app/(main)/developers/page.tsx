@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 // src/app/dashboard/developers/page.tsx
 import { DeveloperView } from "@/components/dashboard/developers/DeveloperView";
 import { getCurrentMerchant } from "@/lib/auth-service";
 import { ArrowUpRight, Code2, KeyRound, Radio, ShieldCheck, Terminal } from "lucide-react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Developers",
+};
 
 export default async function DevelopersPage() {
   const merchant = await getCurrentMerchant();

@@ -1,15 +1,14 @@
+import type { Metadata } from "next";
 // src/app/dashboard/settings/page.tsx
 import { SettingsView } from "@/components/dashboard/settings/SettingsView";
+import { LocalTime } from "@/components/common/LocalTime";
 import { getCurrentMerchant } from "@/lib/auth-service";
 import { CalendarDays, CheckCircle2, Globe2, Settings, ShieldCheck, Wallet } from "lucide-react";
 import { redirect } from "next/navigation";
 
-function formatJoinDate(value: Date | string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
+export const metadata: Metadata = {
+  title: "Settings",
+};
 
 export default async function SettingsPage() {
   const merchant = await getCurrentMerchant();
@@ -64,7 +63,7 @@ export default async function SettingsPage() {
           {
             icon: CalendarDays,
             label: "Since",
-            value: formatJoinDate(merchant.createdAt),
+            value: <LocalTime value={merchant.createdAt} preset="monthYear" withTitle />,
             detail: "Merchant onboarding date",
             tone: "blue",
           },
@@ -80,7 +79,7 @@ export default async function SettingsPage() {
               }`}
             />
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
-            <p className="mt-2 text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            <div className="mt-2 text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</div>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
           </div>
         ))}

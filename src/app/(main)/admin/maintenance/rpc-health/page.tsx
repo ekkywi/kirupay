@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import AutoRefresh from "@/components/admin/AutoRefresh";
 import { getRpcHealthSummary, type IncidentSeverity, type RpcHealthSnapshot } from "@/lib/rpc-health";
 import { Clock3, RefreshCcw, Signal } from "lucide-react";
 import { runRpcHealthCheckAction } from "../actions";
 import { MaintenanceFlash, MaintenanceHeader } from "../_shared";
+
+export const metadata: Metadata = {
+  title: "Admin RPC Health",
+};
 
 function formatDateTime(value: Date | null | undefined) {
   if (!value) return "Not checked yet";

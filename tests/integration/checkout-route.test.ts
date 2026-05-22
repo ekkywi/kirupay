@@ -166,7 +166,8 @@ describe("POST /api/v1/checkout", () => {
       walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
     });
     prismaMock.transaction.findFirst.mockResolvedValue(null);
-    prismaMock.transaction.create.mockResolvedValue({ id: "txn_abc" });
+    const expiresAt = new Date("2026-05-22T01:30:00.000Z");
+    prismaMock.transaction.create.mockResolvedValue({ id: "txn_abc", expiresAt });
 
     const { POST } = await import("@/app/api/v1/checkout/route");
 
@@ -180,10 +181,19 @@ describe("POST /api/v1/checkout", () => {
     });
 
     const res = await POST(req);
-    const json = (await res.json()) as { transactionId: string; checkoutUrl: string };
+    const json = (await res.json()) as { transactionId: string; checkoutUrl: string; expiresAt: string };
 
     expect(res.status).toBe(201);
     expect(json.transactionId).toBe("txn_abc");
     expect(json.checkoutUrl).toBe("https://trezalink.test/pay/txn_abc");
+    expect(new Date(json.expiresAt).toISOString()).toBe(expiresAt.toISOString());
+    expect(prismaMock.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PENDING",
+          expiresAt: expect.any(Date),
+        }),
+      }),
+    );
   });
 });

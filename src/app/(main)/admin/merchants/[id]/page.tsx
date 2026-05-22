@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import prisma from "@/lib/neon";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -17,6 +18,26 @@ import {
 } from "lucide-react";
 
 const formatSOL = (val: number | null | undefined) => val ? val.toFixed(4) : "0.0000";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+  const merchant = await prisma.merchant.findUnique({
+    where: { id: resolvedParams.id },
+    select: { businessName: true },
+  });
+
+  if (!merchant) {
+    return { title: "Admin Merchant" };
+  }
+
+  return {
+    title: `Admin Merchant ${merchant.businessName || ""}`.trim(),
+  };
+}
 
 export default async function MerchantDetailPage({
   params,

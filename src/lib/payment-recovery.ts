@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import prisma from "@/lib/neon";
+import { createMerchantNotification } from "@/lib/merchant-notifications";
 
 const PLATFORM_FEE_RATE = 0.003;
 
@@ -14,6 +15,10 @@ type WebhookDeliveryResult = {
   statusCode: number | null;
   responseText: string | null;
 };
+
+function isWebhookFailed(statusCode: number | null) {
+  return statusCode === null || statusCode < 200 || statusCode >= 300;
+}
 
 async function deliverWebhook(payloadString: string, webhookUrl: string, webhookSecret?: string | null) {
   const headers: Record<string, string> = {
@@ -71,6 +76,60 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
     return { success: false, error: "Transaction not found.", statusCode: 404 };
   }
 
+  if (existingTx.status === "PAID") {
+    return {
+      success: true,
+      transaction: existingTx,
+      webhookLogId: null,
+    };
+  }
+
+  if (existingTx.status !== "PENDING") {
+    return {
+      success: false,
+      error: "This checkout is no longer payable.",
+      statusCode: 409,
+    };
+  }
+
+  if (new Date(existingTx.expiresAt).getTime() <= Date.now()) {
+    const updated = await prisma.transaction.updateMany({
+      where: {
+        id: existingTx.id,
+        status: "PENDING",
+      },
+      data: {
+        status: "FAILED",
+      },
+    });
+
+    if (updated.count > 0) {
+      await createMerchantNotification({
+        merchantId: existingTx.merchantId,
+        type: "PAYMENT_FAILED",
+        source: "PAYMENT",
+        severity: "ERROR",
+        title: "Payment expired",
+        message: `Order ${existingTx.orderId} expired after 30 minutes and is now marked as failed. Create a new checkout to continue.`,
+        sourceRefId: existingTx.id,
+        metadata: {
+          transactionId: existingTx.id,
+          orderId: existingTx.orderId,
+          amount: existingTx.amount,
+          currency: existingTx.currency,
+          expiresAt: existingTx.expiresAt,
+        },
+        dedupMode: "once",
+      });
+    }
+
+    return {
+      success: false,
+      error: "Checkout has expired. Please create a new checkout.",
+      statusCode: 409,
+    };
+  }
+
   const resolvedSignature = input.signature?.trim() || existingTx.txSignature || null;
   if (!resolvedSignature) {
     return {
@@ -84,8 +143,11 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
   const feeAmount = grossAmount * PLATFORM_FEE_RATE;
   const netAmount = grossAmount - feeAmount;
 
-  const updatedTransaction = await prisma.transaction.update({
-    where: { id: input.transactionId },
+  const updatedTransactions = await prisma.transaction.updateManyAndReturn({
+    where: {
+      id: input.transactionId,
+      status: "PENDING",
+    },
     data: {
       status: "PAID",
       txSignature: resolvedSignature,
@@ -94,30 +156,67 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       feeAmount,
       netAmount,
     },
-    include: {
-      merchant: true,
+  });
+  const paidTransaction = updatedTransactions[0];
+
+  if (!paidTransaction) {
+    return {
+      success: false,
+      error: "Transaction is no longer payable.",
+      statusCode: 409,
+    };
+  }
+
+  const transactionWithMerchant = await prisma.transaction.findUnique({
+    where: { id: paidTransaction.id },
+    include: { merchant: true },
+  });
+
+  if (!transactionWithMerchant) {
+    return {
+      success: false,
+      error: "Transaction not found after update.",
+      statusCode: 404,
+    };
+  }
+
+  await createMerchantNotification({
+    merchantId: transactionWithMerchant.merchantId,
+    type: "PAYMENT_SUCCESS",
+    source: "PAYMENT",
+    severity: "INFO",
+    title: "Payment confirmed",
+    message: `Order ${transactionWithMerchant.orderId} was confirmed and marked as paid.`,
+    sourceRefId: transactionWithMerchant.id,
+    metadata: {
+      transactionId: transactionWithMerchant.id,
+      orderId: transactionWithMerchant.orderId,
+      amount: transactionWithMerchant.amount,
+      currency: transactionWithMerchant.currency,
+      status: transactionWithMerchant.status,
+      txSignature: transactionWithMerchant.txSignature,
     },
   });
 
-  const webhookUrl = updatedTransaction.merchant.webhookUrl;
-  const webhookSecret = updatedTransaction.merchant.webhookSecret;
+  const webhookUrl = transactionWithMerchant.merchant.webhookUrl;
+  const webhookSecret = transactionWithMerchant.merchant.webhookSecret;
   let webhookLogId: string | null = null;
 
   if (webhookUrl) {
     const payloadData = {
       event: "payment.success",
       data: {
-        orderId: updatedTransaction.orderId,
-        transactionId: updatedTransaction.id,
-        grossAmount: updatedTransaction.amount,
-        platformFee: updatedTransaction.feeAmount,
-        netAmount: updatedTransaction.netAmount,
-        currency: updatedTransaction.currency,
-        status: updatedTransaction.status,
-        txSignature: updatedTransaction.txSignature,
-        buyerWallet: updatedTransaction.buyerWallet,
-        walletProvider: updatedTransaction.walletProvider,
-        paidAt: updatedTransaction.updatedAt,
+        orderId: transactionWithMerchant.orderId,
+        transactionId: transactionWithMerchant.id,
+        grossAmount: transactionWithMerchant.amount,
+        platformFee: transactionWithMerchant.feeAmount,
+        netAmount: transactionWithMerchant.netAmount,
+        currency: transactionWithMerchant.currency,
+        status: transactionWithMerchant.status,
+        txSignature: transactionWithMerchant.txSignature,
+        buyerWallet: transactionWithMerchant.buyerWallet,
+        walletProvider: transactionWithMerchant.walletProvider,
+        paidAt: transactionWithMerchant.updatedAt,
       },
     };
 
@@ -127,7 +226,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
     try {
       const newLog = await prisma.webhookLog.create({
         data: {
-          merchantId: updatedTransaction.merchantId,
+          merchantId: transactionWithMerchant.merchantId,
           event: "payment.success",
           url: webhookUrl,
           status: delivery.statusCode,
@@ -137,6 +236,24 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       });
 
       webhookLogId = newLog.id;
+
+      if (isWebhookFailed(delivery.statusCode)) {
+        await createMerchantNotification({
+          merchantId: transactionWithMerchant.merchantId,
+          type: "WEBHOOK_DELIVERY_FAILED",
+          source: "WEBHOOK",
+          severity: "ERROR",
+          title: "Webhook delivery failed",
+          message: `Delivery failed for order ${transactionWithMerchant.orderId}. Check webhook logs and retry.`,
+          sourceRefId: newLog.id,
+          metadata: {
+            webhookLogId: newLog.id,
+            event: newLog.event,
+            statusCode: newLog.status,
+            response: newLog.response,
+          },
+        });
+      }
     } catch (dbLogError) {
       console.error("[WEBHOOK] Failed to persist delivery log:", dbLogError);
     }
@@ -144,7 +261,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
 
   return {
     success: true,
-    transaction: updatedTransaction,
+    transaction: transactionWithMerchant,
     webhookLogId,
   };
 }
@@ -191,6 +308,41 @@ export async function retryWebhookDelivery(logId: string) {
       response: delivery.responseText,
     },
   });
+
+  if (isWebhookFailed(delivery.statusCode)) {
+    await createMerchantNotification({
+      merchantId: existingLog.merchantId,
+      type: "WEBHOOK_DELIVERY_FAILED",
+      source: "WEBHOOK",
+      severity: "ERROR",
+      title: "Webhook retry failed",
+      message: `Retry for webhook event ${existingLog.event} failed again.`,
+      sourceRefId: retryLog.id,
+      metadata: {
+        webhookLogId: retryLog.id,
+        previousLogId: existingLog.id,
+        event: retryLog.event,
+        statusCode: retryLog.status,
+        response: retryLog.response,
+      },
+    });
+  } else {
+    await createMerchantNotification({
+      merchantId: existingLog.merchantId,
+      type: "WEBHOOK_RECOVERED",
+      source: "WEBHOOK",
+      severity: "INFO",
+      title: "Webhook recovered",
+      message: `Retry for webhook event ${existingLog.event} was delivered successfully.`,
+      sourceRefId: retryLog.id,
+      metadata: {
+        webhookLogId: retryLog.id,
+        previousLogId: existingLog.id,
+        event: retryLog.event,
+        statusCode: retryLog.status,
+      },
+    });
+  }
 
   return {
     success: true,

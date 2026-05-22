@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 // src/app/(main)/admin/overview/page.tsx
 import prisma from "@/lib/neon";
 import {
@@ -17,6 +18,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
+
+export const metadata: Metadata = {
+  title: "Admin Overview",
+};
 
 const formatSOL = (value: number | null | undefined, precision = 4) => (value ?? 0).toFixed(precision);
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
@@ -22,6 +23,10 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Developer",
+};
 
 const API_CAPABILITIES = [
   { value: "POST", label: "/api/v1/checkout" },

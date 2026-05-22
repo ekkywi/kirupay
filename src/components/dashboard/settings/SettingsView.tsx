@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AlertCircle, BellRing, CheckCircle2, Globe, LockKeyhole, Mail, Save, Store, Wallet } from "lucide-react";
 import { WalletOverview } from "@/components/dashboard/WalletOverview";
 import { useMerchantUpdate } from "@/hooks/api/merchant/useMerchantUpdate";
+import { useNotificationPreferences } from "@/hooks/api/merchant/useNotificationPreferences";
+import { formatLocalDateTime } from "@/lib/local-time";
 
 type SettingsTab = "profile" | "payouts" | "webhooks";
 
@@ -45,19 +47,12 @@ const tabs: Array<{
   },
 ];
 
-function formatDate(value: Date | string) {
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
 export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
   const [businessName, setBusinessName] = useState(merchant.businessName || "");
   const [webhookUrl, setWebhookUrl] = useState(merchant.webhookUrl || "");
   const { updateField, loading, status } = useMerchantUpdate();
+  const { preferences, setPreferences, changed, save, loading: preferencesLoading } = useNotificationPreferences();
 
   const walletConnected = !merchant.walletAddress.includes("pending");
   const profileChanged = businessName.trim() !== merchant.businessName;
@@ -69,6 +64,10 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
 
   const saveWebhookUrl = () => {
     void updateField("webhookUrl", webhookUrl.trim());
+  };
+
+  const saveNotificationPreferences = async () => {
+    await save();
   };
 
   return (
@@ -178,7 +177,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
             <div className="mt-5 space-y-4">
               {[
                 { label: "Business", value: businessName || "Not configured" },
-                { label: "Created", value: formatDate(merchant.createdAt) },
+                { label: "Created", value: formatLocalDateTime(merchant.createdAt, { preset: "date" }) },
                 { label: "Email status", value: merchant.emailVerified ? "Verified" : "Pending" },
                 { label: "Environment", value: merchant.isActive ? "Live" : "Paused" },
               ].map((item) => (
@@ -278,6 +277,56 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                       If this is your first endpoint, Trezalink will automatically generate a webhook signing secret when you save.
                     </p>
                   </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="mb-3">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Notification preferences</h4>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Choose which payment and webhook events appear in your in-app notification center.</p>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { key: "paymentSuccess", label: "Payment success", detail: "Notify when transactions are confirmed as paid." },
+                    { key: "paymentFailed", label: "Payment failed", detail: "Notify when a transaction is marked failed." },
+                    { key: "paymentPendingTooLong", label: "Payment pending too long", detail: "Notify when pending payments exceed safety threshold." },
+                    { key: "webhookDeliveryFailed", label: "Webhook delivery failed", detail: "Notify when webhook response is timeout or non-2xx." },
+                    { key: "webhookRecovered", label: "Webhook recovered", detail: "Notify when retry webhook delivery becomes successful." },
+                  ].map((item) => {
+                    const key = item.key as keyof typeof preferences;
+                    return (
+                      <label key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#0B0F17]">
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-slate-900 dark:text-white">{item.label}</span>
+                          <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{item.detail}</span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={preferences[key]}
+                          onChange={(event) =>
+                            setPreferences((prev) => ({
+                              ...prev,
+                              [key]: event.target.checked,
+                            }))
+                          }
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void saveNotificationPreferences()}
+                    disabled={preferencesLoading || !changed}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Save className="h-4 w-4" />
+                    {preferencesLoading ? "Saving..." : "Save notification settings"}
+                  </button>
                 </div>
               </div>
             </div>

@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import { getPlatformMaintenanceState } from "@/lib/platform-maintenance";
 import { Signal, Wrench } from "lucide-react";
 import { saveMaintenanceSettingsAction } from "../actions";
 import { MaintenanceFlash, MaintenanceHeader } from "../_shared";
+
+export const metadata: Metadata = {
+  title: "Admin Maintenance Control",
+};
 
 function formatDateTime(value: Date | null | undefined) {
   if (!value) return "Not scheduled";

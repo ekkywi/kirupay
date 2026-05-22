@@ -30,7 +30,10 @@ describe("smoke: checkout create flow", () => {
       walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
     });
     prismaMock.transaction.findFirst.mockResolvedValue(null);
-    prismaMock.transaction.create.mockResolvedValue({ id: "txn_smoke_1" });
+    prismaMock.transaction.create.mockResolvedValue({
+      id: "txn_smoke_1",
+      expiresAt: new Date("2026-05-22T01:30:00.000Z"),
+    });
 
     const { POST } = await import("@/app/api/v1/checkout/route");
 

@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import Link from "next/link";
 import { ArrowRight, BadgeCheck, Check, CreditCard, ReceiptText, ShieldCheck, TrendingDown, Wallet } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+};
 
 const EXAMPLES = [
   { gross: "1.00 SOL", fee: "0.003 SOL", net: "0.997 SOL" },

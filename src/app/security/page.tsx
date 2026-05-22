@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 import Link from "next/link";
 import { ArrowRight, Check, FileCheck, Fingerprint, KeyRound, Lock, ShieldCheck, Wallet, Webhook } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Security",
+};
 
 const CONTROLS = [
   { icon: Wallet, title: "Non-custodial settlement", desc: "Trezalink coordinates payments without storing merchant balances or private keys." },

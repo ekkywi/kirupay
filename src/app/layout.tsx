@@ -11,7 +11,10 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Trezalink | Web3 Payment Infrastructure",
+  title: {
+    default: "Trezalink",
+    template: "Trezalink | %s",
+  },
   description: "Non-custodial Solana payment gateway with atomic split-fee.",
 };
 

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
@@ -6,6 +7,10 @@ import AutoRefresh from "@/components/admin/AutoRefresh";
 import { getPublicStatusSummary, type PublicComponentStatus, type PublicIncident, type PublicSystemStatus } from "@/lib/public-status";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, BadgeCheck, Server, ShieldCheck, Waves } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Status",
+};
 
 function formatDateTime(value: Date | null | undefined) {
   if (!value) return "n/a";

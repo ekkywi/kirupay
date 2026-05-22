@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import { getPlatformOperationsSnapshot } from "@/lib/platform-maintenance";
 import { ArrowUpRight, DatabaseZap, RefreshCcw, Server } from "lucide-react";
 import Link from "next/link";
 import { resyncTransactionAction, retryWebhookAction } from "../actions";
 import { MaintenanceFlash, MaintenanceHeader } from "../_shared";
+
+export const metadata: Metadata = {
+  title: "Admin Maintenance Recovery",
+};
 
 type OperationsSnapshot = Awaited<ReturnType<typeof getPlatformOperationsSnapshot>>;
 type FailedWebhookLog = OperationsSnapshot["recentFailedWebhookLogs"][number];

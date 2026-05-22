@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import DocsArticle from "@/components/docs/DocsArticle";
+
+export const metadata: Metadata = {
+  title: "Docs Error Reference",
+};
 
 const ERROR_GROUPS = [
   {

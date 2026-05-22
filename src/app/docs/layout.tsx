@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
@@ -5,6 +6,10 @@ import DocsSidebar from "@/components/docs/DocsSidebar";
 import { DOCS_NAV } from "@/lib/docs-nav";
 import Link from "next/link";
 import "./docs.css";
+
+export const metadata: Metadata = {
+  title: "Docs",
+};
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (

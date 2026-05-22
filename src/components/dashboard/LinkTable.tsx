@@ -5,6 +5,7 @@ import { Copy, Check, ExternalLink, Search, Filter, ChevronLeft, ChevronRight, L
 import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
+import { formatLocalDateTime } from "@/lib/local-time";
 
 interface LinkTableProps {
   links: PaymentLinkRow[];
@@ -172,9 +173,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
                       </span>
                     </td>
                     <td className="p-4 text-gray-500 text-[11px] font-medium">
-                      {new Date(link.createdAt).toLocaleDateString("en-US", {
-                        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-                      })}
+                      {formatLocalDateTime(link.createdAt)}
                     </td>
                     <td className="p-4 flex justify-end gap-1">
                       <button

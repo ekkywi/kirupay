@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import prisma from "@/lib/neon";
 import type { Prisma } from "@prisma/client";
 import {
@@ -12,6 +13,10 @@ import {
 import { SuspendButton } from "@/components/admin/SuspendButton";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Admin Merchants",
+};
 
 type AdminMerchantSearchParams = {
   search?: string;
