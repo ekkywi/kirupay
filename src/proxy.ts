@@ -14,7 +14,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/payment-links') ||
     pathname.startsWith('/analytics') ||
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/developers');
+    pathname.startsWith('/developers') ||
+    pathname.startsWith('/business');
   const isPrivateAppPage =
     isMerchantPage || isAdminPage;
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -22,7 +23,7 @@ export async function proxy(request: NextRequest) {
   if (token) {
     try {
       const { payload } = await jwtVerify(token, secret);
-      const actorType = typeof payload.actorType === 'string' ? payload.actorType : (payload.merchantId ? 'merchant' : null);
+      const actorType = typeof payload.actorType === 'string' ? payload.actorType : null;
 
       if (isAuthPage) {
         const destination = actorType === 'internal' ? '/admin/overview' : '/dashboard';
@@ -68,6 +69,7 @@ export const config = {
     '/analytics/:path*',
     '/settings/:path*',
     '/developers/:path*',
+    '/business/:path*',
     '/admin/:path*',
     '/login',
     '/register',

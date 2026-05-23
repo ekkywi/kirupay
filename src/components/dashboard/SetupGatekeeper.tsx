@@ -7,13 +7,13 @@ import { AlertTriangle, Mail, Lock, Building2, ArrowRight, Loader2 } from "lucid
 import { useGatekeeper } from "@/hooks/auth/useGatekeeper";
 
 interface SetupGatekeeperProps {
-  merchantId: string;
+  businessId: string;
   currentEmail: string;
   isWalletUser: boolean;
 }
 
-export default function SetupGatekeeper({ merchantId, currentEmail, isWalletUser }: SetupGatekeeperProps) {
-  const { isLoading, statusMsg, completeProfile, resendVerification } = useGatekeeper(merchantId, currentEmail);
+export default function SetupGatekeeper({ businessId, currentEmail, isWalletUser }: SetupGatekeeperProps) {
+  const { isLoading, statusMsg, completeProfile, resendVerification } = useGatekeeper(businessId, currentEmail);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

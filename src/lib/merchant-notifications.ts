@@ -30,24 +30,24 @@ const TYPE_TO_PREF: Record<NotificationType, PreferenceKey> = {
   WEBHOOK_RECOVERED: "webhookRecovered",
 };
 
-export async function getOrCreateNotificationPreferences(merchantId: string) {
+export async function getOrCreateNotificationPreferences(businessId: string) {
   return prisma.merchantNotificationPreference.upsert({
-    where: { merchantId },
+    where: { businessId },
     create: {
-      merchantId,
+      businessId,
       ...NOTIFICATION_PREF_DEFAULTS,
     },
     update: {},
   });
 }
 
-export async function isNotificationTypeEnabled(merchantId: string, type: NotificationType) {
-  const preference = await getOrCreateNotificationPreferences(merchantId);
+export async function isNotificationTypeEnabled(businessId: string, type: NotificationType) {
+  const preference = await getOrCreateNotificationPreferences(businessId);
   return preference[TYPE_TO_PREF[type]];
 }
 
 export async function createMerchantNotification(input: {
-  merchantId: string;
+  businessId: string;
   type: NotificationType;
   source: NotificationSource;
   severity: NotificationSeverity;
@@ -57,7 +57,7 @@ export async function createMerchantNotification(input: {
   metadata?: Record<string, unknown>;
   dedupMode?: "window" | "once";
 }) {
-  const enabled = await isNotificationTypeEnabled(input.merchantId, input.type);
+  const enabled = await isNotificationTypeEnabled(input.businessId, input.type);
 
   if (!enabled) {
     return { created: false as const, reason: "disabled" as const };
@@ -73,7 +73,7 @@ export async function createMerchantNotification(input: {
 
     const existing = await prisma.merchantNotification.findFirst({
       where: {
-        merchantId: input.merchantId,
+        businessId: input.businessId,
         type: input.type,
         sourceRefId: input.sourceRefId,
         createdAt: createdAtFilter,
@@ -88,7 +88,7 @@ export async function createMerchantNotification(input: {
 
   const created = await prisma.merchantNotification.create({
     data: {
-      merchantId: input.merchantId,
+      businessId: input.businessId,
       type: input.type,
       source: input.source,
       severity: input.severity,

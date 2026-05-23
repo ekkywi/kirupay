@@ -7,6 +7,10 @@ import prisma from "@/lib/neon";
 import crypto from "crypto";
 import { apiError, createRequestId } from "@/lib/api-errors";
 
+function businessCodeFromWallet(publicKey: string) {
+  return `biz-${publicKey.slice(0, 6).toLowerCase()}-${crypto.randomBytes(3).toString("hex")}`;
+}
+
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
@@ -26,35 +30,76 @@ export async function POST(req: Request) {
       });
     }
 
-    const existingIdentity = await prisma.merchantWalletIdentity.findUnique({
+    const existingIdentity = await prisma.merchantPrivateWalletIdentity.findUnique({
       where: { walletAddress: publicKey },
       include: { merchant: true },
     });
 
     let merchant = existingIdentity?.merchant;
+    let activeBusinessId: string | null = merchant?.activeBusinessId ?? null;
 
     if (!merchant) {
-      merchant = await prisma.merchant.create({
-        data: {
-          walletAddress: publicKey,
-          businessName: `Merchant ${publicKey.slice(0, 4)}`,
-          email: `${publicKey}@wallet.auth`,
-          password: "WALLET_AUTH_NO_PASSWORD",
-          apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
-          walletIdentities: {
-            create: {
-              walletAddress: publicKey,
-              isActive: true,
-              linkedAt: new Date(),
-              unlinkedAt: null,
+      const created = await prisma.$transaction(async (tx) => {
+        const newMerchant = await tx.merchant.create({
+          data: {
+            businessName: `User ${publicKey.slice(0, 4)}`,
+            email: `${publicKey}@wallet.auth`,
+            password: await (await import("bcrypt")).hash(crypto.randomBytes(24).toString("hex"), 12),
+            emailVerified: true,
+            privateWallets: {
+              create: {
+                walletAddress: publicKey,
+                isActive: true,
+                linkedAt: new Date(),
+                unlinkedAt: null,
+              },
             },
           },
-        },
+        });
+
+        const business = await tx.businessEntity.create({
+          data: {
+            name: `Business ${publicKey.slice(0, 4)}`,
+            code: businessCodeFromWallet(publicKey),
+            contactEmail: newMerchant.email,
+          },
+        });
+
+        await tx.businessMembership.create({
+          data: {
+            merchantId: newMerchant.id,
+            businessId: business.id,
+            role: "OWNER",
+          },
+        });
+
+        await tx.businessCredential.create({
+          data: {
+            businessId: business.id,
+            apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
+          },
+        });
+
+        await tx.businessWalletIdentity.create({
+          data: {
+            businessId: business.id,
+            walletAddress: publicKey,
+            isActive: true,
+            linkedAt: new Date(),
+          },
+        });
+
+        await tx.merchant.update({ where: { id: newMerchant.id }, data: { activeBusinessId: business.id } });
+
+        return { newMerchant, businessId: business.id };
       });
+
+      merchant = created.newMerchant;
+      activeBusinessId = created.businessId;
     }
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ actorType: "merchant", actorId: merchant.id, wallet: publicKey })
+    const token = await new SignJWT({ actorType: "merchant", actorId: merchant.id, wallet: publicKey, activeBusinessId })
       .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime("24h")
       .sign(secret);
@@ -66,7 +111,7 @@ export async function POST(req: Request) {
       path: "/",
     });
 
-    return NextResponse.json({ success: true, merchantId: merchant.id });
+    return NextResponse.json({ success: true, businessId: activeBusinessId, activeBusinessId });
   } catch (error) {
     console.error("Wallet verify error", { requestId, error });
     return apiError(500, {

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // src/app/dashboard/payment-links/page.tsx
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
 import { CreateLinkButton } from "@/components/dashboard/CreateLinkButton";
@@ -21,8 +21,10 @@ export default async function PaymentLinksPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const merchant = await getCurrentMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentMerchantBusinessContext();
+  if (!ctx) redirect("/login");
+  const merchant = ctx.merchant;
+  const business = ctx.business;
 
   const params = await searchParams;
 
@@ -33,7 +35,7 @@ export default async function PaymentLinksPage({
 
   // 2. Rangkai kondisi filter dinamis untuk Prisma
   const whereCondition: Prisma.TransactionWhereInput = {
-    merchantId: merchant.id,
+    businessId: business.id,
     source: "PAYMENT_LINK",
   };
 
@@ -49,7 +51,7 @@ export default async function PaymentLinksPage({
   }
 
   const baseWhere: Prisma.TransactionWhereInput = {
-    merchantId: merchant.id,
+    businessId: business.id,
     source: "PAYMENT_LINK",
   };
 
@@ -101,7 +103,7 @@ export default async function PaymentLinksPage({
             View ledger
             <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <CreateLinkButton merchantId={merchant.id} />
+          <CreateLinkButton businessId={business.id} />
         </div>
       </header>
 

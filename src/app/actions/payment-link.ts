@@ -22,7 +22,7 @@ type ManualLinkActionResult =
     };
 
 export async function createManualPaymentLink(formData: {
-  merchantId: string;
+  businessId: string;
   amount: number;
   orderId?: string;
   customerEmail?: string;
@@ -76,7 +76,7 @@ export async function createManualPaymentLink(formData: {
     if (finalOrderId) {
       const existing = await prisma.transaction.findFirst({
         where: {
-          merchantId: formData.merchantId,
+          businessId: formData.businessId,
           orderId: finalOrderId,
         }
       });
@@ -97,7 +97,7 @@ export async function createManualPaymentLink(formData: {
     const expiresAt = new Date(now.getTime() + CHECKOUT_TTL_MS);
     const transaction = await prisma.transaction.create({
       data: {
-        merchantId: formData.merchantId,
+        businessId: formData.businessId,
         orderId: finalOrderId,
         amount: formData.amount,
         currency: "SOL",

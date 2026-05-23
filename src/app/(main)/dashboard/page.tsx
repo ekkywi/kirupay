@@ -4,7 +4,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { WalletOverview } from "@/components/dashboard/WalletOverview";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
 import { Activity, CreditCard, CheckCircle2, LayoutDashboard, ArrowUpRight, ShieldCheck } from "lucide-react";
@@ -16,14 +16,16 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const merchant = await getCurrentMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentMerchantBusinessContext();
+  if (!ctx) redirect("/login");
+  const merchant = ctx.merchant;
+  const business = ctx.business;
 
   const isWalletDummyEmail = merchant.email.includes("@wallet.auth");
   const isUnverified = merchant.emailVerified === false;
 
   if (isWalletDummyEmail || isUnverified) {
-    return <SetupGatekeeper merchantId={merchant.id} currentEmail={merchant.email} isWalletUser={isWalletDummyEmail} />;
+    return <SetupGatekeeper businessId={business.id} currentEmail={merchant.email} isWalletUser={isWalletDummyEmail} />;
   }
 
   const now = new Date();
@@ -43,15 +45,15 @@ export default async function DashboardPage() {
     paidTxCount,
     last7DaysTx 
   ] = await Promise.all([
-    prisma.transaction.findMany({ where: { merchantId: merchant.id }, orderBy: { createdAt: "desc" }, take: 5 }),
+    prisma.transaction.findMany({ where: { businessId: business.id }, orderBy: { createdAt: "desc" }, take: 5 }),
     // PERBAIKAN: Tambahkan netAmount ke dalam _sum
-    prisma.transaction.aggregate({ where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: startOfThisMonth } }, _sum: { netAmount: true, amount: true } }),
-    prisma.transaction.aggregate({ where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { netAmount: true, amount: true } }),
-    prisma.transaction.count({ where: { merchantId: merchant.id } }),
-    prisma.transaction.count({ where: { merchantId: merchant.id, status: "PAID" } }),
+    prisma.transaction.aggregate({ where: { businessId: business.id, status: "PAID", createdAt: { gte: startOfThisMonth } }, _sum: { netAmount: true, amount: true } }),
+    prisma.transaction.aggregate({ where: { businessId: business.id, status: "PAID", createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { netAmount: true, amount: true } }),
+    prisma.transaction.count({ where: { businessId: business.id } }),
+    prisma.transaction.count({ where: { businessId: business.id, status: "PAID" } }),
     // PERBAIKAN: Tambahkan netAmount ke dalam select
     prisma.transaction.findMany({ 
-      where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: sevenDaysAgo } },
+      where: { businessId: business.id, status: "PAID", createdAt: { gte: sevenDaysAgo } },
       select: { netAmount: true, amount: true, createdAt: true }
     }),
   ]);
@@ -106,8 +108,8 @@ export default async function DashboardPage() {
             Payment links
             <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <Link href="/developers" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-            API console
+          <Link href="/business?tab=integrations" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+            Business Hub
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -135,7 +137,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <WalletOverview initialWallet={merchant.walletAddress} />
+          <WalletOverview initialWallet={business.settlementWallet?.walletAddress || "pending"} />
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />

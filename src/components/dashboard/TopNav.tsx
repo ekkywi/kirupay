@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import type { FormEvent } from "react";
-import { Activity, Bell, CheckCheck, LogOut, Search, Settings, User } from "lucide-react";
+import { Activity, Bell, Building2, CheckCheck, LogOut, Search, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -15,15 +15,24 @@ interface TopNavProps {
   merchant: {
     businessName?: string | null;
     email?: string | null;
+    activeBusinessId?: string | null;
     actorType: "merchant" | "internal";
   } | null;
 }
+
+type BusinessItem = {
+  role: "OWNER" | "ADMIN" | "MEMBER";
+  business: { id: string; name: string; code: string };
+  isCurrent: boolean;
+};
 
 export function TopNav({ merchant }: TopNavProps) {
   const isAdmin = merchant?.actorType === "internal";
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [transactionSearch, setTransactionSearch] = useState("");
+  const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
+  const [switchingBusiness, setSwitchingBusiness] = useState(false);
   const [notificationPosition, setNotificationPosition] = useState({ top: 56, left: 0, width: 360 });
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
@@ -42,13 +51,45 @@ export function TopNav({ merchant }: TopNavProps) {
     `${iconControlBaseClass} border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20`;
 
   const resolveNotificationLink = (item: MerchantNotification) => {
-    if (item.source === "WEBHOOK") return "/developers";
+    if (item.source === "WEBHOOK") return "/business?tab=integrations";
     return "/payments";
   };
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+  };
+
+  useEffect(() => {
+    if (!merchant || merchant.actorType !== "merchant") return;
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = (await res.json()) as { data?: BusinessItem[] };
+        setBusinesses(json.data || []);
+      } catch {
+        // noop
+      }
+    })();
+  }, [merchant]);
+
+  const switchBusiness = async (businessId: string) => {
+    if (!businessId || switchingBusiness) return;
+    setSwitchingBusiness(true);
+    try {
+      const res = await fetch("/api/merchant/businesses/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
+      if (res.ok) {
+        router.refresh();
+      }
+    } finally {
+      setSwitchingBusiness(false);
+    }
   };
 
   useEffect(() => {
@@ -159,6 +200,27 @@ export function TopNav({ merchant }: TopNavProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {!isAdmin && (
+          <div className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 dark:border-white/10 dark:bg-white/[0.03]">
+            <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            <select
+              disabled={switchingBusiness}
+              value={merchant?.activeBusinessId || businesses.find((item) => item.isCurrent)?.business.id || ""}
+              onChange={(event) => void switchBusiness(event.target.value)}
+              className="max-w-[220px] truncate bg-transparent text-xs font-semibold text-slate-700 outline-none dark:text-slate-200"
+            >
+              {businesses.map((item) => (
+                <option key={item.business.id} value={item.business.id}>
+                  {item.business.name} ({item.role})
+                </option>
+              ))}
+            </select>
+            <Link href="/business" className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10">
+              Manage
+            </Link>
+          </div>
+        )}
+
         <form onSubmit={handleTransactionSearch} className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
@@ -209,9 +271,9 @@ export function TopNav({ merchant }: TopNavProps) {
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 py-2 animate-in fade-in zoom-in duration-150">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Merchant account"}</p>
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Business account"}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white truncate">
-                  {merchant?.email || "merchant@trezalink.com"}
+                  {merchant?.email || "business@trezalink.com"}
                 </p>
               </div>
               <Link

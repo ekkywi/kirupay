@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,6 +13,12 @@ enum InternalRole {
   SUPERADMIN
   SUPPORT
   DEVELOPER
+}
+
+enum BusinessRole {
+  OWNER
+  ADMIN
+  MEMBER
 }
 
 enum RpcEndpointType {
@@ -67,26 +71,128 @@ enum NotificationType {
   WEBHOOK_RECOVERED
 }
 
-// User/Merchant
 model Merchant {
-  id              String        @id @default(cuid())
-  businessName    String
-  email           String        @unique
-  password        String
-  walletAddress   String        @unique 
-  apiKey          String        @unique @default(uuid()) 
-  isActive        Boolean       @default(true)
-  emailVerified   Boolean       @default(false)
-  activationToken String?       @unique
-  walletIdentities MerchantWalletIdentity[]
-  transactions    Transaction[]
-  webhookLogs     WebhookLog[]
-  notifications   MerchantNotification[]
+  id                String   @id @default(cuid())
+  businessName      String
+  email             String   @unique
+  password          String
+  isActive          Boolean  @default(true)
+  emailVerified     Boolean  @default(false)
+  activeBusinessId  String?
+  activeBusiness    BusinessEntity? @relation("merchant_active_business", fields: [activeBusinessId], references: [id], onDelete: SetNull)
+  memberships       BusinessMembership[]
+  usedBusinessInvites BusinessInvite[]
+  privateWallets    MerchantPrivateWalletIdentity[]
+  verificationTokens MerchantEmailVerificationToken[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MerchantEmailVerificationToken {
+  id         String   @id @default(cuid())
+  merchantId String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([merchantId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model BusinessEntity {
+  id                   String   @id @default(cuid())
+  name                 String
+  code                 String   @unique
+  isActive             Boolean  @default(true)
+  contactEmail         String?
+  memberships          BusinessMembership[]
+  invites              BusinessInvite[]
+  credentials          BusinessCredential?
+  settlementWallets    BusinessWalletIdentity[]
+  transactions         Transaction[]
+  webhookLogs          WebhookLog[]
+  notifications        MerchantNotification[]
   notificationPreference MerchantNotificationPreference?
-  webhookUrl      String?
-  webhookSecret   String?       @unique 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  activeMerchants      Merchant[] @relation("merchant_active_business")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model BusinessInvite {
+  id         String         @id @default(cuid())
+  businessId String
+  business   BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  codeHash   String         @unique
+  codeHint   String
+  role       BusinessRole   @default(MEMBER)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  usedById   String?
+  usedBy     Merchant?      @relation(fields: [usedById], references: [id], onDelete: SetNull)
+  createdBy  String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([businessId, createdAt])
+  @@index([expiresAt, usedAt])
+}
+
+model BusinessMembership {
+  id          String       @id @default(cuid())
+  merchantId  String
+  businessId  String
+  role        BusinessRole @default(MEMBER)
+  isActive    Boolean      @default(true)
+  merchant    Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  business    BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@unique([merchantId, businessId])
+  @@index([businessId, role, isActive])
+  @@index([merchantId, isActive])
+}
+
+model BusinessCredential {
+  id            String   @id @default(cuid())
+  businessId    String   @unique
+  apiKey        String   @unique
+  webhookUrl    String?
+  webhookSecret String?  @unique
+  rotatedAt     DateTime?
+  business      BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MerchantPrivateWalletIdentity {
+  id            String   @id @default(cuid())
+  merchantId    String
+  merchant      Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  walletAddress String   @unique
+  isActive      Boolean  @default(true)
+  linkedAt      DateTime @default(now())
+  unlinkedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([merchantId])
+}
+
+model BusinessWalletIdentity {
+  id            String   @id @default(cuid())
+  businessId    String
+  business      BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  walletAddress String   @unique
+  isActive      Boolean  @default(true)
+  linkedAt      DateTime @default(now())
+  unlinkedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([businessId])
 }
 
 model InternalUser {
@@ -120,67 +226,51 @@ model InternalUserInvite {
   @@map("internal_user_invites")
 }
 
-model MerchantWalletIdentity {
-  id            String   @id @default(cuid())
-  merchantId    String
-  merchant      Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  walletAddress String   @unique
-  isActive      Boolean  @default(true)
-  linkedAt      DateTime @default(now())
-  unlinkedAt    DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([merchantId])
-}
-
 model PlatformMaintenance {
-  id               String    @id
-  enabled          Boolean   @default(false)
-  message          String    @default("The system is currently under maintenance. Please try again later.")
+  id                String    @id
+  enabled           Boolean   @default(false)
+  message           String    @default("The system is currently under maintenance. Please try again later.")
   maintenanceEndsAt DateTime?
-  updatedById      String?
-  updatedByEmail   String?
-  updatedAt        DateTime  @updatedAt
+  updatedById       String?
+  updatedByEmail    String?
+  updatedAt         DateTime  @updatedAt
 }
 
-// Transaction
 model Transaction {
-  id              String        @id @default(cuid())
-  merchantId      String
-  merchant        Merchant      @relation(fields: [merchantId], references: [id])
-  orderId         String
-  amount          Float
-  feeAmount       Float?
-  netAmount       Float?
-  currency        String        @default("SOL")
-  status          String        @default("PENDING")
-  txSignature     String?       @unique
-  customerEmail   String?
+  id                String   @id @default(cuid())
+  businessId        String
+  business          BusinessEntity @relation(fields: [businessId], references: [id])
+  orderId           String
+  amount            Float
+  feeAmount         Float?
+  netAmount         Float?
+  currency          String   @default("SOL")
+  status            String   @default("PENDING")
+  txSignature       String?  @unique
+  customerEmail     String?
   customerReference String?
-  customerName    String?
-  notes           String?
-  successUrl      String?
-  cancelUrl       String?
-  source          String        @default("PAYMENT_LINK")
-  buyerWallet     String?
-  walletProvider  String?
-  expiresAt       DateTime      @default(dbgenerated("(CURRENT_TIMESTAMP + interval '30 minutes')"))
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  customerName      String?
+  notes             String?
+  successUrl        String?
+  cancelUrl         String?
+  source            String   @default("PAYMENT_LINK")
+  buyerWallet       String?
+  walletProvider    String?
+  expiresAt         DateTime @default(dbgenerated("(CURRENT_TIMESTAMP + interval '30 minutes')"))
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
-// Webhook Log
 model WebhookLog {
-  id              String        @id @default(cuid())
-  merchantId      String
-  merchant        Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  event           String
-  url             String
-  status          Int?
-  payload         String
-  response        String?
-  createdAt       DateTime      @default(now())
+  id         String   @id @default(cuid())
+  businessId String
+  business   BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  event      String
+  url        String
+  status     Int?
+  payload    String
+  response   String?
+  createdAt  DateTime @default(now())
 }
 
 model RpcHealthLog {
@@ -217,23 +307,23 @@ model RpcTrafficLog {
 }
 
 model OperationalIncident {
-  id                    String              @id @default(cuid())
-  source                IncidentSource
-  severity              IncidentSeverity
-  status                IncidentStatus      @default(ACTIVE)
-  dedupKey              String
-  title                 String
-  summary               String
-  startedAt             DateTime
-  resolvedAt            DateTime?
-  lastObservedAt        DateTime
-  healthyStreak         Int                 @default(0)
-  primaryEndpointMasked String?
+  id                     String              @id @default(cuid())
+  source                 IncidentSource
+  severity               IncidentSeverity
+  status                 IncidentStatus      @default(ACTIVE)
+  dedupKey               String
+  title                  String
+  summary                String
+  startedAt              DateTime
+  resolvedAt             DateTime?
+  lastObservedAt         DateTime
+  healthyStreak          Int                 @default(0)
+  primaryEndpointMasked  String?
   fallbackEndpointMasked String?
-  triggerMetrics        Json?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  events                OperationalIncidentEvent[]
+  triggerMetrics         Json?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  events                 OperationalIncidentEvent[]
 
   @@index([status, lastObservedAt])
   @@index([source, status, lastObservedAt])
@@ -241,46 +331,46 @@ model OperationalIncident {
 }
 
 model OperationalIncidentEvent {
-  id          String            @id @default(cuid())
-  incidentId  String
-  incident    OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
-  eventType   IncidentEventType
-  message     String
-  createdAt   DateTime          @default(now())
+  id         String              @id @default(cuid())
+  incidentId String
+  incident   OperationalIncident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  eventType  IncidentEventType
+  message    String
+  createdAt  DateTime            @default(now())
 
   @@index([incidentId, createdAt])
   @@index([createdAt])
 }
 
 model MerchantNotification {
-  id         String               @id @default(cuid())
-  merchantId String
-  merchant   Merchant             @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  type       NotificationType
-  source     NotificationSource
-  severity   NotificationSeverity @default(INFO)
-  title      String
-  message    String
-  metadata   Json?
+  id          String               @id @default(cuid())
+  businessId  String
+  business    BusinessEntity       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  source      NotificationSource
+  severity    NotificationSeverity @default(INFO)
+  title       String
+  message     String
+  metadata    Json?
   sourceRefId String?
-  readAt     DateTime?
-  createdAt  DateTime             @default(now())
+  readAt      DateTime?
+  createdAt   DateTime             @default(now())
 
-  @@index([merchantId, createdAt])
-  @@index([merchantId, readAt, createdAt])
-  @@index([merchantId, severity, createdAt])
-  @@index([merchantId, sourceRefId, type, createdAt])
+  @@index([businessId, createdAt])
+  @@index([businessId, readAt, createdAt])
+  @@index([businessId, severity, createdAt])
+  @@index([businessId, sourceRefId, type, createdAt])
 }
 
 model MerchantNotificationPreference {
-  id                     String   @id @default(cuid())
-  merchantId             String   @unique
-  merchant               Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  paymentSuccess         Boolean  @default(true)
-  paymentFailed          Boolean  @default(true)
-  paymentPendingTooLong  Boolean  @default(true)
-  webhookDeliveryFailed  Boolean  @default(true)
-  webhookRecovered       Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                    String         @id @default(cuid())
+  businessId            String         @unique
+  business              BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  paymentSuccess        Boolean        @default(true)
+  paymentFailed         Boolean        @default(true)
+  paymentPendingTooLong Boolean        @default(true)
+  webhookDeliveryFailed Boolean        @default(true)
+  webhookRecovered      Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 }

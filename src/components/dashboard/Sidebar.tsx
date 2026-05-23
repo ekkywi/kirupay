@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   Activity, 
-  Terminal, 
   Settings, 
   LinkIcon, 
   BarChart3,
+  Building2,
   UserCog,
   Users,
   Wrench,
@@ -62,8 +62,13 @@ export function Sidebar({ actorType }: SidebarProps) {
     {
       title: "MANAGEMENT",
       items: [
-        { href: "/developers", label: "Developers", icon: <Terminal size={16}/> },
         { href: "/settings", label: "Settings", icon: <Settings size={16}/> },
+      ]
+    },
+    {
+      title: "BUSINESS",
+      items: [
+        { href: "/business", label: "Business Hub", icon: <Building2 size={16}/> },
       ]
     }
   ];

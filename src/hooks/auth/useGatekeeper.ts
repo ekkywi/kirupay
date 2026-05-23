@@ -9,7 +9,7 @@ type CompleteProfilePayload = {
   businessName: string;
 };
 
-export function useGatekeeper(merchantId: string, currentEmail: string) {
+export function useGatekeeper(businessId: string, currentEmail: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "error" | "success" | "", text: string }>({ type: "", text: "" });
 
@@ -28,7 +28,7 @@ export function useGatekeeper(merchantId: string, currentEmail: string) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          merchantId, 
+          businessId,
           email: data.email, 
           password: data.password, 
           businessName: data.businessName 
@@ -54,7 +54,7 @@ export function useGatekeeper(merchantId: string, currentEmail: string) {
       const res = await fetch("/api/auth/profile/resend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchantId, email: currentEmail })
+        body: JSON.stringify({ businessId, email: currentEmail })
       });
 
       if (!res.ok) await throwAuthResponseError(res, "Failed to resend email.");

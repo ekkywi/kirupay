@@ -4,22 +4,29 @@ import bs58 from "bs58";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
-import { requireMerchantUser } from "@/lib/auth-service";
+import { requireBusinessMembership } from "@/lib/auth-service";
+
+function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
+  if (error instanceof Error && error.message === "Forbidden") {
+    return { status: 403, code: "MERCHANT_FORBIDDEN", message: "Forbidden." };
+  }
+  return { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." };
+}
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
   const obs = startObservation(requestId, "POST /api/merchant/wallet/update");
 
   try {
-    let merchantId = "";
+    let ctx;
     try {
-      const merchant = await requireMerchantUser();
-      merchantId = merchant.id;
-    } catch {
-      recordObservation(obs, { outcome: "error", status: 401, errorCode: "MERCHANT_UNAUTHORIZED" });
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
+      ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+    } catch (error) {
+      const accessError = mapAccessError(error);
+      recordObservation(obs, { outcome: "error", status: accessError.status, errorCode: accessError.code });
+      return apiError(accessError.status, {
+        code: accessError.code,
+        message: accessError.message,
         requestId,
         retryable: false,
       });
@@ -54,33 +61,33 @@ export async function POST(req: Request) {
         });
       }
 
-      const existingIdentity = await prisma.merchantWalletIdentity.findUnique({ where: { walletAddress: publicKey } });
+      const existingIdentity = await prisma.businessWalletIdentity.findUnique({ where: { walletAddress: publicKey } });
 
-      if (existingIdentity && existingIdentity.merchantId !== merchantId) {
+      if (existingIdentity && existingIdentity.businessId !== ctx.business.id) {
         recordObservation(obs, { outcome: "error", status: 409, errorCode: "MERCHANT_WALLET_ALREADY_LINKED" });
         return apiError(409, {
           code: "MERCHANT_WALLET_ALREADY_LINKED",
-          message: "This wallet is already linked to another merchant account.",
+          message: "This wallet is already linked to another business account.",
           requestId,
           retryable: false,
         });
       }
 
       await prisma.$transaction(async (tx) => {
-        await tx.merchantWalletIdentity.updateMany({
-          where: { merchantId, isActive: true },
+        await tx.businessWalletIdentity.updateMany({
+          where: { businessId: ctx.business.id, isActive: true },
           data: { isActive: false, unlinkedAt: new Date() },
         });
 
-        if (existingIdentity && existingIdentity.merchantId === merchantId) {
-          await tx.merchantWalletIdentity.update({
+        if (existingIdentity && existingIdentity.businessId === ctx.business.id) {
+          await tx.businessWalletIdentity.update({
             where: { walletAddress: publicKey },
             data: { isActive: true, linkedAt: new Date(), unlinkedAt: null },
           });
         } else {
-          await tx.merchantWalletIdentity.create({
+          await tx.businessWalletIdentity.create({
             data: {
-              merchantId,
+              businessId: ctx.business.id,
               walletAddress: publicKey,
               isActive: true,
               linkedAt: new Date(),
@@ -88,8 +95,6 @@ export async function POST(req: Request) {
             },
           });
         }
-
-        await tx.merchant.update({ where: { id: merchantId }, data: { walletAddress: publicKey } });
       });
 
       recordObservation(obs, { outcome: "success", status: 200 });
@@ -97,22 +102,13 @@ export async function POST(req: Request) {
     }
 
     if (action === "unlink") {
-      const placeholderWallet = `pending_${Date.now()}_unlinked`;
-      const merchant = await prisma.merchant.findUnique({ where: { id: merchantId }, select: { walletAddress: true } });
-
-      await prisma.$transaction(async (tx) => {
-        if (merchant?.walletAddress && !merchant.walletAddress.startsWith("pending_")) {
-          await tx.merchantWalletIdentity.updateMany({
-            where: { merchantId, walletAddress: merchant.walletAddress, isActive: true },
-            data: { isActive: false, unlinkedAt: new Date() },
-          });
-        }
-
-        await tx.merchant.update({ where: { id: merchantId }, data: { walletAddress: placeholderWallet } });
+      await prisma.businessWalletIdentity.updateMany({
+        where: { businessId: ctx.business.id, isActive: true },
+        data: { isActive: false, unlinkedAt: new Date() },
       });
 
       recordObservation(obs, { outcome: "success", status: 200 });
-      return NextResponse.json({ message: "Wallet unlinked successfully", walletAddress: placeholderWallet }, { status: 200 });
+      return NextResponse.json({ message: "Wallet unlinked successfully", walletAddress: null }, { status: 200 });
     }
 
     recordObservation(obs, { outcome: "error", status: 400, errorCode: "MERCHANT_INVALID_ACTION" });

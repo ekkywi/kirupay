@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 // src/app/dashboard/payments/page.tsx
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { ExportTransactionsButton } from "@/components/dashboard/ExportTransactionsButton";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { Activity, ArrowUpRight, CheckCircle2, Clock3, ReceiptText, TrendingUp } from "lucide-react";
 import type { Prisma } from "@prisma/client";
@@ -22,8 +22,10 @@ export default async function PaymentsPage({
   // Tangkap parameter dari URL (dari komponen TransactionTable)
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const merchant = await getCurrentMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentMerchantBusinessContext();
+  if (!ctx) redirect("/login");
+  const merchant = ctx.merchant;
+  const business = ctx.business;
 
   const params = await searchParams;
 
@@ -35,7 +37,7 @@ export default async function PaymentsPage({
 
   // 2. Buat kondisi filter untuk Prisma (WHERE clause dinamis)
   const whereCondition: Prisma.TransactionWhereInput = {
-    merchantId: merchant.id,
+    businessId: business.id,
   };
 
   if (search) {
@@ -58,7 +60,7 @@ export default async function PaymentsPage({
     whereCondition.source = sourceFilter;
   }
 
-  const baseWhere: Prisma.TransactionWhereInput = { merchantId: merchant.id };
+  const baseWhere: Prisma.TransactionWhereInput = { businessId: business.id };
 
   // 3. Hitung TOTAL SELURUH DATA (untuk membuat nomor halaman)
   const [

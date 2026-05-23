@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
-  merchant: {
+  businessCredential: {
     findUnique: vi.fn(),
   },
   transaction: {
@@ -24,10 +24,12 @@ describe("smoke: checkout create flow", () => {
   it("creates checkout URL for downstream /pay render flow", async () => {
     process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
     maintenanceMock.mockResolvedValue(null);
-    prismaMock.merchant.findUnique.mockResolvedValue({
-      id: "merchant_smoke",
-      isActive: true,
-      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_smoke",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
     });
     prismaMock.transaction.findFirst.mockResolvedValue(null);
     prismaMock.transaction.create.mockResolvedValue({

@@ -13,7 +13,7 @@ export async function evaluatePaymentLifecycle(now = new Date()) {
     },
     select: {
       id: true,
-      merchantId: true,
+      businessId: true,
       orderId: true,
       amount: true,
       currency: true,
@@ -26,7 +26,7 @@ export async function evaluatePaymentLifecycle(now = new Date()) {
   let warned = 0;
   for (const tx of warningCandidates) {
     const result = await createMerchantNotification({
-      merchantId: tx.merchantId,
+      businessId: tx.businessId,
       type: "PAYMENT_PENDING_TOO_LONG",
       source: "PAYMENT",
       severity: "WARNING",
@@ -53,7 +53,7 @@ export async function evaluatePaymentLifecycle(now = new Date()) {
     },
     select: {
       id: true,
-      merchantId: true,
+      businessId: true,
       orderId: true,
       amount: true,
       currency: true,
@@ -82,7 +82,7 @@ export async function evaluatePaymentLifecycle(now = new Date()) {
     failed += 1;
 
     const result = await createMerchantNotification({
-      merchantId: tx.merchantId,
+      businessId: tx.businessId,
       type: "PAYMENT_FAILED",
       source: "PAYMENT",
       severity: "ERROR",

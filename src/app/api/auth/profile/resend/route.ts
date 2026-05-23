@@ -1,26 +1,41 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import crypto from "crypto";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
+import { issueMerchantVerificationToken } from "@/lib/email-verification";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const { merchantId, email } = await req.json();
+    const { businessId, email } = await req.json();
 
-    if (!merchantId || !email) {
+    if (!businessId || !email) {
       return apiError(400, {
         code: "AUTH_MISSING_REQUIRED_FIELDS",
         message: "Missing required fields.",
         requestId,
         retryable: false,
-        details: { fields: ["merchantId", "email"] },
+        details: { fields: ["businessId", "email"] },
       });
     }
 
-    const merchant = await prisma.merchant.findUnique({ where: { id: merchantId } });
+    const membership = await prisma.businessMembership.findFirst({
+      where: { businessId, isActive: true },
+      select: { merchantId: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!membership) {
+      return apiError(404, {
+        code: "AUTH_MERCHANT_NOT_FOUND",
+        message: "Merchant not found for this business.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    const merchant = await prisma.merchant.findUnique({ where: { id: membership.merchantId } });
 
     if (!merchant) {
       return apiError(404, {
@@ -40,12 +55,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const newActivationToken = crypto.randomBytes(32).toString("hex");
-
-    await prisma.merchant.update({
-      where: { id: merchantId },
-      data: { activationToken: newActivationToken },
-    });
+    const newActivationToken = await issueMerchantVerificationToken(membership.merchantId);
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const baseUrl = process.env.FRONTEND_URL;

@@ -1,21 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { mapMerchantAccessError, requireBusinessMembership } from "@/lib/auth-service";
 import { apiError, createRequestId } from "@/lib/api-errors";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const merchant = await getCurrentMerchant();
-    if (!merchant) {
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
-        requestId,
-        retryable: false,
-      });
-    }
+    const ctx = await requireBusinessMembership();
+    const businessId = ctx.business.id;
 
     const body = (await req.json()) as { notificationId?: string; markAll?: boolean };
     const now = new Date();
@@ -23,7 +16,7 @@ export async function POST(req: Request) {
     if (body.markAll) {
       await prisma.merchantNotification.updateMany({
         where: {
-          merchantId: merchant.id,
+          businessId,
           readAt: null,
         },
         data: {
@@ -46,7 +39,7 @@ export async function POST(req: Request) {
     await prisma.merchantNotification.updateMany({
       where: {
         id: body.notificationId,
-        merchantId: merchant.id,
+        businessId,
         readAt: null,
       },
       data: {
@@ -56,6 +49,15 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      const mapped = mapMerchantAccessError(error);
+      return apiError(mapped.status, {
+        code: mapped.code,
+        message: mapped.message,
+        requestId,
+        retryable: false,
+      });
+    }
     console.error("Mark notification read error", { requestId, error });
     return apiError(500, {
       code: "INTERNAL_SERVER_ERROR",

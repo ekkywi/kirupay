@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/neon";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { mapMerchantAccessError, requireBusinessMembership } from "@/lib/auth-service";
 import { apiError, createRequestId } from "@/lib/api-errors";
 
 const CSV_HEADERS = [
   "transactionId",
-  "merchantId",
+  "businessId",
   "orderId",
   "status",
   "currency",
@@ -52,15 +52,8 @@ export async function GET(request: Request) {
   const requestId = createRequestId();
 
   try {
-    const merchant = await getCurrentMerchant();
-    if (!merchant) {
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
-        requestId,
-        retryable: false,
-      });
-    }
+    const ctx = await requireBusinessMembership();
+    const businessId = ctx.business.id;
 
     const { searchParams } = new URL(request.url);
     const statusParam = (searchParams.get("status") || "PAID").toUpperCase();
@@ -100,7 +93,7 @@ export async function GET(request: Request) {
     }
 
     const where: Prisma.TransactionWhereInput = {
-      merchantId: merchant.id,
+      businessId,
       createdAt: {
         gte: fromDate,
         lte: toDate,
@@ -113,7 +106,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
-        merchantId: true,
+        businessId: true,
         orderId: true,
         status: true,
         currency: true,
@@ -135,7 +128,7 @@ export async function GET(request: Request) {
     const rows = transactions.map((tx) =>
       [
         tx.id,
-        tx.merchantId,
+        tx.businessId,
         tx.orderId,
         tx.status,
         tx.currency,
@@ -166,6 +159,15 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      const mapped = mapMerchantAccessError(error);
+      return apiError(mapped.status, {
+        code: mapped.code,
+        message: mapped.message,
+        requestId,
+        retryable: false,
+      });
+    }
     console.error("Export transactions CSV error", { requestId, error });
     return apiError(500, {
       code: "INTERNAL_SERVER_ERROR",

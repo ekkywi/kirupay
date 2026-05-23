@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const getCurrentMerchantMock = vi.fn();
+const requireBusinessMembershipMock = vi.fn();
 const prismaMock = {
   transaction: {
     findMany: vi.fn(),
@@ -12,7 +12,11 @@ vi.mock("@/lib/neon", () => ({
 }));
 
 vi.mock("@/lib/auth-service", () => ({
-  getCurrentMerchant: getCurrentMerchantMock,
+  requireBusinessMembership: requireBusinessMembershipMock,
+  mapMerchantAccessError: (error: Error) =>
+    error.message === "Forbidden"
+      ? { status: 403, code: "MERCHANT_FORBIDDEN", message: "Forbidden." }
+      : { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." },
 }));
 
 describe("GET /api/merchant/transactions/export", () => {
@@ -27,7 +31,7 @@ describe("GET /api/merchant/transactions/export", () => {
   });
 
   it("returns 401 when merchant is not authenticated", async () => {
-    getCurrentMerchantMock.mockResolvedValue(null);
+    requireBusinessMembershipMock.mockRejectedValue(new Error("Unauthorized"));
     const { GET } = await import("@/app/api/merchant/transactions/export/route");
 
     const res = await GET(new Request("http://localhost/api/merchant/transactions/export"));
@@ -40,7 +44,7 @@ describe("GET /api/merchant/transactions/export", () => {
   });
 
   it("returns 400 for invalid date query", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "m_1" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "biz_1" } });
     const { GET } = await import("@/app/api/merchant/transactions/export/route");
 
     const res = await GET(new Request("http://localhost/api/merchant/transactions/export?from=invalid-date"));
@@ -51,7 +55,7 @@ describe("GET /api/merchant/transactions/export", () => {
   });
 
   it("uses default filter (PAID + last 30 days) and returns csv response headers", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "merchant_123" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "business_123" } });
     prismaMock.transaction.findMany.mockResolvedValue([]);
     const { GET } = await import("@/app/api/merchant/transactions/export/route");
 
@@ -63,29 +67,29 @@ describe("GET /api/merchant/transactions/export", () => {
     expect(res.headers.get("Content-Disposition")).toContain(
       'attachment; filename="transactions-reconciliation-20260521.csv"',
     );
-    expect(csv.startsWith("transactionId,merchantId,orderId,status,currency,grossAmount,feeAmount,netAmount,txSignature,source,buyerWallet,customerEmail,customerReference,customerName,notes,createdAtUtc,updatedAtUtc")).toBe(true);
+    expect(csv.startsWith("transactionId,businessId,orderId,status,currency,grossAmount,feeAmount,netAmount,txSignature,source,buyerWallet,customerEmail,customerReference,customerName,notes,createdAtUtc,updatedAtUtc")).toBe(true);
 
     expect(prismaMock.transaction.findMany).toHaveBeenCalledTimes(1);
     const callArg = prismaMock.transaction.findMany.mock.calls[0][0] as {
       where: {
-        merchantId: string;
+        businessId: string;
         status: string;
         createdAt: { gte: Date; lte: Date };
       };
     };
 
-    expect(callArg.where.merchantId).toBe("merchant_123");
+    expect(callArg.where.businessId).toBe("business_123");
     expect(callArg.where.status).toBe("PAID");
     expect(callArg.where.createdAt.lte.toISOString()).toBe("2026-05-21T10:00:00.000Z");
     expect(callArg.where.createdAt.gte.toISOString()).toBe("2026-04-21T10:00:00.000Z");
   });
 
   it("returns csv rows with raw numeric values, UTC timestamps, and empty strings for null fields", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "merchant_123" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "business_123" } });
     prismaMock.transaction.findMany.mockResolvedValue([
       {
         id: "txn_1",
-        merchantId: "merchant_123",
+        businessId: "business_123",
         orderId: "ORD-1",
         status: "PAID",
         currency: "SOL",

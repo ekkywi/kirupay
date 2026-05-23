@@ -4,6 +4,12 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
+import { issueMerchantVerificationToken } from "@/lib/email-verification";
+
+function toBusinessCode(name: string) {
+  const normalized = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `${normalized || "business"}-${crypto.randomBytes(3).toString("hex")}`;
+}
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -33,8 +39,8 @@ export async function POST(req: Request) {
     }
 
     const [existingMerchant, existingWalletIdentity] = await Promise.all([
-      prisma.merchant.findFirst({ where: { OR: [{ email }, { walletAddress }] } }),
-      prisma.merchantWalletIdentity.findUnique({ where: { walletAddress } }),
+      prisma.merchant.findUnique({ where: { email } }),
+      prisma.merchantPrivateWalletIdentity.findUnique({ where: { walletAddress } }),
     ]);
 
     if (existingMerchant || existingWalletIdentity) {
@@ -47,35 +53,72 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const activationToken = crypto.randomBytes(32).toString("hex");
 
-    await prisma.merchant.create({
-      data: {
-        businessName,
-        email,
-        walletAddress,
-        password: hashedPassword,
-        activationToken,
-        emailVerified: false,
-        apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
-        walletIdentities: {
-          create: {
-            walletAddress,
-            isActive: true,
-            linkedAt: new Date(),
+    const created = await prisma.$transaction(async (tx) => {
+      const merchant = await tx.merchant.create({
+        data: {
+          businessName: businessName,
+          email,
+          password: hashedPassword,
+          emailVerified: false,
+          privateWallets: {
+            create: {
+              walletAddress,
+              isActive: true,
+              linkedAt: new Date(),
+            },
           },
         },
-      },
+      });
+
+      const business = await tx.businessEntity.create({
+        data: {
+          name: businessName,
+          code: toBusinessCode(businessName),
+          contactEmail: email,
+        },
+      });
+
+      await tx.businessMembership.create({
+        data: {
+          merchantId: merchant.id,
+          businessId: business.id,
+          role: "OWNER",
+          isActive: true,
+        },
+      });
+
+      await tx.businessCredential.create({
+        data: {
+          businessId: business.id,
+          apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
+        },
+      });
+
+      await tx.businessWalletIdentity.create({
+        data: {
+          businessId: business.id,
+          walletAddress,
+          isActive: true,
+          linkedAt: new Date(),
+        },
+      });
+
+      await tx.merchant.update({ where: { id: merchant.id }, data: { activeBusinessId: business.id } });
+
+      return { merchant, business };
     });
 
+    const verifyToken = await issueMerchantVerificationToken(created.merchant.id);
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const baseUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
     await resend.emails.send({
       from: "Kirupay <noreply@kirupay.com>",
       to: email,
       subject: "Action Required: Verify Your Kirupay Account",
-      html: `<!DOCTYPE html><html><body><p>Hello ${businessName}, verify your account:</p><a href="${baseUrl}/activate?token=${activationToken}">Verify</a></body></html>`,
+      html: `<!DOCTYPE html><html><body><p>Hello ${businessName}, verify your account:</p><a href="${baseUrl}/activate?token=${verifyToken}">Verify</a></body></html>`,
     });
 
     return NextResponse.json(

@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   const transactions = actor.actorType === "merchant"
     ? await prisma.transaction.findMany({
-        where: { merchantId: actor.merchant.id },
+        where: { businessId: actor.activeBusinessId ?? "__missing_business__" },
         orderBy: { createdAt: "desc" },
       })
     : [];
@@ -28,12 +28,21 @@ export default async function DashboardLayout({
         .reduce((acc, tx) => acc + (tx.netAmount ?? tx.amount ?? 0), 0)
     : 0;
 
+  const activeBusiness =
+    actor.actorType === "merchant" && actor.activeBusinessId
+      ? await prisma.businessEntity.findUnique({
+          where: { id: actor.activeBusinessId },
+          select: { id: true, name: true },
+        })
+      : null;
+
   const shellIdentity =
     actor.actorType === "merchant"
       ? {
           actorType: "merchant" as const,
-          businessName: actor.merchant.businessName,
+          businessName: activeBusiness?.name || actor.merchant.businessName,
           email: actor.merchant.email,
+          activeBusinessId: actor.activeBusinessId,
         }
       : {
           actorType: "internal" as const,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const getCurrentMerchantMock = vi.fn();
+const requireBusinessMembershipMock = vi.fn();
 
 const prismaMock = {
   merchantNotification: {
@@ -14,7 +14,11 @@ const prismaMock = {
 };
 
 vi.mock("@/lib/auth-service", () => ({
-  getCurrentMerchant: getCurrentMerchantMock,
+  requireBusinessMembership: requireBusinessMembershipMock,
+  mapMerchantAccessError: (error: Error) =>
+    error.message === "Forbidden"
+      ? { status: 403, code: "MERCHANT_FORBIDDEN", message: "Forbidden." }
+      : { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." },
 }));
 
 vi.mock("@/lib/neon", () => ({
@@ -27,7 +31,7 @@ describe("merchant notifications routes", () => {
   });
 
   it("returns 401 for notifications list when unauthorized", async () => {
-    getCurrentMerchantMock.mockResolvedValue(null);
+    requireBusinessMembershipMock.mockRejectedValue(new Error("Unauthorized"));
     const { GET } = await import("@/app/api/merchant/notifications/route");
 
     const res = await GET(new Request("http://localhost/api/merchant/notifications"));
@@ -38,7 +42,7 @@ describe("merchant notifications routes", () => {
   });
 
   it("returns paginated notifications", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "m1" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "biz_1" } });
     prismaMock.merchantNotification.findMany.mockResolvedValue([
       { id: "n3", createdAt: new Date() },
       { id: "n2", createdAt: new Date() },
@@ -56,7 +60,7 @@ describe("merchant notifications routes", () => {
   });
 
   it("marks all notifications as read", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "m1" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "biz_1" } });
     prismaMock.merchantNotification.updateMany.mockResolvedValue({ count: 3 });
 
     const { POST } = await import("@/app/api/merchant/notifications/mark-read/route");
@@ -73,7 +77,7 @@ describe("merchant notifications routes", () => {
   });
 
   it("returns unread count", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "m1" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "biz_1" } });
     prismaMock.merchantNotification.count.mockResolvedValue(7);
 
     const { GET } = await import("@/app/api/merchant/notifications/unread-count/route");
@@ -85,9 +89,9 @@ describe("merchant notifications routes", () => {
   });
 
   it("updates notification preferences", async () => {
-    getCurrentMerchantMock.mockResolvedValue({ id: "m1" });
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "biz_1" } });
     prismaMock.merchantNotificationPreference.upsert.mockResolvedValue({
-      merchantId: "m1",
+      businessId: "biz_1",
       paymentSuccess: true,
       paymentFailed: false,
       paymentPendingTooLong: true,

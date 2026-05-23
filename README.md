@@ -59,7 +59,7 @@ It provides:
 - Checkout runtime: `/pay/[id]` + `POST /api/v1/checkout`.
 - Merchant area: dashboard, payments, payment links, analytics, settings, developers.
 - Admin area: overview, transactions, revenue, merchants, maintenance.
-- Persistence: Prisma models for `Merchant`, `Transaction`, `WebhookLog`, `PlatformMaintenance`.
+- Persistence: Prisma models for `Merchant`, `BusinessEntity`, `BusinessMembership`, `BusinessCredential`, `Transaction`, `WebhookLog`, and `PlatformMaintenance`.
 
 ## Local Setup
 1. Install dependencies
@@ -214,3 +214,5 @@ npx prisma generate
 ## Project Planning
 Maintenance implementation and validation record is tracked in:
 - [`plan.md`](./plan.md)
+- Backend migration baseline and shim policy for Phase 1 closure:
+  - [`PHASE1_BACKEND_MIGRATION.md`](./PHASE1_BACKEND_MIGRATION.md)

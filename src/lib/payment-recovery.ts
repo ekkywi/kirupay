@@ -69,7 +69,7 @@ async function deliverWebhook(payloadString: string, webhookUrl: string, webhook
 export async function confirmTransactionPayment(input: ConfirmTransactionInput) {
   const existingTx = await prisma.transaction.findUnique({
     where: { id: input.transactionId },
-    include: { merchant: true },
+    include: { business: { include: { credentials: true } } },
   });
 
   if (!existingTx) {
@@ -105,7 +105,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
 
     if (updated.count > 0) {
       await createMerchantNotification({
-        merchantId: existingTx.merchantId,
+        businessId: existingTx.businessId,
         type: "PAYMENT_FAILED",
         source: "PAYMENT",
         severity: "ERROR",
@@ -167,12 +167,12 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
     };
   }
 
-  const transactionWithMerchant = await prisma.transaction.findUnique({
+  const transactionWithBusiness = await prisma.transaction.findUnique({
     where: { id: paidTransaction.id },
-    include: { merchant: true },
+    include: { business: { include: { credentials: true } } },
   });
 
-  if (!transactionWithMerchant) {
+  if (!transactionWithBusiness) {
     return {
       success: false,
       error: "Transaction not found after update.",
@@ -181,42 +181,42 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
   }
 
   await createMerchantNotification({
-    merchantId: transactionWithMerchant.merchantId,
+    businessId: transactionWithBusiness.businessId,
     type: "PAYMENT_SUCCESS",
     source: "PAYMENT",
     severity: "INFO",
     title: "Payment confirmed",
-    message: `Order ${transactionWithMerchant.orderId} was confirmed and marked as paid.`,
-    sourceRefId: transactionWithMerchant.id,
+    message: `Order ${transactionWithBusiness.orderId} was confirmed and marked as paid.`,
+    sourceRefId: transactionWithBusiness.id,
     metadata: {
-      transactionId: transactionWithMerchant.id,
-      orderId: transactionWithMerchant.orderId,
-      amount: transactionWithMerchant.amount,
-      currency: transactionWithMerchant.currency,
-      status: transactionWithMerchant.status,
-      txSignature: transactionWithMerchant.txSignature,
+      transactionId: transactionWithBusiness.id,
+      orderId: transactionWithBusiness.orderId,
+      amount: transactionWithBusiness.amount,
+      currency: transactionWithBusiness.currency,
+      status: transactionWithBusiness.status,
+      txSignature: transactionWithBusiness.txSignature,
     },
   });
 
-  const webhookUrl = transactionWithMerchant.merchant.webhookUrl;
-  const webhookSecret = transactionWithMerchant.merchant.webhookSecret;
+  const webhookUrl = transactionWithBusiness.business.credentials?.webhookUrl ?? null;
+  const webhookSecret = transactionWithBusiness.business.credentials?.webhookSecret ?? null;
   let webhookLogId: string | null = null;
 
   if (webhookUrl) {
     const payloadData = {
       event: "payment.success",
       data: {
-        orderId: transactionWithMerchant.orderId,
-        transactionId: transactionWithMerchant.id,
-        grossAmount: transactionWithMerchant.amount,
-        platformFee: transactionWithMerchant.feeAmount,
-        netAmount: transactionWithMerchant.netAmount,
-        currency: transactionWithMerchant.currency,
-        status: transactionWithMerchant.status,
-        txSignature: transactionWithMerchant.txSignature,
-        buyerWallet: transactionWithMerchant.buyerWallet,
-        walletProvider: transactionWithMerchant.walletProvider,
-        paidAt: transactionWithMerchant.updatedAt,
+        orderId: transactionWithBusiness.orderId,
+        transactionId: transactionWithBusiness.id,
+        grossAmount: transactionWithBusiness.amount,
+        platformFee: transactionWithBusiness.feeAmount,
+        netAmount: transactionWithBusiness.netAmount,
+        currency: transactionWithBusiness.currency,
+        status: transactionWithBusiness.status,
+        txSignature: transactionWithBusiness.txSignature,
+        buyerWallet: transactionWithBusiness.buyerWallet,
+        walletProvider: transactionWithBusiness.walletProvider,
+        paidAt: transactionWithBusiness.updatedAt,
       },
     };
 
@@ -226,7 +226,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
     try {
       const newLog = await prisma.webhookLog.create({
         data: {
-          merchantId: transactionWithMerchant.merchantId,
+          businessId: transactionWithBusiness.businessId,
           event: "payment.success",
           url: webhookUrl,
           status: delivery.statusCode,
@@ -239,12 +239,12 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
 
       if (isWebhookFailed(delivery.statusCode)) {
         await createMerchantNotification({
-          merchantId: transactionWithMerchant.merchantId,
+          businessId: transactionWithBusiness.businessId,
           type: "WEBHOOK_DELIVERY_FAILED",
           source: "WEBHOOK",
           severity: "ERROR",
           title: "Webhook delivery failed",
-          message: `Delivery failed for order ${transactionWithMerchant.orderId}. Check webhook logs and retry.`,
+          message: `Delivery failed for order ${transactionWithBusiness.orderId}. Check webhook logs and retry.`,
           sourceRefId: newLog.id,
           metadata: {
             webhookLogId: newLog.id,
@@ -261,7 +261,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
 
   return {
     success: true,
-    transaction: transactionWithMerchant,
+    transaction: transactionWithBusiness,
     webhookLogId,
   };
 }
@@ -270,11 +270,14 @@ export async function retryWebhookDelivery(logId: string) {
   const existingLog = await prisma.webhookLog.findUnique({
     where: { id: logId },
     include: {
-      merchant: {
-        select: {
-          webhookUrl: true,
-          webhookSecret: true,
-          businessName: true,
+      business: {
+        include: {
+          credentials: {
+            select: {
+              webhookUrl: true,
+              webhookSecret: true,
+            },
+          },
         },
       },
     },
@@ -284,25 +287,29 @@ export async function retryWebhookDelivery(logId: string) {
     return { success: false, error: "Webhook log not found.", statusCode: 404 };
   }
 
-  if (!existingLog.merchant.webhookUrl) {
+  const webhookUrl = existingLog.business.credentials?.webhookUrl ?? null;
+  const webhookSecret = existingLog.business.credentials?.webhookSecret ?? null;
+  const ownerLabel = existingLog.business.name || existingLog.businessId;
+
+  if (!webhookUrl) {
     return {
       success: false,
-      error: `Merchant ${existingLog.merchant.businessName} has no webhook endpoint configured.`,
+      error: `Business ${ownerLabel} has no webhook endpoint configured.`,
       statusCode: 400,
     };
   }
 
   const delivery = await deliverWebhook(
     existingLog.payload,
-    existingLog.merchant.webhookUrl,
-    existingLog.merchant.webhookSecret
+    webhookUrl,
+    webhookSecret
   );
 
   const retryLog = await prisma.webhookLog.create({
     data: {
-      merchantId: existingLog.merchantId,
+      businessId: existingLog.businessId,
       event: `${existingLog.event}.retry`,
-      url: existingLog.merchant.webhookUrl,
+      url: webhookUrl,
       status: delivery.statusCode,
       payload: existingLog.payload,
       response: delivery.responseText,
@@ -311,7 +318,7 @@ export async function retryWebhookDelivery(logId: string) {
 
   if (isWebhookFailed(delivery.statusCode)) {
     await createMerchantNotification({
-      merchantId: existingLog.merchantId,
+      businessId: existingLog.businessId,
       type: "WEBHOOK_DELIVERY_FAILED",
       source: "WEBHOOK",
       severity: "ERROR",
@@ -328,7 +335,7 @@ export async function retryWebhookDelivery(logId: string) {
     });
   } else {
     await createMerchantNotification({
-      merchantId: existingLog.merchantId,
+      businessId: existingLog.businessId,
       type: "WEBHOOK_RECOVERED",
       source: "WEBHOOK",
       severity: "INFO",

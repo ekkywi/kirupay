@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const transaction = await prisma.transaction.findUnique({
     where: { id },
-    include: { merchant: { select: { businessName: true } } }
+    include: { business: { select: { name: true } } }
   });
 
   if (!transaction) return { title: "Invoice Not Found | Trezalink" };
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: `Pay ${transaction.amount} SOL to ${transaction.merchant.businessName}`,
+    title: `Pay ${transaction.amount} SOL to ${transaction.business.name}`,
     description: `Secure Web3 checkout powered by Trezalink for Order #${transaction.orderId}`,
   };
 }
@@ -63,12 +63,15 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
   const transaction = await prisma.transaction.findUnique({
     where: { id: id },
     include: {
-      merchant: {
-        select: {
-          businessName: true,
-          walletAddress: true,
-        }
-      }
+      business: {
+        include: {
+          settlementWallets: {
+            where: { isActive: true },
+            take: 1,
+            select: { walletAddress: true },
+          },
+        },
+      },
     }
   });
 
@@ -110,7 +113,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">Payment Receipt</h1>
             <p className="text-gray-500 dark:text-gray-400 mb-5 text-sm leading-relaxed">
-            Thank you for your purchase from <strong>{transaction.merchant.businessName}</strong>. Your transaction has been confirmed.
+            Thank you for your purchase from <strong>{transaction.business.name}</strong>. Your transaction has been confirmed.
             </p>
           </div>
 
@@ -143,7 +146,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
             <dl className="space-y-3 text-sm">
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-500 dark:text-gray-400">Merchant</dt>
-                <dd className="font-semibold text-gray-900 dark:text-white text-right">{transaction.merchant.businessName}</dd>
+                <dd className="font-semibold text-gray-900 dark:text-white text-right">{transaction.business.name}</dd>
               </div>
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-500 dark:text-gray-400">Order reference</dt>
@@ -304,7 +307,15 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em]">Secure Web3 Checkout</span>
         </div>
 
-        <CheckoutCard transaction={transaction} />
+        <CheckoutCard
+          transaction={{
+            ...transaction,
+            merchant: {
+              businessName: transaction.business.name,
+              walletAddress: transaction.business.settlementWallets[0]?.walletAddress || "pending",
+            },
+          }}
+        />
 
         <div className="mt-8 text-center flex items-center justify-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500 p-2 px-4 rounded-full bg-white dark:bg-[#111] shadow-sm border border-gray-100 dark:border-white/5">
            <span>Powered by</span>

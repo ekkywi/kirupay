@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMock = {
-  merchant: {
+  businessCredential: {
     findUnique: vi.fn(),
   },
   transaction: {
@@ -47,10 +47,12 @@ describe("POST /api/v1/checkout", () => {
   });
 
   it("returns 400 on validation error with diagnostics contract", async () => {
-    prismaMock.merchant.findUnique.mockResolvedValue({
-      id: "m1",
-      isActive: true,
-      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
     });
 
     const { POST } = await import("@/app/api/v1/checkout/route");
@@ -73,10 +75,12 @@ describe("POST /api/v1/checkout", () => {
   });
 
   it("returns 400 when metadata exceeds allowed length", async () => {
-    prismaMock.merchant.findUnique.mockResolvedValue({
-      id: "m1",
-      isActive: true,
-      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
     });
 
     const { POST } = await import("@/app/api/v1/checkout/route");
@@ -104,10 +108,12 @@ describe("POST /api/v1/checkout", () => {
   });
 
   it("returns 409 when duplicate order id exists", async () => {
-    prismaMock.merchant.findUnique.mockResolvedValue({
-      id: "m1",
-      isActive: true,
-      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
     });
     prismaMock.transaction.findFirst.mockResolvedValue({ id: "txn-existing" });
 
@@ -160,10 +166,12 @@ describe("POST /api/v1/checkout", () => {
   });
 
   it("returns 201 on success", async () => {
-    prismaMock.merchant.findUnique.mockResolvedValue({
-      id: "m1",
-      isActive: true,
-      walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ",
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
     });
     prismaMock.transaction.findFirst.mockResolvedValue(null);
     const expiresAt = new Date("2026-05-22T01:30:00.000Z");

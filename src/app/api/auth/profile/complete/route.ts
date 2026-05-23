@@ -1,30 +1,45 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
+import { issueMerchantVerificationToken } from "@/lib/email-verification";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const { merchantId, email, password, businessName } = await req.json();
+    const { businessId, email, password, businessName } = await req.json();
 
-    if (!merchantId || !email || !password || !businessName) {
+    if (!businessId || !email || !password || !businessName) {
       return apiError(400, {
         code: "AUTH_MISSING_REQUIRED_FIELDS",
         message: "All fields are required.",
         requestId,
         retryable: false,
-        details: { fields: ["merchantId", "email", "password", "businessName"] },
+        details: { fields: ["businessId", "email", "password", "businessName"] },
+      });
+    }
+
+    const membership = await prisma.businessMembership.findFirst({
+      where: { businessId, isActive: true },
+      select: { merchantId: true, businessId: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (!membership) {
+      return apiError(404, {
+        code: "AUTH_MERCHANT_NOT_FOUND",
+        message: "Merchant not found for this business.",
+        requestId,
+        retryable: false,
       });
     }
 
     const existingEmail = await prisma.merchant.findFirst({
       where: {
         email,
-        id: { not: merchantId },
+        id: { not: membership.merchantId },
       },
     });
 
@@ -38,18 +53,33 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-    const activationToken = crypto.randomBytes(32).toString("hex");
 
-    await prisma.merchant.update({
-      where: { id: merchantId },
-      data: {
-        email,
-        password: hashedPassword,
-        businessName,
-        activationToken,
-        emailVerified: false,
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.merchant.update({
+        where: { id: membership.merchantId },
+        data: {
+          email,
+          password: hashedPassword,
+          businessName: businessName,
+          emailVerified: false,
+        },
+      });
+
+      const activeMembership = await tx.businessMembership.findFirst({
+        where: { merchantId: membership.merchantId, isActive: true },
+        include: { business: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      if (activeMembership) {
+        await tx.businessEntity.update({
+          where: { id: activeMembership.businessId },
+          data: { name: businessName, contactEmail: email },
+        });
+      }
     });
+
+    const activationToken = await issueMerchantVerificationToken(membership.merchantId);
 
     const resend = new Resend(process.env.RESEND_API_KEY!);
     const baseUrl = process.env.FRONTEND_URL;
