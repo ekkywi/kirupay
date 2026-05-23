@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 import nacl from "tweetnacl";
 import bs58 from "bs58";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
+import { requireMerchantUser } from "@/lib/auth-service";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
   const obs = startObservation(requestId, "POST /api/merchant/wallet/update");
 
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth-token")?.value;
-
-    if (!token) {
+    let merchantId = "";
+    try {
+      const merchant = await requireMerchantUser();
+      merchantId = merchant.id;
+    } catch {
       recordObservation(obs, { outcome: "error", status: 401, errorCode: "MERCHANT_UNAUTHORIZED" });
       return apiError(401, {
         code: "MERCHANT_UNAUTHORIZED",
@@ -24,10 +24,6 @@ export async function POST(req: Request) {
         retryable: false,
       });
     }
-
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
-    const merchantId = payload.merchantId as string;
 
     const { action, publicKey, signature, message } = await req.json();
 

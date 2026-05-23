@@ -1,6 +1,6 @@
 "use server";
 
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { requireInternalUser } from "@/lib/auth-service";
 import {
   DEFAULT_MAINTENANCE_MESSAGE,
   upsertPlatformMaintenanceState,
@@ -11,13 +11,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 async function requireAdmin() {
-  const merchant = await getCurrentMerchant();
-
-  if (!merchant || merchant.role !== "ADMIN") {
-    throw new Error("Unauthorized");
-  }
-
-  return merchant;
+  return requireInternalUser({ roles: ["SUPERADMIN", "SUPPORT", "DEVELOPER"] });
 }
 
 function parseDateTime(value: FormDataEntryValue | null) {
@@ -60,7 +54,7 @@ function buildMaintenanceRedirectUrl(params: { error?: string; success?: string;
 }
 
 export async function saveMaintenanceSettingsAction(formData: FormData): Promise<void> {
-  const admin = await requireAdmin();
+  const admin = await requireInternalUser({ roles: ["SUPERADMIN"] });
   const returnTo = resolveReturnPath(formData);
   const enabled = formData.get("enabled") === "on";
   const message = String(formData.get("message") ?? "").trim() || DEFAULT_MAINTENANCE_MESSAGE;
@@ -84,7 +78,7 @@ export async function saveMaintenanceSettingsAction(formData: FormData): Promise
 }
 
 export async function resyncTransactionAction(formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireInternalUser({ roles: ["SUPERADMIN", "SUPPORT"] });
   const returnTo = resolveReturnPath(formData);
 
   const transactionId = String(formData.get("transactionId") ?? "").trim();
@@ -115,7 +109,7 @@ export async function resyncTransactionAction(formData: FormData): Promise<void>
 }
 
 export async function retryWebhookAction(formData: FormData): Promise<void> {
-  await requireAdmin();
+  await requireInternalUser({ roles: ["SUPERADMIN", "SUPPORT"] });
   const returnTo = resolveReturnPath(formData);
 
   const logId = String(formData.get("logId") ?? "").trim();

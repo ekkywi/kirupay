@@ -22,9 +22,9 @@ export async function POST(req: Request) {
       });
     }
 
-    const merchant = await prisma.merchant.findUnique({ where: { email } });
+    const internalUser = await prisma.internalUser.findUnique({ where: { email } });
 
-    if (!merchant) {
+    if (!internalUser || !internalUser.isActive) {
       return apiError(401, {
         code: "AUTH_INVALID_CREDENTIALS",
         message: "Invalid email or password.",
@@ -33,25 +33,7 @@ export async function POST(req: Request) {
       });
     }
 
-    if (!merchant.emailVerified) {
-      return apiError(403, {
-        code: "AUTH_EMAIL_NOT_VERIFIED",
-        message: "Please verify your email before logging in.",
-        requestId,
-        retryable: false,
-      });
-    }
-
-    if (merchant.password === "WALLET_AUTH_NO_PASSWORD") {
-      return apiError(403, {
-        code: "AUTH_PROFILE_SETUP_REQUIRED",
-        message: "Please complete your profile setup before using email login.",
-        requestId,
-        retryable: false,
-      });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, merchant.password);
+    const isPasswordValid = await bcrypt.compare(password, internalUser.password);
     if (!isPasswordValid) {
       return apiError(401, {
         code: "AUTH_INVALID_CREDENTIALS",
@@ -62,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ actorType: "merchant", actorId: merchant.id, email: merchant.email })
+    const token = await new SignJWT({ actorType: "internal", actorId: internalUser.id, email: internalUser.email })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("24h")
@@ -80,16 +62,17 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message: "Login successful",
-        merchant: {
-          id: merchant.id,
-          businessName: merchant.businessName,
-          email: merchant.email,
+        user: {
+          id: internalUser.id,
+          name: internalUser.name,
+          email: internalUser.email,
+          role: internalUser.role,
         },
       },
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error during login", { requestId, error });
+    console.error("Error during internal login", { requestId, error });
     return apiError(500, {
       code: "INTERNAL_SERVER_ERROR",
       message: "Internal server error.",

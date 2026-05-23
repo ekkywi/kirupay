@@ -31,7 +31,7 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: Dashb
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#121212]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} actorType="merchant" />
       
       <main className="flex-1 overflow-y-auto p-8">
         {/* TAB: OVERVIEW */}

@@ -15,12 +15,12 @@ interface TopNavProps {
   merchant: {
     businessName?: string | null;
     email?: string | null;
-    role?: string | null;
+    actorType: "merchant" | "internal";
   } | null;
 }
 
 export function TopNav({ merchant }: TopNavProps) {
-  const isAdmin = merchant?.role === "ADMIN";
+  const isAdmin = merchant?.actorType === "internal";
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [transactionSearch, setTransactionSearch] = useState("");
@@ -215,11 +215,11 @@ export function TopNav({ merchant }: TopNavProps) {
                 </p>
               </div>
               <Link
-                href="/settings"
+                href={isAdmin ? "/admin/overview" : "/settings"}
                 onClick={() => setIsProfileOpen(false)}
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/[0.04]"
               >
-                <Settings size={14} /> Settings
+                <Settings size={14} /> {isAdmin ? "Admin Home" : "Settings"}
               </Link>
               <div className="mx-4 my-1 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
                 <Activity size={14} className="text-emerald-500" />

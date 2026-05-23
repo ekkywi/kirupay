@@ -11,6 +11,7 @@ import {
   LinkIcon, 
   BarChart3,
   UserCog,
+  Users,
   Wrench,
   Landmark,
   Globe,
@@ -20,7 +21,7 @@ import {
 interface SidebarProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
-  role?: string;
+  actorType: "merchant" | "internal";
 }
 
 // Definisikan tipe untuk struktur menu
@@ -39,9 +40,9 @@ type MenuCategory = {
   items: MenuItem[];
 };
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ actorType }: SidebarProps) {
   const pathname = usePathname();
-  const isAdmin = role === "ADMIN";
+  const isAdmin = actorType === "internal";
 
   const merchantMenuCategories: MenuCategory[] = [
     {
@@ -74,6 +75,7 @@ export function Sidebar({ role }: SidebarProps) {
       { href: "/admin/revenue", label: "Revenue & Treasury", icon: <Landmark size={16}/> },
       { href: "/admin/transactions", label: "Global Ledger", icon: <Globe size={16}/> },
       { href: "/admin/merchants", label: "Merchant List", icon: <UserCog size={16}/> },
+      { href: "/admin/internal-users", label: "Internal Users", icon: <Users size={16}/> },
       {
         href: "/admin/maintenance",
         label: "Maintenance",

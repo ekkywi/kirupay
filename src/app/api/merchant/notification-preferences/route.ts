@@ -46,11 +46,11 @@ export async function POST(req: Request) {
     }
 
     const body = (await req.json()) as Partial<typeof NOTIFICATION_PREF_DEFAULTS>;
-    const updates: Partial<typeof NOTIFICATION_PREF_DEFAULTS> = {};
+    const updates: Partial<Record<keyof typeof NOTIFICATION_PREF_DEFAULTS, boolean>> = {};
 
     for (const key of Object.keys(NOTIFICATION_PREF_DEFAULTS) as Array<keyof typeof NOTIFICATION_PREF_DEFAULTS>) {
       if (typeof body[key] === "boolean") {
-        updates[key] = body[key];
+        updates[key] = body[key] as boolean;
       }
     }
 

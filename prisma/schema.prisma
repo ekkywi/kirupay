@@ -11,9 +11,10 @@ datasource db {
   provider  = "postgresql"
 }
 
-enum Role {
-  ADMIN
-  MERCHANT
+enum InternalRole {
+  SUPERADMIN
+  SUPPORT
+  DEVELOPER
 }
 
 enum RpcEndpointType {
@@ -76,7 +77,6 @@ model Merchant {
   apiKey          String        @unique @default(uuid()) 
   isActive        Boolean       @default(true)
   emailVerified   Boolean       @default(false)
-  role            Role          @default(MERCHANT)
   activationToken String?       @unique
   walletIdentities MerchantWalletIdentity[]
   transactions    Transaction[]
@@ -87,6 +87,37 @@ model Merchant {
   webhookSecret   String?       @unique 
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+model InternalUser {
+  id         String       @id @default(cuid())
+  name       String
+  email      String       @unique
+  password   String
+  role       InternalRole @default(SUPPORT)
+  isActive   Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  invites    InternalUserInvite[]
+
+  @@map("internal_users")
+}
+
+model InternalUserInvite {
+  id         String       @id @default(cuid())
+  email      String
+  role       InternalRole
+  tokenHash  String       @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  invitedBy  String
+  inviter    InternalUser @relation(fields: [invitedBy], references: [id], onDelete: Restrict)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([email, createdAt])
+  @@index([expiresAt, usedAt])
+  @@map("internal_user_invites")
 }
 
 model MerchantWalletIdentity {
