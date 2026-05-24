@@ -26,8 +26,8 @@ function getStatusClasses(status: number | null) {
   return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
 }
 
-export function TabWebhookLogs({ activeTab }: { activeTab: string }) {
-  const { logs, isLoadingLogs, selectedLog, setSelectedLog, fetchLogs } = useWebhookLogs(activeTab);
+export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; businessId?: string }) {
+  const { logs, isLoadingLogs, selectedLog, setSelectedLog, fetchLogs } = useWebhookLogs(activeTab, businessId);
   const successfulDeliveries = logs.filter((log) => log.status && log.status >= 200 && log.status < 300).length;
   const failedDeliveries = logs.length - successfulDeliveries;
 

@@ -7,6 +7,7 @@ import { TopNav } from "./TopNav";
 
 interface ShellMerchant {
   businessName?: string | null;
+  displayName?: string | null;
   email?: string | null;
   activeBusinessId?: string | null;
   actorType: "merchant" | "internal";

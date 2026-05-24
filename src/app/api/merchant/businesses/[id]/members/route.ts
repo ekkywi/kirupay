@@ -1,23 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { mapMerchantAccessError, requireBusinessMembership } from "@/lib/auth-service";
+import { mapMerchantAccessError, requireBusinessMembershipById } from "@/lib/auth-service";
 import { apiError, createRequestId } from "@/lib/api-errors";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   const requestId = createRequestId();
 
   try {
-    const ctx = await requireBusinessMembership();
     const { id } = await context.params;
-
-    if (ctx.business.id !== id) {
-      return apiError(403, {
-        code: "MERCHANT_FORBIDDEN",
-        message: "Forbidden.",
-        requestId,
-        retryable: false,
-      });
-    }
+    await requireBusinessMembershipById(id);
 
     const members = await prisma.businessMembership.findMany({
       where: { businessId: id },

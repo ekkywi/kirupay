@@ -14,6 +14,7 @@ export type MerchantNotification = {
 };
 
 const POLL_INTERVAL_MS = 10_000;
+const AUTH_BACKOFF_MS = 60_000;
 
 function severityRank(severity: MerchantNotification["severity"]) {
   if (severity === "ERROR") return 3;
@@ -38,15 +39,25 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
   const [hasMore, setHasMore] = useState(false);
   const unreadInFlightRef = useRef(false);
   const listInFlightRef = useRef(false);
+  const nextUnreadRetryAtRef = useRef(0);
+  const isAuthenticatedRef = useRef(true);
 
   const refreshUnread = useCallback(async () => {
     if (unreadInFlightRef.current) return false;
+    if (!isAuthenticatedRef.current && Date.now() < nextUnreadRetryAtRef.current) return false;
     unreadInFlightRef.current = true;
     try {
       const res = await fetch("/api/merchant/notifications/unread-count", { cache: "no-store" });
+      if (res.status === 401) {
+        isAuthenticatedRef.current = false;
+        nextUnreadRetryAtRef.current = Date.now() + AUTH_BACKOFF_MS;
+        return false;
+      }
       if (!res.ok) throw new Error("Failed to fetch unread count");
       const json = (await res.json()) as { data: { unread: number } };
       setUnread(json.data.unread || 0);
+      isAuthenticatedRef.current = true;
+      nextUnreadRetryAtRef.current = 0;
       return true;
     } catch {
       return false;
@@ -64,10 +75,16 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
       if (nextCursor) query.set("cursor", nextCursor);
 
       const res = await fetch(`/api/merchant/notifications?${query.toString()}`, { cache: "no-store" });
+      if (res.status === 401) {
+        isAuthenticatedRef.current = false;
+        nextUnreadRetryAtRef.current = Date.now() + AUTH_BACKOFF_MS;
+        return false;
+      }
       if (!res.ok) {
         const apiError = await parseApiErrorResponse(res);
         throw new Error(toDiagnosticMessage(apiError));
       }
+      isAuthenticatedRef.current = true;
 
       const json = (await res.json()) as {
         data: MerchantNotification[];
@@ -118,6 +135,7 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
   const unreadItems = useMemo(() => items.filter((item) => !item.readAt), [items]);
 
   useEffect(() => {
+    if (!isAuthenticatedRef.current && Date.now() < nextUnreadRetryAtRef.current) return;
     const initialTick = window.setTimeout(() => {
       void refreshUnread();
     }, 0);
@@ -132,7 +150,7 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
   }, [refreshUnread]);
 
   useEffect(() => {
-    if (!isPanelOpen) return;
+    if (!isPanelOpen || !isAuthenticatedRef.current) return;
     const intervalId = window.setInterval(() => {
       void fetchNotifications(undefined, { silent: true });
     }, POLL_INTERVAL_MS);

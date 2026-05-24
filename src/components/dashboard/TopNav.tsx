@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRef } from "react";
 import type { FormEvent } from "react";
-import { Activity, Bell, Building2, CheckCheck, LogOut, Search, Settings, User } from "lucide-react";
+import { Activity, Bell, Building2, Check, CheckCheck, ChevronDown, Loader2, LogOut, Search, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import { formatLocalDateTime } from "@/lib/local-time";
 interface TopNavProps {
   merchant: {
     businessName?: string | null;
+    displayName?: string | null;
     email?: string | null;
     activeBusinessId?: string | null;
     actorType: "merchant" | "internal";
@@ -28,14 +29,18 @@ type BusinessItem = {
 
 export function TopNav({ merchant }: TopNavProps) {
   const isAdmin = merchant?.actorType === "internal";
+  const [isHydrated, setIsHydrated] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isBusinessMenuOpen, setIsBusinessMenuOpen] = useState(false);
   const [transactionSearch, setTransactionSearch] = useState("");
   const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
   const [switchingBusiness, setSwitchingBusiness] = useState(false);
   const [notificationPosition, setNotificationPosition] = useState({ top: 56, left: 0, width: 360 });
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
+  const businessMenuRef = useRef<HTMLDivElement | null>(null);
+  const businessMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -50,8 +55,21 @@ export function TopNav({ merchant }: TopNavProps) {
   const iconControlProfileClass =
     `${iconControlBaseClass} border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20`;
 
+  const loadBusinesses = useCallback(async () => {
+    if (!merchant || merchant.actorType !== "merchant") return;
+
+    try {
+      const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = (await res.json()) as { data?: BusinessItem[] };
+      setBusinesses(json.data || []);
+    } catch {
+      // noop
+    }
+  }, [merchant]);
+
   const resolveNotificationLink = (item: MerchantNotification) => {
-    if (item.source === "WEBHOOK") return "/business?tab=integrations";
+    if (item.source === "WEBHOOK") return "/business";
     return "/payments";
   };
 
@@ -61,19 +79,22 @@ export function TopNav({ merchant }: TopNavProps) {
   };
 
   useEffect(() => {
-    if (!merchant || merchant.actorType !== "merchant") return;
+    void loadBusinesses();
+  }, [loadBusinesses]);
 
-    void (async () => {
-      try {
-        const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
-        if (!res.ok) return;
-        const json = (await res.json()) as { data?: BusinessItem[] };
-        setBusinesses(json.data || []);
-      } catch {
-        // noop
-      }
-    })();
-  }, [merchant]);
+  useEffect(() => {
+    const handleBusinessEvent = () => {
+      void loadBusinesses();
+    };
+
+    window.addEventListener("merchant:business-switched", handleBusinessEvent);
+    window.addEventListener("merchant:business-updated", handleBusinessEvent);
+
+    return () => {
+      window.removeEventListener("merchant:business-switched", handleBusinessEvent);
+      window.removeEventListener("merchant:business-updated", handleBusinessEvent);
+    };
+  }, [loadBusinesses]);
 
   const switchBusiness = async (businessId: string) => {
     if (!businessId || switchingBusiness) return;
@@ -85,6 +106,9 @@ export function TopNav({ merchant }: TopNavProps) {
         body: JSON.stringify({ businessId }),
       });
       if (res.ok) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("merchant:business-switched", { detail: { businessId } }));
+        }
         router.refresh();
       }
     } finally {
@@ -178,6 +202,46 @@ export function TopNav({ merchant }: TopNavProps) {
     const query = params.toString();
     router.push(query ? `/payments?${query}` : "/payments");
   };
+  const currentBusiness = businesses.find((item) => item.isCurrent) || (!businesses.length ? businesses.find((item) => item.business.id === merchant?.activeBusinessId) || null : null);
+  const manageBusinessId = currentBusiness?.business.id || (businesses.length === 0 ? merchant?.activeBusinessId || null : null);
+  const manageHref = manageBusinessId ? `/business/manage/${manageBusinessId}` : "/business";
+  const manageDisabled = !isHydrated || !manageBusinessId;
+  const switchDisabled = isHydrated ? switchingBusiness || businesses.length === 0 : undefined;
+  const displayBusinessName = isHydrated ? currentBusiness?.business.name || "Select business" : merchant?.businessName || "Select business";
+  const displayBusinessMeta = isHydrated
+    ? currentBusiness?.role
+      ? `${currentBusiness.role} · Active`
+      : "No active business"
+    : "Loading business context";
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isBusinessMenuOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const panel = businessMenuRef.current;
+      const trigger = businessMenuButtonRef.current;
+      if (!panel || !trigger) return;
+      if (panel.contains(target) || trigger.contains(target)) return;
+      setIsBusinessMenuOpen(false);
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsBusinessMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [isBusinessMenuOpen]);
 
   return (
     <header className="h-16 bg-white/95 dark:bg-[#0B0F17]/95 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -187,7 +251,7 @@ export function TopNav({ merchant }: TopNavProps) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">
-            {merchant?.businessName || (isAdmin ? "Admin console" : "Merchant dashboard")}
+            {merchant?.displayName || (isAdmin ? "Admin Console" : "Business Dashboard")}
           </p>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="hidden sm:inline">Network</span>
@@ -201,23 +265,89 @@ export function TopNav({ merchant }: TopNavProps) {
 
       <div className="flex items-center gap-3">
         {!isAdmin && (
-          <div className="hidden md:flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1 dark:border-white/10 dark:bg-white/[0.03]">
-            <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <select
-              disabled={switchingBusiness}
-              value={merchant?.activeBusinessId || businesses.find((item) => item.isCurrent)?.business.id || ""}
-              onChange={(event) => void switchBusiness(event.target.value)}
-              className="max-w-[220px] truncate bg-transparent text-xs font-semibold text-slate-700 outline-none dark:text-slate-200"
+          <div className="relative hidden md:flex items-center gap-2">
+            <button
+              ref={businessMenuButtonRef}
+              type="button"
+              disabled={switchDisabled}
+              onClick={() => {
+                if (!isHydrated || switchingBusiness || businesses.length === 0) return;
+                setIsProfileOpen(false);
+                setIsNotificationOpen(false);
+                setIsBusinessMenuOpen((value) => !value);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
             >
-              {businesses.map((item) => (
-                <option key={item.business.id} value={item.business.id}>
-                  {item.business.name} ({item.role})
-                </option>
-              ))}
-            </select>
-            <Link href="/business" className="rounded-lg px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10">
+              <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              <div className="max-w-[220px] leading-tight">
+                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                  {displayBusinessName}
+                </p>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  {displayBusinessMeta}
+                </p>
+              </div>
+              {switchingBusiness ? (
+                <Loader2 className="h-4 w-4 animate-spin text-slate-500 dark:text-slate-300" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              )}
+            </button>
+            <Link
+              href={manageHref}
+              aria-disabled={manageDisabled}
+              onClick={(event) => {
+                if (manageDisabled) {
+                  event.preventDefault();
+                }
+              }}
+              className={`rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold dark:border-white/10 dark:bg-white/[0.03] ${
+                manageDisabled
+                  ? "cursor-not-allowed text-slate-400 opacity-70 dark:text-slate-500"
+                  : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              }`}
+            >
               Manage
             </Link>
+
+            {isBusinessMenuOpen && (
+              <div
+                ref={businessMenuRef}
+                className="absolute left-0 top-[calc(100%+8px)] z-40 w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-black/30"
+              >
+                <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Switch business</p>
+                <div className="max-h-64 space-y-1 overflow-y-auto">
+                  {businesses.map((item) => {
+                    const isActive = item.isCurrent;
+                    return (
+                      <button
+                        key={item.business.id}
+                        type="button"
+                        onClick={() => {
+                          if (isActive || switchingBusiness) return;
+                          void switchBusiness(item.business.id);
+                          setIsBusinessMenuOpen(false);
+                        }}
+                        disabled={switchingBusiness}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-colors ${
+                          isActive
+                            ? "bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-200"
+                            : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{item.business.name}</p>
+                          <p className={`truncate text-[11px] ${isActive ? "text-blue-700 dark:text-blue-300" : "text-slate-500 dark:text-slate-400"}`}>
+                            {item.role} · {isActive ? "Current" : item.business.code}
+                          </p>
+                        </div>
+                        {isActive ? <Check className="h-4 w-4 shrink-0" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { mapMerchantAccessError, requireBusinessMembership } from "@/lib/auth-service";
+import { mapMerchantAccessError, requireBusinessMembershipById } from "@/lib/auth-service";
 import { setMerchantSessionToken } from "@/lib/merchant-session";
 import { apiError, createRequestId } from "@/lib/api-errors";
 
@@ -8,16 +8,8 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
   const requestId = createRequestId();
 
   try {
-    const ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     const { id } = await context.params;
-    if (ctx.business.id !== id) {
-      return apiError(403, {
-        code: "MERCHANT_FORBIDDEN",
-        message: "Forbidden.",
-        requestId,
-        retryable: false,
-      });
-    }
+    await requireBusinessMembershipById(id, { roles: ["OWNER", "ADMIN"] });
 
     const body = await req.json();
     const name = typeof body?.name === "string" ? body.name.trim() : undefined;
@@ -67,22 +59,17 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
   const requestId = createRequestId();
 
   try {
-    const ctx = await requireBusinessMembership({ roles: ["OWNER"] });
     const { id } = await context.params;
-    if (ctx.business.id !== id) {
-      return apiError(403, {
-        code: "MERCHANT_FORBIDDEN",
-        message: "Forbidden.",
-        requestId,
-        retryable: false,
-      });
-    }
-
+    const ctx = await requireBusinessMembershipById(id, { roles: ["OWNER"] });
     let nextActiveBusinessId: string | null = null;
 
     await prisma.$transaction(async (tx) => {
       await tx.businessEntity.update({ where: { id }, data: { isActive: false } });
       await tx.businessMembership.updateMany({ where: { businessId: id }, data: { isActive: false } });
+      await tx.businessWalletIdentity.updateMany({
+        where: { businessId: id, isActive: true },
+        data: { isActive: false, unlinkedAt: new Date() },
+      });
 
       const nextActive = await tx.businessMembership.findFirst({
         where: { merchantId: ctx.merchant.id, isActive: true, business: { isActive: true } },
@@ -97,13 +84,11 @@ export async function DELETE(_: Request, context: { params: Promise<{ id: string
       });
     });
 
-    if (nextActiveBusinessId) {
-      await setMerchantSessionToken({
-        actorId: ctx.merchant.id,
-        email: ctx.merchant.email,
-        activeBusinessId: nextActiveBusinessId,
-      });
-    }
+    await setMerchantSessionToken({
+      actorId: ctx.merchant.id,
+      email: ctx.merchant.email,
+      activeBusinessId: nextActiveBusinessId,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

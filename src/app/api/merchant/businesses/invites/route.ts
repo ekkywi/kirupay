@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { requireBusinessMembership, mapMerchantAccessError } from "@/lib/auth-service";
+import { requireBusinessMembership, mapMerchantAccessError, requireBusinessMembershipById } from "@/lib/auth-service";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { generateBusinessInviteCode, hashBusinessInviteCode, inviteCodeHint } from "@/lib/business-invite";
 
-export async function GET() {
+export async function GET(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const ctx = await requireBusinessMembership();
+    const { searchParams } = new URL(req.url);
+    const businessId = searchParams.get("businessId");
+    const ctx = businessId ? await requireBusinessMembershipById(businessId) : await requireBusinessMembership();
+
     const invites = await (prisma as any).businessInvite.findMany({
       where: { businessId: ctx.business.id },
       orderBy: { createdAt: "desc" },
@@ -41,8 +44,12 @@ export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     const body = await req.json();
+    const businessId = typeof body?.businessId === "string" ? body.businessId : null;
+    const ctx = businessId
+      ? await requireBusinessMembershipById(businessId, { roles: ["OWNER", "ADMIN"] })
+      : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+
     const role = body?.role === "ADMIN" ? "ADMIN" : "MEMBER";
     const expiresInHoursRaw = Number(body?.expiresInHours || 72);
     const expiresInHours = Number.isFinite(expiresInHoursRaw)

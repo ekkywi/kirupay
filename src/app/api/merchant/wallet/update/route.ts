@@ -4,7 +4,7 @@ import bs58 from "bs58";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
-import { requireBusinessMembership } from "@/lib/auth-service";
+import { requireBusinessMembership, requireBusinessMembershipById } from "@/lib/auth-service";
 
 function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
   if (error instanceof Error && error.message === "Forbidden") {
@@ -18,9 +18,14 @@ export async function POST(req: Request) {
   const obs = startObservation(requestId, "POST /api/merchant/wallet/update");
 
   try {
+    const { action, publicKey, signature, message, businessId } = await req.json();
+    const targetBusinessId = typeof businessId === "string" ? businessId : null;
+
     let ctx;
     try {
-      ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+      ctx = targetBusinessId
+        ? await requireBusinessMembershipById(targetBusinessId, { roles: ["OWNER", "ADMIN"] })
+        : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     } catch (error) {
       const accessError = mapAccessError(error);
       recordObservation(obs, { outcome: "error", status: accessError.status, errorCode: accessError.code });
@@ -31,8 +36,6 @@ export async function POST(req: Request) {
         retryable: false,
       });
     }
-
-    const { action, publicKey, signature, message } = await req.json();
 
     if (action === "link") {
       if (!publicKey || !signature || !message) {
@@ -61,9 +64,21 @@ export async function POST(req: Request) {
         });
       }
 
-      const existingIdentity = await prisma.businessWalletIdentity.findUnique({ where: { walletAddress: publicKey } });
+      const existingIdentity = await prisma.businessWalletIdentity.findUnique({
+        where: { walletAddress: publicKey },
+        include: {
+          business: {
+            select: { isActive: true },
+          },
+        },
+      });
 
-      if (existingIdentity && existingIdentity.businessId !== ctx.business.id) {
+      if (
+        existingIdentity &&
+        existingIdentity.businessId !== ctx.business.id &&
+        existingIdentity.isActive &&
+        existingIdentity.business.isActive
+      ) {
         recordObservation(obs, { outcome: "error", status: 409, errorCode: "MERCHANT_WALLET_ALREADY_LINKED" });
         return apiError(409, {
           code: "MERCHANT_WALLET_ALREADY_LINKED",
@@ -79,10 +94,15 @@ export async function POST(req: Request) {
           data: { isActive: false, unlinkedAt: new Date() },
         });
 
-        if (existingIdentity && existingIdentity.businessId === ctx.business.id) {
+        if (existingIdentity) {
           await tx.businessWalletIdentity.update({
             where: { walletAddress: publicKey },
-            data: { isActive: true, linkedAt: new Date(), unlinkedAt: null },
+            data: {
+              businessId: ctx.business.id,
+              isActive: true,
+              linkedAt: new Date(),
+              unlinkedAt: null,
+            },
           });
         } else {
           await tx.businessWalletIdentity.create({

@@ -3,7 +3,7 @@ import prisma from "@/lib/neon";
 import crypto from "crypto";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
-import { requireBusinessMembership } from "@/lib/auth-service";
+import { requireBusinessMembership, requireBusinessMembershipById } from "@/lib/auth-service";
 
 function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
   if (error instanceof Error && error.message === "Forbidden") {
@@ -12,14 +12,19 @@ function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UN
   return { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." };
 }
 
-export async function POST() {
+export async function POST(req?: Request) {
   const requestId = createRequestId();
   const obs = startObservation(requestId, "POST /api/merchant/webhook/regenerate");
 
   try {
+    const body = ((await req?.json?.().catch(() => ({}))) || {}) as { businessId?: string };
+    const targetBusinessId = typeof body.businessId === "string" ? body.businessId : null;
+
     let ctx;
     try {
-      ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+      ctx = targetBusinessId
+        ? await requireBusinessMembershipById(targetBusinessId, { roles: ["OWNER", "ADMIN"] })
+        : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     } catch (error) {
       const accessError = mapAccessError(error);
       recordObservation(obs, { outcome: "error", status: accessError.status, errorCode: accessError.code });

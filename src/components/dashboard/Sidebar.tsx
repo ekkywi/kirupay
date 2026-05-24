@@ -24,7 +24,6 @@ interface SidebarProps {
   actorType: "merchant" | "internal";
 }
 
-// Definisikan tipe untuk struktur menu
 type MenuItem = {
   href: string;
   label: string;
@@ -127,11 +126,8 @@ export function Sidebar({ actorType }: SidebarProps) {
             {/* Category Items */}
             <div className="space-y-0.5">
               {category.items.map((item) => {
-                // Logika aktif yang akurat
                 const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                 const isMaintenanceParent = Boolean(item.children && pathname.startsWith("/admin/maintenance"));
-                
-                // Pembeda warna khusus untuk rute Admin agar terlihat eksklusif
                 const isAdminRoute = item.href.startsWith("/admin");
                 
                 return (
@@ -214,6 +210,3 @@ export function Sidebar({ actorType }: SidebarProps) {
     </>
   );
 }
-
-// Placeholder to fix type error if Sidebar is meant to handle tabs
-// In a real scenario, Sidebar properties should be updated in the interface.

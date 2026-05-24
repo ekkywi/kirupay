@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
 import crypto from "crypto";
 import { apiError, createRequestId } from "@/lib/api-errors";
-import { requireBusinessMembership } from "@/lib/auth-service";
+import { requireBusinessMembership, requireBusinessMembershipById } from "@/lib/auth-service";
 
 function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
   if (error instanceof Error && error.message === "Forbidden") {
@@ -15,9 +15,18 @@ export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
+    const payload = (await req.json()) as {
+      webhookUrl?: string;
+      businessName?: string;
+      businessId?: string;
+    };
+    const targetBusinessId = typeof payload.businessId === "string" ? payload.businessId : null;
+
     let ctx;
     try {
-      ctx = await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+      ctx = targetBusinessId
+        ? await requireBusinessMembershipById(targetBusinessId, { roles: ["OWNER", "ADMIN"] })
+        : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     } catch (error) {
       const accessError = mapAccessError(error);
       return apiError(accessError.status, {
@@ -28,10 +37,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const { webhookUrl, businessName } = (await req.json()) as {
-      webhookUrl?: string;
-      businessName?: string;
-    };
+    const { webhookUrl, businessName } = payload;
 
     if (businessName !== undefined) {
       await prisma.businessEntity.update({

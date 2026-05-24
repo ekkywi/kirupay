@@ -23,7 +23,7 @@ export default async function PaymentsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const ctx = await getCurrentMerchantBusinessContext();
-  if (!ctx) redirect("/login");
+  if (!ctx) redirect("/business");
   const merchant = ctx.merchant;
   const business = ctx.business;
 

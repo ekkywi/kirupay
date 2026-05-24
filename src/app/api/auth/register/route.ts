@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { issueMerchantVerificationToken } from "@/lib/email-verification";
-
-function toBusinessCode(name: string) {
-  const normalized = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  return `${normalized || "business"}-${crypto.randomBytes(3).toString("hex")}`;
-}
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -43,10 +37,19 @@ export async function POST(req: Request) {
       prisma.merchantPrivateWalletIdentity.findUnique({ where: { walletAddress } }),
     ]);
 
-    if (existingMerchant || existingWalletIdentity) {
+    if (existingMerchant) {
       return apiError(409, {
         code: "AUTH_PROFILE_EMAIL_CONFLICT",
-        message: "Merchant with this email or wallet address already exists.",
+        message: "Merchant with this email already exists.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    if (existingWalletIdentity?.isActive) {
+      return apiError(409, {
+        code: "AUTH_PROFILE_EMAIL_CONFLICT",
+        message: "Wallet address is already linked to an active merchant account.",
         requestId,
         retryable: false,
       });
@@ -61,52 +64,31 @@ export async function POST(req: Request) {
           email,
           password: hashedPassword,
           emailVerified: false,
-          privateWallets: {
-            create: {
-              walletAddress,
-              isActive: true,
-              linkedAt: new Date(),
-            },
+        },
+      });
+
+      if (existingWalletIdentity) {
+        await tx.merchantPrivateWalletIdentity.update({
+          where: { id: existingWalletIdentity.id },
+          data: {
+            merchantId: merchant.id,
+            isActive: true,
+            linkedAt: new Date(),
+            unlinkedAt: null,
           },
-        },
-      });
+        });
+      } else {
+        await tx.merchantPrivateWalletIdentity.create({
+          data: {
+            merchantId: merchant.id,
+            walletAddress,
+            isActive: true,
+            linkedAt: new Date(),
+          },
+        });
+      }
 
-      const business = await tx.businessEntity.create({
-        data: {
-          name: businessName,
-          code: toBusinessCode(businessName),
-          contactEmail: email,
-        },
-      });
-
-      await tx.businessMembership.create({
-        data: {
-          merchantId: merchant.id,
-          businessId: business.id,
-          role: "OWNER",
-          isActive: true,
-        },
-      });
-
-      await tx.businessCredential.create({
-        data: {
-          businessId: business.id,
-          apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
-        },
-      });
-
-      await tx.businessWalletIdentity.create({
-        data: {
-          businessId: business.id,
-          walletAddress,
-          isActive: true,
-          linkedAt: new Date(),
-        },
-      });
-
-      await tx.merchant.update({ where: { id: merchant.id }, data: { activeBusinessId: business.id } });
-
-      return { merchant, business };
+      return { merchant };
     });
 
     const verifyToken = await issueMerchantVerificationToken(created.merchant.id);

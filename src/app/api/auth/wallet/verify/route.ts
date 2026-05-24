@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
-import { SignJWT } from "jose";
-import { cookies } from "next/headers";
 import { sign } from "tweetnacl";
 import bs58 from "bs58";
 import prisma from "@/lib/neon";
 import crypto from "crypto";
 import { apiError, createRequestId } from "@/lib/api-errors";
-
-function businessCodeFromWallet(publicKey: string) {
-  return `biz-${publicKey.slice(0, 6).toLowerCase()}-${crypto.randomBytes(3).toString("hex")}`;
-}
+import { setMerchantSessionToken } from "@/lib/merchant-session";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -35,7 +30,16 @@ export async function POST(req: Request) {
       include: { merchant: true },
     });
 
-    let merchant = existingIdentity?.merchant;
+    if (existingIdentity?.isActive && existingIdentity.merchant.isActive === false) {
+      return apiError(409, {
+        code: "MERCHANT_WALLET_ALREADY_LINKED",
+        message: "This wallet is currently linked to an inactive merchant account and must be reclaimed through account recovery.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    let merchant = existingIdentity?.isActive ? existingIdentity.merchant : null;
     let activeBusinessId: string | null = merchant?.activeBusinessId ?? null;
 
     if (!merchant) {
@@ -46,69 +50,61 @@ export async function POST(req: Request) {
             email: `${publicKey}@wallet.auth`,
             password: await (await import("bcrypt")).hash(crypto.randomBytes(24).toString("hex"), 12),
             emailVerified: true,
-            privateWallets: {
-              create: {
-                walletAddress: publicKey,
-                isActive: true,
-                linkedAt: new Date(),
-                unlinkedAt: null,
-              },
+          },
+        });
+
+        if (existingIdentity) {
+          await tx.merchantPrivateWalletIdentity.update({
+            where: { id: existingIdentity.id },
+            data: {
+              merchantId: newMerchant.id,
+              isActive: true,
+              linkedAt: new Date(),
+              unlinkedAt: null,
             },
-          },
-        });
+          });
+        } else {
+          await tx.merchantPrivateWalletIdentity.create({
+            data: {
+              merchantId: newMerchant.id,
+              walletAddress: publicKey,
+              isActive: true,
+              linkedAt: new Date(),
+              unlinkedAt: null,
+            },
+          });
+        }
 
-        const business = await tx.businessEntity.create({
-          data: {
-            name: `Business ${publicKey.slice(0, 4)}`,
-            code: businessCodeFromWallet(publicKey),
-            contactEmail: newMerchant.email,
-          },
-        });
-
-        await tx.businessMembership.create({
-          data: {
-            merchantId: newMerchant.id,
-            businessId: business.id,
-            role: "OWNER",
-          },
-        });
-
-        await tx.businessCredential.create({
-          data: {
-            businessId: business.id,
-            apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`,
-          },
-        });
-
-        await tx.businessWalletIdentity.create({
-          data: {
-            businessId: business.id,
-            walletAddress: publicKey,
-            isActive: true,
-            linkedAt: new Date(),
-          },
-        });
-
-        await tx.merchant.update({ where: { id: newMerchant.id }, data: { activeBusinessId: business.id } });
-
-        return { newMerchant, businessId: business.id };
+        return newMerchant;
       });
 
-      merchant = created.newMerchant;
-      activeBusinessId = created.businessId;
+      merchant = created;
+      activeBusinessId = null;
     }
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ actorType: "merchant", actorId: merchant.id, wallet: publicKey, activeBusinessId })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("24h")
-      .sign(secret);
+    if (!activeBusinessId) {
+      const firstMembership = await prisma.businessMembership.findFirst({
+        where: {
+          merchantId: merchant.id,
+          isActive: true,
+          business: { isActive: true },
+        },
+        orderBy: { createdAt: "asc" },
+      });
 
-    (await cookies()).set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24,
-      path: "/",
+      if (firstMembership) {
+        activeBusinessId = firstMembership.businessId;
+        await prisma.merchant.update({
+          where: { id: merchant.id },
+          data: { activeBusinessId },
+        });
+      }
+    }
+
+    await setMerchantSessionToken({
+      actorId: merchant.id,
+      email: merchant.email,
+      activeBusinessId,
     });
 
     return NextResponse.json({ success: true, businessId: activeBusinessId, activeBusinessId });

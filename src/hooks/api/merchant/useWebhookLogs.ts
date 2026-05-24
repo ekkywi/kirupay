@@ -1,4 +1,3 @@
-// src/hooks/api/merchant/useWebhookLogs.ts
 import { useState, useEffect, useCallback } from "react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
@@ -12,7 +11,7 @@ export interface WebhookLog {
   createdAt: string | Date;
 }
 
-export function useWebhookLogs(activeTab: string) {
+export function useWebhookLogs(activeTab: string, businessId?: string) {
   const [logs, setLogs] = useState<WebhookLog[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
   const [selectedLog, setSelectedLog] = useState<WebhookLog | null>(null);
@@ -20,7 +19,8 @@ export function useWebhookLogs(activeTab: string) {
   const fetchLogs = useCallback(async () => {
     setIsLoadingLogs(true);
     try {
-      const res = await fetch("/api/merchant/webhook/logs");
+      const query = businessId ? `?businessId=${encodeURIComponent(businessId)}` : "";
+      const res = await fetch(`/api/merchant/webhook/logs${query}`);
       const errorRes = res.clone();
       const json = await res.json();
       if (res.ok && json.success) {
@@ -34,7 +34,7 @@ export function useWebhookLogs(activeTab: string) {
     } finally {
       setIsLoadingLogs(false);
     }
-  }, []);
+  }, [businessId]);
 
   useEffect(() => {
     if (activeTab === "logs") {

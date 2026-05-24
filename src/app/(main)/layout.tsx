@@ -15,12 +15,13 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const transactions = actor.actorType === "merchant"
-    ? await prisma.transaction.findMany({
-        where: { businessId: actor.activeBusinessId ?? "__missing_business__" },
-        orderBy: { createdAt: "desc" },
-      })
-    : [];
+  const transactions =
+    actor.actorType === "merchant" && actor.activeBusinessId
+      ? await prisma.transaction.findMany({
+          where: { businessId: actor.activeBusinessId },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
 
   const totalRevenue = actor.actorType === "merchant"
     ? transactions
@@ -41,12 +42,14 @@ export default async function DashboardLayout({
       ? {
           actorType: "merchant" as const,
           businessName: activeBusiness?.name || actor.merchant.businessName,
+          displayName: actor.merchant.businessName,
           email: actor.merchant.email,
           activeBusinessId: actor.activeBusinessId,
         }
       : {
           actorType: "internal" as const,
           businessName: actor.internalUser.name,
+          displayName: actor.internalUser.name,
           email: actor.internalUser.email,
         };
 

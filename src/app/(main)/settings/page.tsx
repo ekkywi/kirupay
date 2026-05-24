@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { LocalTime } from "@/components/common/LocalTime";
+import { PersonalLoginWalletCard } from "@/components/settings/PersonalLoginWalletCard";
 import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
+import prisma from "@/lib/neon";
 import { CheckCircle2, Mail, Settings, ShieldCheck, User } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -10,8 +12,13 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   const ctx = await getCurrentMerchantBusinessContext();
-  if (!ctx) redirect("/login");
+  if (!ctx) redirect("/business");
   const merchant = ctx.merchant;
+  const personalWallet = await prisma.merchantPrivateWalletIdentity.findFirst({
+    where: { merchantId: merchant.id, isActive: true },
+    select: { walletAddress: true },
+    orderBy: { linkedAt: "desc" },
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -67,6 +74,8 @@ export default async function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <PersonalLoginWalletCard initialWallet={personalWallet?.walletAddress || null} />
     </div>
   );
 }

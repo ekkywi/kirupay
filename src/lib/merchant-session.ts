@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 export async function setMerchantSessionToken(input: {
   actorId: string;
   email: string;
-  activeBusinessId: string;
+  activeBusinessId: string | null;
 }) {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET);
   const token = await new SignJWT({

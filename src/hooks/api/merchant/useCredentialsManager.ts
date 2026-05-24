@@ -1,11 +1,10 @@
-// src/hooks/api/merchant/useCredentialsManager.ts
 import { useState } from "react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
-export function useCredentialsManager(initialApiKey?: string | null, initialWebhookSecret?: string | null) {
+export function useCredentialsManager(initialApiKey?: string | null, initialWebhookSecret?: string | null, businessId?: string) {
   const [currentKey, setCurrentKey] = useState(initialApiKey || "API_KEY_NOT_GENERATED");
   const [currentWebhookSecret, setCurrentWebhookSecret] = useState(initialWebhookSecret || "WEBHOOK_SECRET_NOT_GENERATED");
-  
+
   const [isRollingKey, setIsRollingKey] = useState(false);
   const [isRollingWebhook, setIsRollingWebhook] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -23,7 +22,11 @@ export function useCredentialsManager(initialApiKey?: string | null, initialWebh
   const executeRollKey = async () => {
     setIsRollingKey(true);
     try {
-      const res = await fetch("/api/merchant/apikey/regenerate", { method: "POST" });
+      const res = await fetch("/api/merchant/apikey/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
       const errorRes = res.clone();
       const data = await res.json();
 
@@ -47,7 +50,11 @@ export function useCredentialsManager(initialApiKey?: string | null, initialWebh
   const executeRollWebhookSecret = async () => {
     setIsRollingWebhook(true);
     try {
-      const res = await fetch("/api/merchant/webhook/regenerate", { method: "POST" });
+      const res = await fetch("/api/merchant/webhook/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
       const errorRes = res.clone();
       const data = await res.json();
 
@@ -69,9 +76,13 @@ export function useCredentialsManager(initialApiKey?: string | null, initialWebh
   };
 
   return {
-    currentKey, currentWebhookSecret,
-    isRollingKey, isRollingWebhook,
-    toast, handleCopy,
-    executeRollKey, executeRollWebhookSecret
+    currentKey,
+    currentWebhookSecret,
+    isRollingKey,
+    isRollingWebhook,
+    toast,
+    handleCopy,
+    executeRollKey,
+    executeRollWebhookSecret,
   };
 }

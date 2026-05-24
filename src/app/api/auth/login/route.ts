@@ -57,17 +57,8 @@ export async function POST(req: Request) {
       orderBy: { createdAt: "asc" },
     });
 
-    if (!firstMembership) {
-      return apiError(403, {
-        code: "AUTH_PROFILE_SETUP_REQUIRED",
-        message: "No active business membership found.",
-        requestId,
-        retryable: false,
-      });
-    }
-
-    const activeBusinessId = merchant.activeBusinessId ?? firstMembership.businessId;
-    if (!merchant.activeBusinessId) {
+    const activeBusinessId = merchant.activeBusinessId ?? firstMembership?.businessId ?? null;
+    if (activeBusinessId !== merchant.activeBusinessId) {
       await prisma.merchant.update({ where: { id: merchant.id }, data: { activeBusinessId } });
     }
 

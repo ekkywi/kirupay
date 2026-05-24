@@ -28,7 +28,6 @@ export async function GET() {
       include: {
         business: {
           include: {
-            credentials: { select: { apiKey: true, webhookUrl: true, webhookSecret: true } },
             settlementWallets: { where: { isActive: true }, take: 1 },
           },
         },
@@ -48,9 +47,6 @@ export async function GET() {
           code: membership.business.code,
           isActive: membership.business.isActive,
           contactEmail: membership.business.contactEmail,
-          apiKey: membership.business.credentials?.apiKey || null,
-          webhookUrl: membership.business.credentials?.webhookUrl || null,
-          webhookSecret: membership.business.credentials?.webhookSecret || null,
           settlementWalletAddress: membership.business.settlementWallets[0]?.walletAddress || null,
         },
         isCurrent: actor.merchant.activeBusinessId === membership.businessId,

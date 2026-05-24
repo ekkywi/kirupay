@@ -43,7 +43,7 @@ export async function getCurrentActor(): Promise<CurrentActor | null> {
     const actorId = typeof tokenPayload.actorId === "string" ? tokenPayload.actorId : null;
     const tokenActiveBusinessId = typeof tokenPayload.activeBusinessId === "string" ? tokenPayload.activeBusinessId : null;
 
-    if (actorType === "merchant" && actorId && tokenActiveBusinessId) {
+    if (actorType === "merchant" && actorId) {
       const merchant = await prisma.merchant.findUnique({ where: { id: actorId } });
       if (!merchant || !merchant.isActive) return null;
       return { actorType: "merchant", merchant, activeBusinessId: tokenActiveBusinessId };
@@ -79,27 +79,27 @@ export async function getCurrentMerchantBusinessContext(): Promise<MerchantBusin
   if (!actor || actor.actorType !== "merchant") return null;
 
   const activeBusinessId = actor.activeBusinessId;
-  if (!activeBusinessId) return null;
-
-  const membership = await prisma.businessMembership.findUnique({
-    where: {
-      merchantId_businessId: {
-        merchantId: actor.merchant.id,
-        businessId: activeBusinessId,
-      },
-    },
-    include: {
-      business: {
-        include: {
-          credentials: true,
-          settlementWallets: {
-            where: { isActive: true },
-            take: 1,
+  const membership = activeBusinessId
+    ? await prisma.businessMembership.findUnique({
+        where: {
+          merchantId_businessId: {
+            merchantId: actor.merchant.id,
+            businessId: activeBusinessId,
           },
         },
-      },
-    },
-  });
+        include: {
+          business: {
+            include: {
+              credentials: true,
+              settlementWallets: {
+                where: { isActive: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      })
+    : null;
 
   if (!membership || !membership.isActive || !membership.business.isActive) {
     const fallbackMembership = await prisma.businessMembership.findFirst({
@@ -188,6 +188,65 @@ export async function requireBusinessMembership(options?: { roles?: BusinessRole
   }
 
   return ctx;
+}
+
+export async function requireBusinessMembershipById(
+  businessId: string,
+  options?: { roles?: BusinessRole[] },
+): Promise<MerchantBusinessContext> {
+  const actor = await getCurrentActor();
+  if (!actor || actor.actorType !== "merchant") {
+    throw new Error("Unauthorized");
+  }
+
+  const membership = await prisma.businessMembership.findUnique({
+    where: {
+      merchantId_businessId: {
+        merchantId: actor.merchant.id,
+        businessId,
+      },
+    },
+    include: {
+      business: {
+        include: {
+          credentials: true,
+          settlementWallets: {
+            where: { isActive: true },
+            take: 1,
+          },
+        },
+      },
+    },
+  });
+
+  if (!membership || !membership.isActive || !membership.business.isActive) {
+    throw new Error("Forbidden");
+  }
+
+  if (options?.roles && options.roles.length > 0 && !options.roles.includes(membership.role)) {
+    throw new Error("Forbidden");
+  }
+
+  return {
+    merchant: actor.merchant,
+    membership,
+    business: {
+      id: membership.business.id,
+      name: membership.business.name,
+      code: membership.business.code,
+      isActive: membership.business.isActive,
+      credentials: membership.business.credentials
+        ? {
+            apiKey: membership.business.credentials.apiKey,
+            webhookUrl: membership.business.credentials.webhookUrl,
+            webhookSecret: membership.business.credentials.webhookSecret,
+          }
+        : null,
+      settlementWallet: membership.business.settlementWallets[0]
+        ? { walletAddress: membership.business.settlementWallets[0].walletAddress }
+        : null,
+    },
+  };
 }
 
 export function mapMerchantAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
