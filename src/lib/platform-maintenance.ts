@@ -255,10 +255,10 @@ export async function getPlatformOperationsSnapshot() {
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {
-        merchant: {
+        business: {
           select: {
-            businessName: true,
-            email: true,
+            name: true,
+            contactEmail: true,
           },
         },
       },
@@ -268,10 +268,10 @@ export async function getPlatformOperationsSnapshot() {
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {
-        merchant: {
+        business: {
           select: {
-            businessName: true,
-            email: true,
+            name: true,
+            contactEmail: true,
           },
         },
       },

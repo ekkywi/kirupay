@@ -78,7 +78,8 @@ export function Sidebar({ actorType }: SidebarProps) {
       { href: "/admin/overview", label: "Overview", icon: <LayoutDashboard size={16}/> },
       { href: "/admin/revenue", label: "Revenue & Treasury", icon: <Landmark size={16}/> },
       { href: "/admin/transactions", label: "Global Ledger", icon: <Globe size={16}/> },
-      { href: "/admin/merchants", label: "Merchant List", icon: <UserCog size={16}/> },
+      { href: "/admin/merchants", label: "Merchant Accounts", icon: <UserCog size={16}/> },
+      { href: "/admin/businesses", label: "Businesses", icon: <Building2 size={16}/> },
       { href: "/admin/internal-users", label: "Internal Users", icon: <Users size={16}/> },
       {
         href: "/admin/maintenance",

@@ -115,7 +115,7 @@ export default async function AdminMaintenanceRecoveryPage({
                     <div key={tx.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-slate-950 dark:text-white">
-                          {tx.merchant.businessName} · {tx.amount.toFixed(4)} {tx.currency}
+                          {tx.business.name || "Unnamed business"} · {tx.amount.toFixed(4)} {tx.currency}
                         </p>
                         <p className="mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">{tx.id}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -157,8 +157,8 @@ export default async function AdminMaintenanceRecoveryPage({
                   {snapshot.recentFailedWebhookLogs.map((log: FailedWebhookLog) => (
                     <div key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{log.merchant.businessName}</p>
-                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{log.merchant.email}</p>
+                        <p className="text-sm font-semibold text-slate-950 dark:text-white">{log.business.name || "Unnamed business"}</p>
+                        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{log.business.contactEmail || "No contact email"}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                           {log.event} • {log.status ?? "Timeout"} • {formatDateTime(log.createdAt)}
                         </p>
