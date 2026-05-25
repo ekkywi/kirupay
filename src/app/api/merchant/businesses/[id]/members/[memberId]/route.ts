@@ -14,7 +14,7 @@ export async function PATCH(req: Request, context: { params: Promise<{ id: strin
     const role = body?.role;
     const isActive = typeof body?.isActive === "boolean" ? body.isActive : undefined;
 
-    if (role !== undefined && role !== "ADMIN" && role !== "MEMBER" && role !== "OWNER") {
+    if (role !== undefined && role !== "ADMIN" && role !== "MEMBER") {
       return apiError(400, {
         code: "MERCHANT_INVALID_ACTION",
         message: "Invalid role.",

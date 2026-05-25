@@ -476,7 +476,7 @@ export function TopNav({ merchant }: TopNavProps) {
                   <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No notifications yet.</p>
                 ) : (
                   items.map((item) => (
-                    <div key={item.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-white/10">
+                    <div key={item.id} className="relative border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-white/10">
                       <div className="flex items-start justify-between gap-3">
                         <Link href={resolveNotificationLink(item)} onClick={() => setIsNotificationOpen(false)} className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
@@ -486,12 +486,15 @@ export function TopNav({ merchant }: TopNavProps) {
                           </p>
                         </Link>
                         {!item.readAt && (
-                          <button
-                            onClick={() => void markRead(item.id)}
-                            className="rounded-md px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
-                          >
-                            Mark read
-                          </button>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread notification" />
+                            <button
+                              onClick={() => void markRead(item.id)}
+                              className="rounded-md px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
+                            >
+                              Mark read
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

@@ -24,9 +24,9 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
           isActive: ctx.business.isActive,
           contactEmail: null,
           settlementWalletAddress: ctx.business.settlementWallet?.walletAddress || null,
-          apiKey: ctx.business.credentials?.apiKey || null,
+          apiKey: ctx.membership.role === "OWNER" ? ctx.business.credentials?.apiKey || null : null,
           webhookUrl: ctx.business.credentials?.webhookUrl || null,
-          webhookSecret: ctx.business.credentials?.webhookSecret || null,
+          webhookSecret: ctx.membership.role === "OWNER" ? ctx.business.credentials?.webhookSecret || null : null,
         },
       },
     });
