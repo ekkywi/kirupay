@@ -2,456 +2,405 @@ import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
-import SupportedAssets from "@/components/landing/SupportedAssets";
+import HeroPaymentIllustration from "@/components/landing/HeroPaymentIllustration";
 import ScrollReveal from "@/components/landing/ScrollReveal";
-import Link from "next/link";
+import TrackingLink from "@/components/landing/TrackingLink";
+import ScrollToSectionButton from "@/components/landing/ScrollToSectionButton";
+import LandingAnalytics from "@/components/landing/LandingAnalytics";
 import {
   ArrowRight,
-  Globe,
-  Zap,
-  Shield,
-  TrendingDown,
   ArrowUpRight,
-  Link as LinkIcon,
-  QrCode,
-  Copy,
-  Send,
-  LayoutTemplate,
-  Lock,
-  KeyRound,
-  FileCheck,
-  Check,
-  Code2,
-  Wallet,
-  Building2,
-  Server,
   BadgeCheck,
-  Headphones,
+  Check,
+  CircleAlert,
+  Clock3,
+  CreditCard,
+  Globe,
+  Shield,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Global Solana Payments for Growing Teams | Trezalink",
+  description:
+    "Accept global Solana payments with transparent fees, direct wallet settlement, and a non-custodial merchant workflow.",
 };
 
-const METRICS = [
+const SOCIAL_PROOF = [
+  { value: "99.95%", label: "Target platform uptime" },
   { value: "0.3%", label: "Flat transaction fee" },
-  { value: "<2s", label: "Median settlement" },
-  { value: "100%", label: "Non-custodial" },
-  { value: "24/7", label: "Platform availability" },
+  { value: "<2 sec", label: "Median settlement speed" },
+  { value: "24/7", label: "Global payment availability" },
 ];
 
-const TRUST_PILLARS = [
-  { icon: Shield, label: "Non-custodial architecture" },
-  { icon: Server, label: "Solana mainnet production" },
-  { icon: FileCheck, label: "HMAC-signed webhooks" },
-  { icon: BadgeCheck, label: "Transparent 0.3% pricing" },
+const PAINS = [
+  "Cross-border wire delays and FX friction",
+  "Unclear processor pricing and hidden costs",
+  "Settlement risk from custodial intermediaries",
 ];
 
-const STEPS = [
-  { step: "01", title: "Create payment link", desc: "Configure amount, description, and branding — no engineering required." },
-  { step: "02", title: "Client settles on-chain", desc: "Payers send SOL from any Solana-compatible wallet worldwide." },
-  { step: "03", title: "Atomic merchant payout", desc: "Net proceeds arrive in your wallet with verifiable on-chain receipts." },
+const SOLUTIONS = [
+  "Accept global SOL payments in minutes",
+  "Know your exact fee before each transaction",
+  "Settle directly into your merchant wallet",
 ];
 
-const ENTERPRISE_FEATURES = [
-  "Scoped API keys per environment",
-  "Webhook delivery logs & retries",
-  "Merchant dashboard & analytics",
-  "Role-ready account structure",
+const HOW_STEPS = [
+  {
+    id: "step-create",
+    title: "Create a payment link",
+    copy: "Set amount, order details, and your brand style in one flow.",
+  },
+  {
+    id: "step-pay",
+    title: "Customer pays on Solana",
+    copy: "Payers use any compatible wallet and complete checkout in seconds.",
+  },
+  {
+    id: "step-settle",
+    title: "You receive direct settlement",
+    copy: "Net funds land in your wallet with on-chain verification.",
+  },
 ];
 
-const AUDIENCE = ["Freelancers", "Agencies", "SaaS", "Marketplaces", "Remote teams"];
+const TRUST_POINTS = [
+  "Non-custodial flow: customer funds are never held by Trezalink",
+  "Signed webhook payloads (HMAC-SHA256) for reliable backend automation",
+  "Transparent fee math visible before settlement",
+  "Network status and operational visibility for merchant teams",
+];
+
+const USE_CASES = [
+  "Freelancers invoicing global clients",
+  "SaaS teams collecting recurring renewals",
+  "Agencies running borderless retainers",
+  "Remote-first businesses reducing payout delays",
+];
+
+const FAQS = [
+  {
+    key: "chargebacks",
+    q: "Do crypto payments have chargebacks?",
+    a: "Solana transactions are final after confirmation. This removes traditional card chargeback exposure for settled payments.",
+  },
+  {
+    key: "custody",
+    q: "Does Trezalink hold merchant funds?",
+    a: "No. Trezalink is non-custodial. Funds settle directly to the wallet you configure for your merchant account.",
+  },
+  {
+    key: "settlement",
+    q: "How fast is settlement?",
+    a: "Most payments settle in under two seconds on Solana, depending on current network conditions.",
+  },
+  {
+    key: "assets",
+    q: "Which networks and assets are supported?",
+    a: "Trezalink currently runs on Solana mainnet with SOL live. Additional assets such as USDC (SPL) are on the roadmap.",
+  },
+];
 
 export default function LandingPage() {
   return (
     <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
       <PageBackground />
+      <LandingAnalytics />
 
       <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4">
         <Navbar />
       </div>
 
       <main>
-        {/* HERO */}
-        <section className="landing-section relative min-h-screen flex items-center pt-24 pb-16">
+        <section data-track-section="hero" className="landing-section relative min-h-screen flex items-center pt-24 pb-12">
           <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-            <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-12">
-              <ScrollReveal immediate delay={0} className="flex-1 text-center lg:text-left">
+            <div className="grid lg:grid-cols-2 gap-10 items-center">
+              <ScrollReveal immediate className="text-center lg:text-left">
                 <span className="inline-flex items-center gap-2 rounded-md border landing-border bg-white/80 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
-                  <Building2 className="w-3.5 h-3.5" />
-                  Enterprise payment infrastructure
+                  <Globe className="w-3.5 h-3.5" />
+                  Built for global SMB merchants
                 </span>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.08]">
-                  <span className="gradient-text">Solana-native payments</span>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.6rem] font-bold tracking-tight leading-[1.06]">
+                  <span className="gradient-text">Get paid globally on Solana</span>
                   <br />
-                  <span className="landing-heading">for growing businesses</span>
+                  <span className="landing-heading">with clear fees and direct wallet settlement</span>
                 </h1>
-                <p className="mt-6 text-lg md:text-xl landing-body max-w-xl mx-auto lg:mx-0">
-                  Accept cross-border crypto with institutional clarity — direct wallet settlement,
-                  predictable fees, and full fund control.
+                <p className="mt-6 text-lg md:text-xl landing-body max-w-2xl mx-auto lg:mx-0">
+                  Launch a merchant checkout in minutes with a non-custodial payment flow,
+                  transparent 0.3% pricing, and no setup fee.
                 </p>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/register" className="landing-btn-primary">
-                    Open merchant account
+                  <TrackingLink
+                    href="/register"
+                    eventName="cta_click"
+                    eventData={{ placement: "hero_primary" }}
+                    className="landing-btn-primary"
+                  >
+                    Create Merchant Account
                     <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/docs" className="landing-btn-secondary">
-                    View documentation
+                  </TrackingLink>
+                  <ScrollToSectionButton
+                    targetId="how-it-works"
+                    eventName="cta_click"
+                    className="landing-btn-secondary"
+                  >
+                    See How It Works
                     <ArrowUpRight className="w-4 h-4" />
-                  </Link>
+                  </ScrollToSectionButton>
                 </div>
                 <p className="mt-6 text-sm landing-subtle flex items-center justify-center lg:justify-start gap-2">
-                  <Headphones className="w-4 h-4" />
-                  Self-serve onboarding · No setup fees
+                  <BadgeCheck className="w-4 h-4" />
+                  No setup fee · You keep custody · First link in minutes
                 </p>
               </ScrollReveal>
 
-              <ScrollReveal immediate delay={120} variant="right" className="flex-1 w-full max-w-[440px] mx-auto lg:mx-0">
-                <div className="landing-panel rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-xs font-semibold landing-subtle uppercase tracking-wider">Settlement preview</span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Confirmed
-                    </span>
-                  </div>
-                  <div className="text-center py-6 border-b landing-border">
-                    <p className="text-sm landing-subtle mb-1">Gross payment</p>
-                    <p className="text-4xl font-bold tracking-tight landing-heading">
-                      10<span className="text-2xl font-semibold landing-muted">.00 SOL</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between py-5 border-b landing-border">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-500/15">
-                        <TrendingDown className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                      </div>
-                      <span className="text-sm landing-muted">Platform fee (0.3%)</span>
-                    </div>
-                    <span className="font-mono text-sm landing-heading">−0.03</span>
-                  </div>
-                  <div className="pt-6 text-center">
-                    <p className="text-sm landing-subtle mb-1">Net to merchant wallet</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">9.97 SOL</p>
-                  </div>
-                </div>
+              <ScrollReveal immediate delay={120} variant="right">
+                <HeroPaymentIllustration />
               </ScrollReveal>
             </div>
 
-            {/* Trust pillars */}
-            <ScrollReveal delay={80} className="mt-14 grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {TRUST_PILLARS.map((item, i) => (
-                <ScrollReveal key={item.label} delay={i * 70} variant="fade" className="flex items-center gap-3 landing-panel rounded-xl px-4 py-3 h-full">
-                  <item.icon className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span className="text-xs font-medium landing-muted leading-snug">{item.label}</span>
+            <ScrollReveal delay={120} className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+              {SOCIAL_PROOF.map((item, i) => (
+                <ScrollReveal key={item.label} delay={i * 70} variant="fade" className="landing-panel rounded-xl px-5 py-4">
+                  <p className="text-2xl md:text-3xl font-bold landing-heading">{item.value}</p>
+                  <p className="text-xs landing-subtle mt-0.5 font-medium">{item.label}</p>
                 </ScrollReveal>
               ))}
-            </ScrollReveal>
-
-            {/* Metrics */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3">
-              {METRICS.map((m, i) => (
-                <ScrollReveal key={m.label} delay={i * 80} className="landing-panel rounded-xl px-5 py-4 h-full">
-                  <p className="text-2xl md:text-3xl font-bold landing-heading">{m.value}</p>
-                  <p className="text-xs landing-subtle mt-0.5 font-medium">{m.label}</p>
-                </ScrollReveal>
-              ))}
-            </div>
-
-            <ScrollReveal delay={100} className="mt-12 pt-8 border-t landing-border">
-              <p className="text-center text-xs landing-subtle uppercase tracking-widest mb-4">
-                Built for teams operating globally
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {AUDIENCE.map((label) => (
-                  <span
-                    key={label}
-                    className="text-sm font-medium landing-muted px-4 py-2 rounded-full border landing-border bg-white/60 dark:bg-white/[0.02]"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
             </ScrollReveal>
           </div>
         </section>
 
-        <SupportedAssets />
+        <section data-track-section="pain-solution" className="landing-section relative py-20" id="pain-solution">
+          <div className="max-w-7xl mx-auto px-6">
+            <ScrollReveal className="max-w-3xl mb-12">
+              <span className="landing-label">Why teams switch</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                Remove payment friction without losing control
+              </h2>
+            </ScrollReveal>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <ScrollReveal className="landing-panel rounded-2xl p-7">
+                <p className="text-sm font-semibold landing-heading mb-4">Common pain points</p>
+                <ul className="space-y-3">
+                  {PAINS.map((pain) => (
+                    <li key={pain} className="flex items-start gap-3 text-sm landing-body">
+                      <CircleAlert className="w-4 h-4 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                      {pain}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollReveal>
+              <ScrollReveal delay={80} className="landing-panel rounded-2xl p-7">
+                <p className="text-sm font-semibold landing-heading mb-4">What Trezalink changes</p>
+                <ul className="space-y-3">
+                  {SOLUTIONS.map((solution) => (
+                    <li key={solution} className="flex items-start gap-3 text-sm landing-body">
+                      <Check className="w-4 h-4 mt-0.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      {solution}
+                    </li>
+                  ))}
+                </ul>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
 
-        {/* HOW IT WORKS */}
-        <section className="landing-section relative py-24 border-t landing-border">
+        <section data-track-section="how-it-works" id="how-it-works" className="landing-section relative py-24">
           <div className="max-w-7xl mx-auto px-6">
             <ScrollReveal className="max-w-2xl mb-16">
               <span className="landing-label">How it works</span>
               <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
-                Operational flow designed for finance teams
+                Three steps from invoice to settlement
               </h2>
               <p className="mt-4 landing-body">
-                A predictable three-step pipeline from invoice to on-chain settlement — auditable,
-                automated, and wallet-direct.
+                Keep onboarding simple for your team while giving finance full visibility.
               </p>
             </ScrollReveal>
             <div className="grid md:grid-cols-3 gap-6">
-              {STEPS.map((s, i) => (
-                <ScrollReveal key={s.step} delay={i * 100} className="landing-panel rounded-2xl p-8 relative overflow-hidden h-full">
-                  <span className="text-5xl font-black text-slate-200 dark:text-white/[0.04] absolute top-4 right-6 select-none">
-                    {s.step}
-                  </span>
+              {HOW_STEPS.map((step, i) => (
+                <ScrollReveal key={step.id} delay={i * 90} className="landing-panel rounded-2xl p-8 h-full">
                   <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/15 border landing-border flex items-center justify-center mb-5 text-sm font-bold text-blue-700 dark:text-blue-400">
                     {i + 1}
                   </div>
-                  <h3 className="text-lg font-semibold landing-heading mb-2">{s.title}</h3>
-                  <p className="text-sm landing-body">{s.desc}</p>
+                  <h3 className="text-lg font-semibold landing-heading mb-2">{step.title}</h3>
+                  <p className="text-sm landing-body">{step.copy}</p>
                 </ScrollReveal>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ENTERPRISE */}
-        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+        <section data-track-section="trust" className="landing-section relative py-24 bg-slate-100/55 dark:bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <ScrollReveal variant="left">
-                <span className="landing-label">Enterprise ready</span>
-                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
-                  Infrastructure your compliance team can explain
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+              <ScrollReveal>
+                <span className="landing-label">Trust and security</span>
+                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                  Built for teams that need reliability and audit clarity
                 </h2>
-                <p className="landing-body mb-8">
-                  Trezalink is built for merchants who need transparent fund flows, signed webhook
-                  events, and production-grade API controls — without taking custody of client assets.
+                <p className="mt-4 landing-body">
+                  Use non-custodial payment infrastructure with merchant-ready controls and
+                  visibility for operations.
                 </p>
-                <ul className="space-y-3">
-                  {ENTERPRISE_FEATURES.map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm landing-body">
-                      <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                      {feature}
+                <ul className="mt-8 space-y-3">
+                  {TRUST_POINTS.map((point) => (
+                    <li key={point} className="flex items-start gap-3 text-sm landing-body">
+                      <Shield className="w-4 h-4 mt-0.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                      {point}
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/architecture"
+                <TrackingLink
+                  href="/status"
+                  eventName="cta_click"
+                  eventData={{ placement: "trust_status" }}
                   className="inline-flex items-center gap-1.5 mt-8 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  Review system architecture
+                  View system status
                   <ArrowUpRight className="w-4 h-4" />
-                </Link>
+                </TrackingLink>
               </ScrollReveal>
-              <ScrollReveal variant="right" delay={80} className="landing-panel rounded-2xl p-8 md:p-10">
-                <h3 className="text-lg font-semibold landing-heading mb-6">Security & control matrix</h3>
+
+              <ScrollReveal variant="right" className="landing-panel rounded-2xl p-8">
+                <h3 className="text-lg font-semibold landing-heading mb-5">Settlement transparency snapshot</h3>
                 <div className="space-y-4">
-                  {[
-                    { title: "Fund custody", value: "Never held by Trezalink", ok: true },
-                    { title: "Settlement network", value: "Solana Mainnet", ok: true },
-                    { title: "Webhook integrity", value: "HMAC-SHA256 signed", ok: true },
-                    { title: "Chargeback exposure", value: "None after finality", ok: true },
-                    { title: "USDC (SPL)", value: "Roadmap", ok: false },
-                  ].map((row) => (
-                    <div
-                      key={row.title}
-                      className="flex items-center justify-between py-3 border-b landing-border last:border-0"
-                    >
-                      <span className="text-sm landing-muted">{row.title}</span>
-                      <span
-                        className={`text-sm font-medium ${
-                          row.ok
-                            ? "text-slate-900 dark:text-white"
-                            : "text-slate-500 dark:text-slate-500"
-                        }`}
-                      >
-                        {row.value}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="flex items-center justify-between text-sm border-b landing-border pb-3">
+                    <span className="landing-muted">Gross payment</span>
+                    <span className="font-semibold landing-heading">10.00 SOL</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-b landing-border pb-3">
+                    <span className="landing-muted">Trezalink fee (0.3%)</span>
+                    <span className="font-semibold landing-heading">0.03 SOL</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-b landing-border pb-3">
+                    <span className="landing-muted">Net to merchant wallet</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">9.97 SOL</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-b landing-border pb-3">
+                    <span className="landing-muted">Settlement speed</span>
+                    <span className="font-semibold landing-heading">Under 2 seconds</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="landing-muted">Custody model</span>
+                    <span className="font-semibold landing-heading">Merchant wallet direct</span>
+                  </div>
                 </div>
               </ScrollReveal>
             </div>
           </div>
         </section>
 
-        {/* PLATFORM */}
-        <section className="landing-section relative py-24 border-t landing-border">
+        <section data-track-section="use-cases" className="landing-section relative py-20">
           <div className="max-w-7xl mx-auto px-6">
-            <ScrollReveal className="mb-12 max-w-2xl">
-              <span className="landing-label">Platform</span>
-              <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight landing-heading">
-                Complete payment stack, one integration
+            <ScrollReveal className="max-w-2xl mb-10">
+              <span className="landing-label">Use cases</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                Built for modern global teams
               </h2>
             </ScrollReveal>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <ScrollReveal className="md:col-span-4 landing-panel rounded-2xl p-8 md:p-10">
-                <Globe className="w-8 h-8 text-blue-600 dark:text-blue-400 mb-5" />
-                <h3 className="text-2xl font-semibold landing-heading mb-3">Borderless collections</h3>
-                <p className="landing-body max-w-md">
-                  Accept SOL from clients in any jurisdiction. No correspondent banking, no FX spread markup.
-                </p>
-                <div className="mt-8 flex flex-wrap gap-2">
-                  {["SOL", "Solana", "Global", "Instant"].map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs font-medium px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </ScrollReveal>
-              <ScrollReveal delay={100} className="md:col-span-2 landing-panel rounded-2xl p-8">
-                <Zap className="w-8 h-8 text-violet-600 dark:text-violet-400" />
-                <h3 className="text-xl font-semibold landing-heading mt-6 mb-2">Real-time settlement</h3>
-                <p className="text-sm landing-body">Sub-second on-chain finality.</p>
-              </ScrollReveal>
-              <ScrollReveal delay={150} className="md:col-span-2 landing-panel rounded-2xl p-8">
-                <Shield className="w-8 h-8 text-emerald-600 dark:text-emerald-400 mb-5" />
-                <h3 className="text-xl font-semibold landing-heading mb-2">Final settlement</h3>
-                <p className="text-sm landing-body">Irreversible after chain confirmation.</p>
-              </ScrollReveal>
-              <ScrollReveal delay={200} className="md:col-span-4 landing-panel rounded-2xl p-8 md:p-10 flex flex-col md:flex-row md:items-center gap-8">
-                <div className="flex-1">
-                  <Code2 className="w-8 h-8 text-cyan-600 dark:text-cyan-400 mb-5" />
-                  <h3 className="text-2xl font-semibold landing-heading mb-3">REST API & webhooks</h3>
-                  <p className="landing-body">
-                    Production and sandbox keys, idempotent checkout creation, and signed event delivery.
-                  </p>
-                  <Link
-                    href="/developer"
-                    className="inline-flex items-center gap-1.5 mt-5 text-sm font-semibold text-cyan-700 dark:text-cyan-400 hover:underline"
-                  >
-                    API reference <ArrowUpRight className="w-4 h-4" />
-                  </Link>
-                </div>
-                <pre className="flex-1 text-xs font-mono landing-muted bg-slate-100 dark:bg-black/40 rounded-xl p-4 border landing-border overflow-x-auto">
-{`POST /api/v1/checkout
-Authorization: Bearer <API_KEY>
-{
-  "amount": 10,
-  "currency": "SOL",
-  "orderId": "inv-1042"
-}`}
-                </pre>
-              </ScrollReveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {USE_CASES.map((item, idx) => (
+                <ScrollReveal key={item} delay={idx * 60} className="landing-panel rounded-xl p-5 h-full">
+                  <p className="text-sm landing-body">{item}</p>
+                </ScrollReveal>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* SECURITY + PAYMENT LINK */}
-        <section className="landing-section relative py-24 border-t landing-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col lg:flex-row gap-14 items-start">
-              <ScrollReveal variant="left" className="flex-1">
-                <span className="landing-label">Security</span>
-                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
-                  Non-custodial by architectural design
-                </h2>
-                <p className="landing-body max-w-lg mb-10">
-                  Payments are orchestrated, not held. Every flow terminates in your designated wallet
-                  with cryptographic proof on Solana.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {[
-                    { icon: Lock, title: "Zero custody", desc: "Wallet-to-wallet settlement" },
-                    { icon: KeyRound, title: "API isolation", desc: "Per-environment credentials" },
-                    { icon: FileCheck, title: "Signed webhooks", desc: "HMAC-SHA256 payloads" },
-                    { icon: Wallet, title: "On-chain receipts", desc: "Verifiable audit trail" },
-                  ].map((item) => (
-                    <div key={item.title} className="flex gap-3 p-4 rounded-xl landing-panel">
-                      <item.icon className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-sm landing-heading">{item.title}</p>
-                        <p className="text-xs landing-subtle mt-0.5">{item.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <ul className="mt-10 space-y-3">
-                  {[
-                    { icon: LayoutTemplate, label: "Branded checkout pages" },
-                    { icon: QrCode, label: "QR code generation" },
-                    { icon: Send, label: "Automated receipts" },
-                  ].map((item) => (
-                    <li key={item.label} className="flex items-center gap-3 text-sm landing-body">
-                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                      <item.icon className="w-4 h-4 landing-subtle" />
-                      {item.label}
-                    </li>
-                  ))}
-                </ul>
-              </ScrollReveal>
-
-              <ScrollReveal variant="right" delay={100} className="flex-1 w-full">
-                <div className="landing-panel rounded-2xl p-8">
-                  <div className="flex items-center justify-between mb-6 pb-4 border-b landing-border">
-                    <span className="flex items-center gap-2 text-sm font-medium landing-heading">
-                      <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      Payment link builder
-                    </span>
-                    <span className="text-[10px] uppercase tracking-wider landing-subtle bg-slate-100 dark:bg-white/5 px-2 py-1 rounded">
-                      No code
-                    </span>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Description</p>
-                      <div className="rounded-lg bg-slate-50 dark:bg-white/5 border landing-border px-4 py-3 text-sm landing-body">
-                        Enterprise SaaS — Q2 license
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Amount</p>
-                      <div className="rounded-lg bg-slate-50 dark:bg-white/5 border landing-border px-4 py-3 flex justify-between items-center">
-                        <span className="text-lg font-bold landing-heading">10.00</span>
-                        <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/15 px-2 py-1 rounded border border-blue-200 dark:border-transparent">
-                          SOL
-                        </span>
-                      </div>
-                    </div>
-                    <div className="pt-2">
-                      <p className="text-[10px] uppercase tracking-wider landing-subtle mb-1.5">Payment URL</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/25 px-3 py-3 text-xs font-mono text-blue-800 dark:text-blue-300 truncate">
-                          trezalink.com/pay/inv-8892x
-                        </div>
-                        <button
-                          type="button"
-                          aria-label="Copy link"
-                          className="p-3 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors"
-                        >
-                          <Copy className="w-4 h-4 landing-muted" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
+        <section data-track-section="faq" className="landing-section relative py-20">
+          <div className="max-w-4xl mx-auto px-6">
+            <ScrollReveal className="text-center mb-10">
+              <span className="landing-label">FAQ</span>
+              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
+                Questions merchants ask before launch
+              </h2>
+            </ScrollReveal>
+            <div className="space-y-3">
+              {FAQS.map((item, idx) => (
+                <ScrollReveal key={item.key} delay={idx * 45}>
+                  <details data-faq-item={item.key} className="landing-panel rounded-xl p-5 group">
+                    <summary className="list-none cursor-pointer flex items-start justify-between gap-4">
+                      <span className="font-semibold landing-heading text-left">{item.q}</span>
+                      <Clock3 className="w-4 h-4 landing-subtle shrink-0 mt-1 group-open:rotate-90 transition-transform" />
+                    </summary>
+                    <p className="mt-3 text-sm landing-body">{item.a}</p>
+                  </details>
+                </ScrollReveal>
+              ))}
+            </div>
+            <div className="mt-8 landing-panel rounded-xl p-5 text-left">
+              <p className="font-semibold landing-heading">Technical details</p>
+              <p className="mt-2 text-sm landing-body">
+                Need implementation-level references? Review our API docs, webhook specs, and
+                architecture notes before you go live.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <TrackingLink
+                  href="/docs/quickstart"
+                  eventName="cta_click"
+                  eventData={{ placement: "faq_tech_quickstart" }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Quickstart <ArrowUpRight className="w-4 h-4" />
+                </TrackingLink>
+                <TrackingLink
+                  href="/architecture"
+                  eventName="cta_click"
+                  eventData={{ placement: "faq_tech_architecture" }}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Architecture <ArrowUpRight className="w-4 h-4" />
+                </TrackingLink>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="landing-section relative py-24">
+        <section data-track-section="final-cta" className="landing-section relative py-24">
           <div className="max-w-4xl mx-auto px-6 text-center">
             <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-16 md:px-16 md:py-20 border-blue-200/50 dark:border-blue-500/20">
               <span className="landing-label">Get started</span>
               <h2 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight landing-heading mb-5">
-                Deploy your payment stack this week
+                Start collecting global payments this week
               </h2>
               <p className="landing-body text-lg max-w-xl mx-auto mb-10">
-                Create a merchant account, connect your wallet, and issue your first payment link —
-                no setup fees or monthly minimums.
+                Create your merchant account, connect your wallet, and launch your first payment link
+                in minutes.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register" className="landing-btn-primary px-10 py-4">
-                  Create merchant account
+                <TrackingLink
+                  href="/register"
+                  eventName="cta_click"
+                  eventData={{ placement: "final_primary" }}
+                  className="landing-btn-primary px-10 py-4"
+                >
+                  Create Merchant Account
                   <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link href="/developer" className="landing-btn-secondary px-10 py-4">
-                  Explore API
-                </Link>
+                </TrackingLink>
+                <TrackingLink
+                  href="/docs/quickstart"
+                  eventName="cta_click"
+                  eventData={{ placement: "final_secondary" }}
+                  className="landing-btn-secondary px-10 py-4"
+                >
+                  Read Quickstart
+                </TrackingLink>
               </div>
             </ScrollReveal>
           </div>
         </section>
       </main>
+
+      <div className="fixed bottom-4 left-4 right-4 z-40 md:hidden">
+        <TrackingLink
+          href="/register"
+          eventName="cta_click"
+          eventData={{ placement: "mobile_sticky" }}
+          className="landing-btn-primary w-full shadow-lg shadow-blue-900/20"
+        >
+          <CreditCard className="w-4 h-4" />
+          Create Merchant Account
+        </TrackingLink>
+      </div>
 
       <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]">
         <Footer />

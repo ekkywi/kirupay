@@ -1,20 +1,51 @@
 import Link from "next/link";
 
+const TRUST_STRIP = ["Non-custodial", "Transparent 0.3% fee", "Solana mainnet"];
+
 export default function Footer() {
   return (
     <footer className="relative bg-transparent pt-10 pb-8 w-full">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 pb-8 border-b landing-border">
-          <div className="flex flex-col gap-2">
+        <div className="rounded-2xl border landing-border bg-white/75 dark:bg-white/[0.03] backdrop-blur-sm p-4 sm:p-5 mb-6">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {TRUST_STRIP.map((item) => (
+              <span
+                key={item}
+                className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white/85 dark:bg-white/[0.05] border landing-border"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-8 pb-8 border-b landing-border">
+          <div className="flex flex-col gap-3 max-w-sm">
             <div className="text-base font-semibold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-              <span className="inline-flex h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-500" />
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-blue-600 dark:bg-cyan-400" />
               Trezalink
             </div>
-            <p className="text-xs landing-muted max-w-xs">
-            Global payments, borderless economy.
+            <p className="text-sm landing-muted">
+              Global crypto payments for modern merchants. Launch checkout fast, keep custody,
+              and settle directly to your wallet.
             </p>
+            <div className="flex items-center gap-3 pt-1">
+              <Link
+                href="/register"
+                className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+              >
+                Create account
+              </Link>
+              <Link
+                href="/docs/quickstart"
+                className="inline-flex items-center rounded-lg border landing-border px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/8 transition-colors"
+              >
+                Quickstart
+              </Link>
+            </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-sm">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-sm">
             <div>
               <p className="font-semibold text-slate-900 dark:text-white mb-3">Product</p>
               <ul className="space-y-2 landing-muted">
@@ -24,28 +55,29 @@ export default function Footer() {
                 <li><Link href="/status" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Status</Link></li>
               </ul>
             </div>
+
             <div>
               <p className="font-semibold text-slate-900 dark:text-white mb-3">Resources</p>
               <ul className="space-y-2 landing-muted">
-                <li><Link href="/architecture" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Architecture</Link></li>
-                <li><Link href="/developer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">API</Link></li>
                 <li><Link href="/docs" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</Link></li>
-                <li><Link href="/roadmap" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Roadmap</Link></li>
+                <li><Link href="/developer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">API</Link></li>
+                <li><Link href="/architecture" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Architecture</Link></li>
                 <li><Link href="/faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">FAQ</Link></li>
               </ul>
             </div>
+
             <div>
               <p className="font-semibold text-slate-900 dark:text-white mb-3">Company</p>
               <ul className="space-y-2 landing-muted">
-                <li><Link href="/register" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Get started</Link></li>
+                <li><Link href="/roadmap" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Roadmap</Link></li>
                 <li><Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Sign in</Link></li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-slate-900 dark:text-white mb-3">Community</p>
-              <ul className="space-y-2 landing-muted">
                 <li>
-                  <Link href="https://github.com/trezanix" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Link
+                    href="https://github.com/trezanix"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  >
                     GitHub
                   </Link>
                 </li>
@@ -53,6 +85,7 @@ export default function Footer() {
             </div>
           </div>
         </div>
+
         <p className="pt-6 text-xs landing-subtle text-center md:text-left">
           © {new Date().getFullYear()} Trezalink by Trezanix. All rights reserved.
         </p>

@@ -17,11 +17,11 @@
 @layer utilities {
   /* ── Landing page shell (light + dark) ── */
   .landing-root {
-    @apply bg-slate-50 text-slate-900;
+    @apply bg-transparent text-slate-900;
   }
 
   .dark .landing-root {
-    @apply bg-[#030712] text-slate-50;
+    @apply bg-transparent text-slate-50;
   }
 
   .landing-grid {
