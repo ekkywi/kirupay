@@ -2,6 +2,43 @@ import Link from "next/link";
 
 const TRUST_STRIP = ["Non-custodial", "Transparent 0.3% fee", "Solana mainnet"];
 
+const FOOTER_GROUPS = [
+  {
+    title: "Product",
+    links: [
+      { href: "/pricing", label: "Pricing" },
+      { href: "/use-cases", label: "Use cases" },
+      { href: "/security", label: "Security" },
+      { href: "/status", label: "Status" },
+    ],
+  },
+  {
+    title: "Developers",
+    links: [
+      { href: "/docs", label: "Documentation" },
+      { href: "/developer", label: "API" },
+      { href: "/architecture", label: "Architecture" },
+    ],
+  },
+  {
+    title: "Trust",
+    links: [
+      { href: "/trust", label: "Trust Center" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { href: "/roadmap", label: "Roadmap" },
+      { href: "/faq", label: "FAQ" },
+      { href: "/contact", label: "Contact" },
+      { href: "/changelog", label: "Changelog" },
+    ],
+  },
+];
+
 export default function Footer() {
   return (
     <footer className="relative bg-transparent pt-10 pb-8 w-full">
@@ -29,7 +66,7 @@ export default function Footer() {
               Global crypto payments for modern merchants. Launch checkout fast, keep custody,
               and settle directly to your wallet.
             </p>
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href="/register"
                 className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
@@ -37,52 +74,32 @@ export default function Footer() {
                 Create account
               </Link>
               <Link
-                href="/docs/quickstart"
+                href="/login"
                 className="inline-flex items-center rounded-lg border landing-border px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-white/8 transition-colors"
               >
-                Quickstart
+                Sign in
               </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-sm">
-            <div>
-              <p className="font-semibold text-slate-900 dark:text-white mb-3">Product</p>
-              <ul className="space-y-2 landing-muted">
-                <li><Link href="/pricing" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Pricing</Link></li>
-                <li><Link href="/use-cases" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Use cases</Link></li>
-                <li><Link href="/security" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Security</Link></li>
-                <li><Link href="/status" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Status</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-semibold text-slate-900 dark:text-white mb-3">Resources</p>
-              <ul className="space-y-2 landing-muted">
-                <li><Link href="/docs" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Documentation</Link></li>
-                <li><Link href="/developer" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">API</Link></li>
-                <li><Link href="/architecture" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Architecture</Link></li>
-                <li><Link href="/faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">FAQ</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-semibold text-slate-900 dark:text-white mb-3">Company</p>
-              <ul className="space-y-2 landing-muted">
-                <li><Link href="/roadmap" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Roadmap</Link></li>
-                <li><Link href="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Sign in</Link></li>
-                <li>
-                  <Link
-                    href="https://github.com/trezanix"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                  >
-                    GitHub
-                  </Link>
-                </li>
-              </ul>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-sm">
+            {FOOTER_GROUPS.map((group) => (
+              <div key={group.title}>
+                <p className="font-semibold text-slate-900 dark:text-white mb-3">{group.title}</p>
+                <ul className="space-y-2 landing-muted">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 

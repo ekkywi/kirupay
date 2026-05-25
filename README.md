@@ -110,6 +110,7 @@ http://localhost:3000
 | `PAYMENT_LIFECYCLE_CRON_SECRET` | Optional | Shared secret for internal payment lifecycle cron route (`/api/internal/payment-lifecycle/cron`) |
 | `CRON_SECRET` | Optional | Fallback shared secret for internal cron routes when route-specific secret is not set |
 | `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows). Required to send activation email. |
+| `SUPPORT_EMAIL` | Optional | Destination inbox for `/contact` form submissions. Defaults to `support@trezalink.com`. |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 
 \* Optional for basic local boot, required if testing email-related auth flows.
