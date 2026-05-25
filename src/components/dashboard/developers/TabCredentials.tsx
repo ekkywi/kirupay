@@ -160,7 +160,7 @@ export function TabCredentials({ merchant, canManage = true }: { merchant: Devel
   const [showWebhookConfirmModal, setShowWebhookConfirmModal] = useState(false);
 
   const { currentKey, currentWebhookSecret, isRollingKey, isRollingWebhook, toast, handleCopy, executeRollKey, executeRollWebhookSecret } =
-    useCredentialsManager(merchant.apiKey, merchant.webhookSecret, merchant.businessId);
+    useCredentialsManager(merchant.apiKey, merchant.webhookSecret, merchant.businessId ?? undefined);
 
   const onConfirmRollKey = async () => {
     const success = await executeRollKey();

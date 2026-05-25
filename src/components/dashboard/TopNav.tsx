@@ -29,7 +29,7 @@ type BusinessItem = {
 
 export function TopNav({ merchant }: TopNavProps) {
   const isAdmin = merchant?.actorType === "internal";
-  const [isHydrated, setIsHydrated] = useState(false);
+  const [isHydrated] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isBusinessMenuOpen, setIsBusinessMenuOpen] = useState(false);
@@ -79,7 +79,10 @@ export function TopNav({ merchant }: TopNavProps) {
   };
 
   useEffect(() => {
-    void loadBusinesses();
+    const timeoutId = window.setTimeout(() => {
+      void loadBusinesses();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, [loadBusinesses]);
 
   useEffect(() => {
@@ -213,10 +216,6 @@ export function TopNav({ merchant }: TopNavProps) {
       ? `${currentBusiness.role} · Active`
       : "No active business"
     : "Loading business context";
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   useEffect(() => {
     if (!isBusinessMenuOpen) return;

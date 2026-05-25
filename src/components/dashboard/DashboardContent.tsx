@@ -6,10 +6,13 @@ import { StatCard } from "./StatCard";
 import { WalletOverview } from "./WalletOverview";
 import { TransactionTable } from "./TransactionTable";
 import { Activity, Globe, Save } from "lucide-react";
-import type { Merchant, Transaction } from "@prisma/client";
+import type { Transaction } from "@prisma/client";
 
 type DashboardContentProps = {
-  merchant: Pick<Merchant, "webhookUrl" | "walletAddress">;
+  merchant: {
+    webhookUrl: string | null;
+    walletAddress: string | null;
+  };
   transactions: Transaction[];
   totalRevenue: number;
 };

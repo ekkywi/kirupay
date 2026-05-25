@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Building2, CheckCircle2, PlusCircle } from "lucide-react";
 
 type BusinessMembership = {
@@ -22,7 +22,7 @@ export default function BusinessEntitiesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
@@ -31,11 +31,14 @@ export default function BusinessEntitiesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [load]);
 
   const createBusiness = async () => {
     if (!name.trim()) return;

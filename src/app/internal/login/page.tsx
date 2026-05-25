@@ -13,7 +13,6 @@ import {
   Loader2,
   Lock,
   Mail,
-  ShieldCheck,
   Sparkles,
   Terminal,
   Zap,

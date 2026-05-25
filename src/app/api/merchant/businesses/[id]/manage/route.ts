@@ -22,7 +22,7 @@ export async function GET(_: Request, context: { params: Promise<{ id: string }>
           name: ctx.business.name,
           code: ctx.business.code,
           isActive: ctx.business.isActive,
-          contactEmail: ctx.membership.business.contactEmail,
+          contactEmail: null,
           settlementWalletAddress: ctx.business.settlementWallet?.walletAddress || null,
           apiKey: ctx.business.credentials?.apiKey || null,
           webhookUrl: ctx.business.credentials?.webhookUrl || null,

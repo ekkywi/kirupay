@@ -96,7 +96,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
 
     const explorerUrl = transaction.txSignature
       ? `https://explorer.solana.com/tx/${transaction.txSignature}${explorerSuffix}`
-      : null;
+      : undefined;
     const shortSignature = transaction.txSignature
       ? `${transaction.txSignature.slice(0, 8)}...${transaction.txSignature.slice(-8)}`
       : null;

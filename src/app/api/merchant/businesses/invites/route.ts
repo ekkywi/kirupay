@@ -4,6 +4,34 @@ import { requireBusinessMembership, mapMerchantAccessError, requireBusinessMembe
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { generateBusinessInviteCode, hashBusinessInviteCode, inviteCodeHint } from "@/lib/business-invite";
 
+type BusinessInviteRow = {
+  id: string;
+  businessId: string;
+  role: "ADMIN" | "MEMBER";
+  codeHint: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+  createdAt: Date;
+};
+
+type BusinessInviteClient = {
+  findMany: (args: {
+    where: { businessId: string };
+    orderBy: { createdAt: "desc" };
+    take: number;
+  }) => Promise<BusinessInviteRow[]>;
+  create: (args: {
+    data: {
+      businessId: string;
+      codeHash: string;
+      codeHint: string;
+      role: "ADMIN" | "MEMBER";
+      expiresAt: Date;
+      createdBy: string;
+    };
+  }) => Promise<BusinessInviteRow>;
+};
+
 export async function GET(req: Request) {
   const requestId = createRequestId();
 
@@ -12,7 +40,12 @@ export async function GET(req: Request) {
     const businessId = searchParams.get("businessId");
     const ctx = businessId ? await requireBusinessMembershipById(businessId) : await requireBusinessMembership();
 
-    const invites = await (prisma as any).businessInvite.findMany({
+    const businessInvite = (prisma as unknown as { businessInvite?: BusinessInviteClient }).businessInvite;
+    if (!businessInvite) {
+      throw new Error("Business invite client unavailable");
+    }
+
+    const invites = await businessInvite.findMany({
       where: { businessId: ctx.business.id },
       orderBy: { createdAt: "desc" },
       take: 25,
@@ -60,7 +93,12 @@ export async function POST(req: Request) {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + expiresInHours * 60 * 60 * 1000);
 
-    const invite = await (prisma as any).businessInvite.create({
+    const businessInvite = (prisma as unknown as { businessInvite?: BusinessInviteClient }).businessInvite;
+    if (!businessInvite) {
+      throw new Error("Business invite client unavailable");
+    }
+
+    const invite = await businessInvite.create({
       data: {
         businessId: ctx.business.id,
         codeHash: hashBusinessInviteCode(code),

@@ -1,4 +1,5 @@
 import prisma from "@/lib/neon";
+import type { Prisma } from "@prisma/client";
 
 export const NOTIFICATION_PREF_DEFAULTS = {
   paymentSuccess: true,
@@ -95,7 +96,7 @@ export async function createMerchantNotification(input: {
       title: input.title,
       message: input.message,
       sourceRefId: input.sourceRefId ?? null,
-      metadata: input.metadata,
+      metadata: input.metadata as Prisma.InputJsonValue | undefined,
     },
   });
 

@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
 
-type BusinessContext = { business: { id: string } };
 type MemberRow = {
   id: string;
   role: "OWNER" | "ADMIN" | "MEMBER";
@@ -15,7 +14,7 @@ export default function BusinessMembersPage() {
   const [businessId, setBusinessId] = useState("");
   const [rows, setRows] = useState<MemberRow[]>([]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const ctxRes = await fetch("/api/merchant/businesses", { cache: "no-store" });
     const ctxJson = (await ctxRes.json()) as { activeBusinessId?: string; data?: Array<{ isCurrent: boolean; business: { id: string } }> };
     const activeId = ctxJson.activeBusinessId || ctxJson.data?.find((item) => item.isCurrent)?.business.id || "";
@@ -25,11 +24,14 @@ export default function BusinessMembersPage() {
     const res = await fetch(`/api/merchant/businesses/${activeId}/members`, { cache: "no-store" });
     const json = (await res.json()) as { data?: MemberRow[] };
     setRows(json.data || []);
-  };
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [load]);
 
   const patchMember = async (memberId: string, payload: { role?: "OWNER" | "ADMIN" | "MEMBER"; isActive?: boolean }) => {
     if (!businessId) return;

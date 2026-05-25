@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LinkIcon } from "lucide-react";
 
 type InviteRow = {
@@ -17,15 +17,18 @@ export default function BusinessInvitesPage() {
   const [joinCode, setJoinCode] = useState("");
   const [role, setRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const res = await fetch("/api/merchant/businesses/invites", { cache: "no-store" });
     const json = (await res.json()) as { data?: InviteRow[] };
     setItems(json.data || []);
-  };
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, []);
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [load]);
 
   const createInvite = async () => {
     const res = await fetch("/api/merchant/businesses/invites", {

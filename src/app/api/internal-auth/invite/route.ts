@@ -17,6 +17,18 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+type InternalUserInviteClient = {
+  create: (args: {
+    data: {
+      email: string;
+      role: InternalRole;
+      tokenHash: string;
+      expiresAt: Date;
+      invitedBy: string;
+    };
+  }) => Promise<unknown>;
+};
+
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
@@ -60,7 +72,12 @@ export async function POST(req: Request) {
     const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + INVITE_TTL_MS);
 
-    await (prisma as any).internalUserInvite.create({
+    const internalUserInvite = (prisma as unknown as { internalUserInvite?: InternalUserInviteClient }).internalUserInvite;
+    if (!internalUserInvite) {
+      throw new Error("Internal invite client unavailable");
+    }
+
+    await internalUserInvite.create({
       data: {
         email,
         role,

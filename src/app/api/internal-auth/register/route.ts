@@ -4,12 +4,29 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { assertInternalAuthRateLimit, getRequestIp } from "@/lib/internal-auth-rate-limit";
+import type { InternalRole } from "@prisma/client";
 
 function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/;
+
+type InternalInviteRow = {
+  id: string;
+  email: string;
+  role: InternalRole;
+  expiresAt: Date;
+  usedAt: Date | null;
+};
+
+type InternalUserInviteClient = {
+  findUnique: (args: { where: { tokenHash: string } }) => Promise<InternalInviteRow | null>;
+};
+
+type InternalUserInviteTxClient = {
+  update: (args: { where: { id: string }; data: { usedAt: Date } }) => Promise<unknown>;
+};
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -41,7 +58,12 @@ export async function POST(req: Request) {
 
     const tokenHash = hashToken(token);
 
-    const invite = await (prisma as any).internalUserInvite.findUnique({ where: { tokenHash } });
+    const internalUserInvite = (prisma as unknown as { internalUserInvite?: InternalUserInviteClient }).internalUserInvite;
+    if (!internalUserInvite) {
+      throw new Error("Internal invite client unavailable");
+    }
+
+    const invite = await internalUserInvite.findUnique({ where: { tokenHash } });
 
     if (!invite) {
       console.info("[audit] internal_invite_register_failed", { requestId, reason: "invalid-token" });
@@ -96,7 +118,12 @@ export async function POST(req: Request) {
         },
       });
 
-      await (tx as any).internalUserInvite.update({
+      const inviteClient = (tx as unknown as { internalUserInvite?: InternalUserInviteTxClient }).internalUserInvite;
+      if (!inviteClient) {
+        throw new Error("Internal invite tx client unavailable");
+      }
+
+      await inviteClient.update({
         where: { id: invite.id },
         data: { usedAt: new Date() },
       });

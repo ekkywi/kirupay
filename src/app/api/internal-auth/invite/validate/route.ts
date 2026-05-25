@@ -8,6 +8,17 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+type InternalInviteRow = {
+  email: string;
+  role: string;
+  expiresAt: Date;
+  usedAt: Date | null;
+};
+
+type InternalUserInviteClient = {
+  findUnique: (args: { where: { tokenHash: string } }) => Promise<InternalInviteRow | null>;
+};
+
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
@@ -26,7 +37,11 @@ export async function POST(req: Request) {
       });
     }
 
-    const invite = await (prisma as any).internalUserInvite.findUnique({ where: { tokenHash: hashToken(token) } });
+    const internalUserInvite = (prisma as unknown as { internalUserInvite?: InternalUserInviteClient }).internalUserInvite;
+    if (!internalUserInvite) {
+      throw new Error("Internal invite client unavailable");
+    }
+    const invite = await internalUserInvite.findUnique({ where: { tokenHash: hashToken(token) } });
 
     if (!invite) {
       return apiError(404, {

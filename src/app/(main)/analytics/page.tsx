@@ -54,7 +54,6 @@ type TransactionStatus = "PAID" | "PENDING" | "FAILED";
 export default async function AnalyticsPage() {
   const ctx = await getCurrentMerchantBusinessContext();
   if (!ctx) redirect("/business");
-  const merchant = ctx.merchant;
   const business = ctx.business;
 
   const [

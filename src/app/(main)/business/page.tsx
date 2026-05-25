@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Building2, CirclePlus, Settings2, ShieldCheck } from "lucide-react";
 
@@ -27,24 +27,29 @@ export default function BusinessHubLandingPage() {
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const loadBusinesses = async () => {
+  const loadBusinesses = useCallback(async () => {
     const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
     const json = (await res.json()) as { data?: BusinessMembership[] };
     setItems(json.data || []);
-  };
+  }, []);
 
   useEffect(() => {
-    void loadBusinesses();
-  }, [pathname, searchParamsKey]);
+    const timeoutId = window.setTimeout(() => {
+      void loadBusinesses();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadBusinesses, pathname, searchParamsKey]);
 
   useEffect(() => {
     const handleBusinessSwitched = () => {
-      void loadBusinesses();
+      window.setTimeout(() => {
+        void loadBusinesses();
+      }, 0);
     };
 
     window.addEventListener("merchant:business-switched", handleBusinessSwitched);
     return () => window.removeEventListener("merchant:business-switched", handleBusinessSwitched);
-  }, []);
+  }, [loadBusinesses]);
 
   const createBusiness = async () => {
     if (!name.trim()) return;

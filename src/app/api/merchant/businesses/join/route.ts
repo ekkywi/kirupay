@@ -5,6 +5,29 @@ import { setMerchantSessionToken } from "@/lib/merchant-session";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { hashBusinessInviteCode } from "@/lib/business-invite";
 
+type InviteWithBusiness = {
+  id: string;
+  businessId: string;
+  role: "OWNER" | "ADMIN" | "MEMBER";
+  usedAt: Date | null;
+  expiresAt: Date;
+  business: { isActive: boolean } | null;
+};
+
+type BusinessInviteClient = {
+  findUnique: (args: {
+    where: { codeHash: string };
+    include: { business: true };
+  }) => Promise<InviteWithBusiness | null>;
+};
+
+type BusinessInviteTxClient = {
+  update: (args: {
+    where: { id: string };
+    data: { usedAt: Date; usedById: string };
+  }) => Promise<unknown>;
+};
+
 export async function POST(req: Request) {
   const requestId = createRequestId();
 
@@ -35,7 +58,12 @@ export async function POST(req: Request) {
 
     const codeHash = hashBusinessInviteCode(code);
 
-    const invite = await (prisma as any).businessInvite.findUnique({
+    const businessInvite = (prisma as unknown as { businessInvite?: BusinessInviteClient }).businessInvite;
+    if (!businessInvite) {
+      throw new Error("Business invite client unavailable");
+    }
+
+    const invite = await businessInvite.findUnique({
       where: { codeHash },
       include: { business: true },
     });
@@ -105,7 +133,12 @@ export async function POST(req: Request) {
         });
       }
 
-      await (tx as any).businessInvite.update({
+      const inviteClient = (tx as unknown as { businessInvite?: BusinessInviteTxClient }).businessInvite;
+      if (!inviteClient) {
+        throw new Error("Business invite tx client unavailable");
+      }
+
+      await inviteClient.update({
         where: { id: invite.id },
         data: {
           usedAt: new Date(),

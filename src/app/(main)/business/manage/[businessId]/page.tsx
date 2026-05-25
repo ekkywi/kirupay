@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { AlertTriangle, Building2, KeyRound, LinkIcon, Loader2, Users, Wallet, X } from "lucide-react";
@@ -71,35 +71,41 @@ export default function BusinessManagePage() {
   const isOwner = role === "OWNER";
   const canManageBusiness = isOwner;
 
-  const loadManage = async () => {
+  const loadManage = useCallback(async () => {
     const res = await fetch(`/api/merchant/businesses/${businessId}/manage`, { cache: "no-store" });
     const json = (await res.json()) as { data?: ManageContext };
     const next = json.data || null;
     setCtx(next);
     setEditingName(next?.business.name || "");
     setWebhookUrl(next?.business.webhookUrl || "");
-  };
+  }, [businessId]);
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
     const res = await fetch(`/api/merchant/businesses/${businessId}/members`, { cache: "no-store" });
     const json = (await res.json()) as { data?: MemberRow[] };
     setMembers(json.data || []);
-  };
+  }, [businessId]);
 
-  const loadInvites = async () => {
+  const loadInvites = useCallback(async () => {
     const res = await fetch(`/api/merchant/businesses/invites?businessId=${encodeURIComponent(businessId)}`, { cache: "no-store" });
     const json = (await res.json()) as { data?: InviteRow[] };
     setInvites(json.data || []);
-  };
+  }, [businessId]);
 
   useEffect(() => {
-    void loadManage();
-  }, [businessId, pathname, searchParamsKey]);
+    const timeoutId = window.setTimeout(() => {
+      void loadManage();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [businessId, loadManage, pathname, searchParamsKey]);
 
   useEffect(() => {
-    if (activeTab === "members") void loadMembers();
-    if (activeTab === "invites") void loadInvites();
-  }, [activeTab, businessId, pathname, searchParamsKey]);
+    const timeoutId = window.setTimeout(() => {
+      if (activeTab === "members") void loadMembers();
+      if (activeTab === "invites") void loadInvites();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [activeTab, businessId, loadInvites, loadMembers, pathname, searchParamsKey]);
 
   useEffect(() => {
     const loadActiveBusiness = async () => {
@@ -108,17 +114,21 @@ export default function BusinessManagePage() {
       setActiveBusinessId(json.activeBusinessId || null);
     };
 
-    void loadActiveBusiness();
-    const handleBusinessSwitched = () => {
+    window.setTimeout(() => {
       void loadActiveBusiness();
-      void loadManage();
-      if (activeTab === "members") void loadMembers();
-      if (activeTab === "invites") void loadInvites();
+    }, 0);
+    const handleBusinessSwitched = () => {
+      window.setTimeout(() => {
+        void loadActiveBusiness();
+        void loadManage();
+        if (activeTab === "members") void loadMembers();
+        if (activeTab === "invites") void loadInvites();
+      }, 0);
     };
 
     window.addEventListener("merchant:business-switched", handleBusinessSwitched);
     return () => window.removeEventListener("merchant:business-switched", handleBusinessSwitched);
-  }, [activeTab, businessId]);
+  }, [activeTab, businessId, loadInvites, loadManage, loadMembers]);
 
   const updateBusiness = async () => {
     if (!editingName.trim()) return;

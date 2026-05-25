@@ -18,9 +18,33 @@ export const metadata: Metadata = {
 
 function getInviteStatus(invite: { usedAt: Date | null; expiresAt: Date }) {
   if (invite.usedAt) return "USED";
-  if (invite.expiresAt.getTime() < Date.now()) return "EXPIRED";
+  if (invite.expiresAt.getTime() < new Date().getTime()) return "EXPIRED";
   return "ACTIVE";
 }
+
+type InternalInviteRow = {
+  id: string;
+  email: string;
+  role: string;
+  usedAt: Date | null;
+  expiresAt: Date;
+  createdAt: Date;
+};
+
+type InternalUserInviteClient = {
+  findMany: (args: {
+    orderBy: { createdAt: "desc" };
+    take: number;
+    select: {
+      id: true;
+      email: true;
+      role: true;
+      expiresAt: true;
+      usedAt: true;
+      createdAt: true;
+    };
+  }) => Promise<InternalInviteRow[]>;
+};
 
 export default async function AdminInternalUsersPage({
   searchParams,
@@ -28,6 +52,7 @@ export default async function AdminInternalUsersPage({
   searchParams: Promise<InternalUsersSearchParams>;
 }) {
   const actor = await requireInternalUser();
+  const now = new Date().getTime();
   const resolvedSearchParams = await searchParams;
   const success = resolvedSearchParams.success?.trim() || "";
   const error = resolvedSearchParams.error?.trim() || "";
@@ -45,7 +70,7 @@ export default async function AdminInternalUsersPage({
         createdAt: true,
       },
     }),
-    (prisma as any).internalUserInvite.findMany({
+    ((prisma as unknown as { internalUserInvite?: InternalUserInviteClient }).internalUserInvite?.findMany({
       orderBy: { createdAt: "desc" },
       take: 20,
       select: {
@@ -56,12 +81,12 @@ export default async function AdminInternalUsersPage({
         usedAt: true,
         createdAt: true,
       },
-    }),
+    }) ?? Promise.resolve([])),
   ]);
 
   const activeUsers = internalUsers.filter((user) => user.isActive).length;
   const inactiveUsers = internalUsers.length - activeUsers;
-  const pendingInvites = inviteRows.filter((invite: { usedAt: Date | null; expiresAt: Date }) => !invite.usedAt && invite.expiresAt.getTime() >= Date.now()).length;
+  const pendingInvites = inviteRows.filter((invite) => !invite.usedAt && invite.expiresAt.getTime() >= now).length;
 
   const inviteLink = success.startsWith("http") ? success : "";
   const statusMessage = inviteLink ? "Invite created successfully." : success;
@@ -195,7 +220,7 @@ export default async function AdminInternalUsersPage({
                   <td colSpan={5} className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No invites created yet.</td>
                 </tr>
               ) : (
-                inviteRows.map((invite: { id: string; email: string; role: string; usedAt: Date | null; expiresAt: Date; createdAt: Date }) => {
+                inviteRows.map((invite) => {
                   const status = getInviteStatus(invite);
                   const statusClass =
                     status === "ACTIVE"

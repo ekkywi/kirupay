@@ -24,7 +24,6 @@ export default async function PaymentsPage({
 }) {
   const ctx = await getCurrentMerchantBusinessContext();
   if (!ctx) redirect("/business");
-  const merchant = ctx.merchant;
   const business = ctx.business;
 
   const params = await searchParams;

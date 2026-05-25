@@ -33,6 +33,27 @@ const corsHeaders = {
 }
 const CHECKOUT_TTL_MS = 30 * 60 * 1000;
 
+type CheckoutCredential = {
+    businessId: string;
+    business: {
+        isActive: boolean;
+        settlementWallets: Array<{ walletAddress: string }>;
+    };
+};
+
+type BusinessCredentialClient = {
+    findUnique: (args: {
+        where: { apiKey: string };
+        include: {
+            business: {
+                include: {
+                    settlementWallets: { where: { isActive: true }; take: number };
+                };
+            };
+        };
+    }) => Promise<CheckoutCredential | null>;
+};
+
 export async function POST(req: Request) {
     const requestId = createRequestId();
     const obs = startObservation(requestId, "POST /api/v1/checkout");
@@ -86,8 +107,8 @@ export async function POST(req: Request) {
         }
 
         const apiKey = authHeader.split(" ")[1];
-        const businessCredentialClient = (prisma as any).businessCredential;
-        let credential: any = null;
+        const businessCredentialClient = (prisma as unknown as { businessCredential?: BusinessCredentialClient }).businessCredential;
+        let credential: CheckoutCredential | null = null;
         if (businessCredentialClient?.findUnique) {
             credential = await businessCredentialClient.findUnique({
                 where: { apiKey },
