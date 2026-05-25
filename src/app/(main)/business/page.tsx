@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Building2, CirclePlus, Settings2, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 type BusinessMembership = {
   membershipId: string;
@@ -26,6 +27,12 @@ export default function BusinessHubLandingPage() {
   const [items, setItems] = useState<BusinessMembership[]>([]);
   const [name, setName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const loadBusinesses = useCallback(async () => {
     const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
@@ -52,31 +59,50 @@ export default function BusinessHubLandingPage() {
   }, [loadBusinesses]);
 
   const createBusiness = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || isSaving) return;
     setIsSaving(true);
+    const toastId = toast.loading("Creating business...");
     try {
       const res = await fetch("/api/merchant/businesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), setActive: false }),
       });
-      const json = (await res.json()) as { data?: { business?: { id?: string } } };
-      const createdBusinessId = json.data?.business?.id;
-      setName("");
-      if (res.ok && createdBusinessId) {
-        await fetch("/api/merchant/businesses/switch", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ businessId: createdBusinessId }),
-        });
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("merchant:business-switched", { detail: { businessId: createdBusinessId } }));
-        }
-        router.refresh();
-        router.push(`/business/manage/${createdBusinessId}`);
+      const json = (await res.json().catch(() => ({}))) as { data?: { business?: { id?: string } }; message?: string; error?: { message?: string } };
+
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to create business."), { id: toastId });
         return;
       }
-      await loadBusinesses();
+
+      const createdBusinessId = json.data?.business?.id;
+      if (!createdBusinessId) {
+        toast.error("Business was created but no ID returned.", { id: toastId });
+        return;
+      }
+
+      const switchRes = await fetch("/api/merchant/businesses/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId: createdBusinessId }),
+      });
+      const switchJson = (await switchRes.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+
+      if (!switchRes.ok) {
+        toast.error(readApiMessage(switchJson, "Business created, but failed to switch context."), { id: toastId });
+        await loadBusinesses();
+        return;
+      }
+
+      setName("");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("merchant:business-switched", { detail: { businessId: createdBusinessId } }));
+      }
+      toast.success("Business created and active context updated.", { id: toastId });
+      router.refresh();
+      router.push(`/business/manage/${createdBusinessId}`);
+    } catch {
+      toast.error("Failed to create business.", { id: toastId });
     } finally {
       setIsSaving(false);
     }

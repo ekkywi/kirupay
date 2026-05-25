@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { toast } from "sonner";
 
 type MemberRow = {
   id: string;
@@ -13,6 +14,13 @@ type MemberRow = {
 export default function BusinessMembersPage() {
   const [businessId, setBusinessId] = useState("");
   const [rows, setRows] = useState<MemberRow[]>([]);
+  const [isPatchingMember, setIsPatchingMember] = useState(false);
+
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const load = useCallback(async () => {
     const ctxRes = await fetch("/api/merchant/businesses", { cache: "no-store" });
@@ -34,13 +42,25 @@ export default function BusinessMembersPage() {
   }, [load]);
 
   const patchMember = async (memberId: string, payload: { role?: "OWNER" | "ADMIN" | "MEMBER"; isActive?: boolean }) => {
-    if (!businessId) return;
-    await fetch(`/api/merchant/businesses/${businessId}/members/${memberId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    await load();
+    if (!businessId || isPatchingMember) return;
+    setIsPatchingMember(true);
+    try {
+      const res = await fetch(`/api/merchant/businesses/${businessId}/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to update member."));
+        return;
+      }
+      await load();
+    } catch {
+      toast.error("Failed to update member.");
+    } finally {
+      setIsPatchingMember(false);
+    }
   };
 
   return (
@@ -66,6 +86,7 @@ export default function BusinessMembersPage() {
                   <select
                     value={row.role}
                     onChange={(event) => void patchMember(row.id, { role: event.target.value as "OWNER" | "ADMIN" | "MEMBER" })}
+                    disabled={isPatchingMember}
                     className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs dark:border-white/10 dark:bg-[#0B0F17]"
                   >
                     <option value="OWNER">OWNER</option>
@@ -74,6 +95,7 @@ export default function BusinessMembersPage() {
                   </select>
                   <button
                     onClick={() => void patchMember(row.id, { isActive: !row.isActive })}
+                    disabled={isPatchingMember}
                     className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold dark:border-white/10"
                   >
                     {row.isActive ? "Deactivate" : "Activate"}

@@ -41,6 +41,7 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
   const listInFlightRef = useRef(false);
   const nextUnreadRetryAtRef = useRef(0);
   const isAuthenticatedRef = useRef(true);
+  const seenNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const refreshUnread = useCallback(async () => {
     if (unreadInFlightRef.current) return false;
@@ -92,10 +93,35 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
       };
 
       const incoming = json.data || [];
+
+      if (typeof window !== "undefined" && !nextCursor) {
+        const newPaymentSuccess = incoming.find(
+          (item) => item.type === "PAYMENT_SUCCESS" && !seenNotificationIdsRef.current.has(item.id),
+        );
+        if (newPaymentSuccess) {
+          const metadata = (newPaymentSuccess.metadata || {}) as Record<string, unknown>;
+          const transactionId =
+            typeof metadata.transactionId === "string" ? metadata.transactionId : null;
+          const orderId = typeof metadata.orderId === "string" ? metadata.orderId : null;
+          window.dispatchEvent(
+            new CustomEvent("merchant:payment-updated", {
+              detail: {
+                notificationId: newPaymentSuccess.id,
+                transactionId,
+                orderId,
+              },
+            }),
+          );
+        }
+      }
+
       setItems((prev) => {
         const merged = nextCursor ? [...prev, ...incoming] : incoming;
         return sortNotifications(merged);
       });
+      for (const item of incoming) {
+        seenNotificationIdsRef.current.add(item.id);
+      }
       setCursor(json.pagination?.nextCursor || null);
       setHasMore(Boolean(json.pagination?.hasMore));
       return true;

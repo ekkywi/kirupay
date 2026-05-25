@@ -313,6 +313,7 @@ export async function retryWebhookDelivery(logId: string) {
       status: delivery.statusCode,
       payload: existingLog.payload,
       response: delivery.responseText,
+      retriedFromLogId: existingLog.id,
     },
   });
 

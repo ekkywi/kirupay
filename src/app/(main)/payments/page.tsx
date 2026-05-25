@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 // src/app/dashboard/payments/page.tsx
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { ExportTransactionsButton } from "@/components/dashboard/ExportTransactionsButton";
+import { PaymentsAutoRefresh } from "@/components/dashboard/PaymentsAutoRefresh";
 import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { Activity, ArrowUpRight, CheckCircle2, Clock3, ReceiptText, TrendingUp } from "lucide-react";
@@ -95,6 +96,7 @@ export default async function PaymentsPage({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      <PaymentsAutoRefresh />
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">

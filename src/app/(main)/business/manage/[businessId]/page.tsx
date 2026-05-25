@@ -6,6 +6,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { AlertTriangle, Building2, KeyRound, LinkIcon, Loader2, Users, Wallet, X } from "lucide-react";
 import { WalletOverview } from "@/components/dashboard/WalletOverview";
 import { DeveloperView } from "@/components/dashboard/developers/DeveloperView";
+import { toast } from "sonner";
 
 type TabId = "entity" | "members" | "invites" | "wallet" | "integrations";
 
@@ -66,10 +67,22 @@ export default function BusinessManagePage() {
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [isPatchingMember, setIsPatchingMember] = useState(false);
+  const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+  const [isJoiningBusiness, setIsJoiningBusiness] = useState(false);
+  const [isSavingWebhook, setIsSavingWebhook] = useState(false);
 
   const role = ctx?.membership.role;
   const isOwner = role === "OWNER";
   const canManageBusiness = isOwner;
+  const trimmedEditingName = editingName.trim();
+  const profileChanged = trimmedEditingName !== (ctx?.business.name ?? "");
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const loadManage = useCallback(async () => {
     const res = await fetch(`/api/merchant/businesses/${businessId}/manage`, { cache: "no-store" });
@@ -131,24 +144,52 @@ export default function BusinessManagePage() {
   }, [activeTab, businessId, loadInvites, loadManage, loadMembers]);
 
   const updateBusiness = async () => {
-    if (!editingName.trim()) return;
-    const nextName = editingName.trim();
-    await fetch(`/api/merchant/businesses/${businessId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: nextName }),
-    });
-    await loadManage();
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("merchant:business-updated", { detail: { businessId, name: nextName } }));
+    if (!trimmedEditingName || !profileChanged || isSavingName) return;
+    const nextName = trimmedEditingName;
+    setIsSavingName(true);
+    const toastId = toast.loading("Saving business name...");
+
+    try {
+      const res = await fetch(`/api/merchant/businesses/${businessId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: nextName }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: { message?: string }; message?: string };
+
+      if (!res.ok) {
+        const message = json.error?.message || json.message || "Failed to save business name.";
+        toast.error(message, { id: toastId });
+        return;
+      }
+
+      await loadManage();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("merchant:business-updated", { detail: { businessId, name: nextName } }));
+      }
+      toast.success("Business name updated.", { id: toastId });
+    } catch {
+      toast.error("Failed to save business name.", { id: toastId });
+    } finally {
+      setIsSavingName(false);
     }
   };
 
   const deactivateBusiness = async () => {
+    if (isDeactivating) return;
     setIsDeactivating(true);
+    const toastId = toast.loading("Deactivating business...");
     try {
-      await fetch(`/api/merchant/businesses/${businessId}`, { method: "DELETE" });
+      const res = await fetch(`/api/merchant/businesses/${businessId}`, { method: "DELETE" });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to deactivate business."), { id: toastId });
+        return;
+      }
+      toast.success("Business deactivated.", { id: toastId });
       window.location.href = "/business";
+    } catch {
+      toast.error("Failed to deactivate business.", { id: toastId });
     } finally {
       setIsDeactivating(false);
       setShowDeactivateModal(false);
@@ -156,42 +197,98 @@ export default function BusinessManagePage() {
   };
 
   const patchMember = async (memberId: string, payload: { role?: "OWNER" | "ADMIN" | "MEMBER"; isActive?: boolean }) => {
-    await fetch(`/api/merchant/businesses/${businessId}/members/${memberId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    await loadMembers();
+    if (isPatchingMember) return;
+    setIsPatchingMember(true);
+    try {
+      const res = await fetch(`/api/merchant/businesses/${businessId}/members/${memberId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to update member."));  
+        return;
+      }
+      await loadMembers();
+    } catch {
+      toast.error("Failed to update member.");
+    } finally {
+      setIsPatchingMember(false);
+    }
   };
 
   const createInvite = async () => {
-    const res = await fetch("/api/merchant/businesses/invites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessId, role: inviteRole, expiresInHours: 72 }),
-    });
-    const json = (await res.json()) as { data?: { code?: string } };
-    setLastCode(json.data?.code || "");
-    await loadInvites();
+    if (isCreatingInvite) return;
+    setIsCreatingInvite(true);
+    const toastId = toast.loading("Generating invite code...");
+    try {
+      const res = await fetch("/api/merchant/businesses/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, role: inviteRole, expiresInHours: 72 }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { data?: { code?: string }; message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to create invite."), { id: toastId });
+        return;
+      }
+      setLastCode(json.data?.code || "");
+      await loadInvites();
+      toast.success("Invite code generated.", { id: toastId });
+    } catch {
+      toast.error("Failed to create invite.", { id: toastId });
+    } finally {
+      setIsCreatingInvite(false);
+    }
   };
 
   const joinBusiness = async () => {
-    if (!joinCode.trim()) return;
-    await fetch("/api/merchant/businesses/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: joinCode.trim(), setActive: false }),
-    });
-    setJoinCode("");
+    if (!joinCode.trim() || isJoiningBusiness) return;
+    setIsJoiningBusiness(true);
+    const toastId = toast.loading("Joining business...");
+    try {
+      const res = await fetch("/api/merchant/businesses/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode.trim(), setActive: false }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to join business."), { id: toastId });
+        return;
+      }
+      setJoinCode("");
+      toast.success("Join request completed.", { id: toastId });
+    } catch {
+      toast.error("Failed to join business.", { id: toastId });
+    } finally {
+      setIsJoiningBusiness(false);
+    }
   };
 
   const saveWebhook = async () => {
-    await fetch("/api/merchant/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessId, webhookUrl: webhookUrl.trim() }),
-    });
-    await loadManage();
+    if (isSavingWebhook) return;
+    setIsSavingWebhook(true);
+    const toastId = toast.loading("Saving webhook URL...");
+    try {
+      const res = await fetch("/api/merchant/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, webhookUrl: webhookUrl.trim() }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to save webhook URL."), { id: toastId });
+        return;
+      }
+      await loadManage();
+      toast.success("Webhook URL saved.", { id: toastId });
+    } catch {
+      toast.error("Failed to save webhook URL.", { id: toastId });
+    } finally {
+      setIsSavingWebhook(false);
+    }
   };
 
   const developerMerchant = useMemo(
@@ -217,11 +314,17 @@ export default function BusinessManagePage() {
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Scoped settings for this business only ({ctx.business.code}).</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/business" className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            <Link
+              href="/business"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+            >
               Back to Hub
             </Link>
             {activeBusinessId && activeBusinessId !== businessId ? (
-              <Link href={`/business/manage/${activeBusinessId}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-blue-300 dark:hover:bg-blue-500/10">
+              <Link
+                href={`/business/manage/${activeBusinessId}`}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-blue-300 dark:hover:bg-blue-500/10"
+              >
                 Open Active Business
               </Link>
             ) : null}
@@ -246,15 +349,25 @@ export default function BusinessManagePage() {
       </div>
 
       {activeTab === "entity" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
-          <p className="text-sm font-semibold">Business profile</p>
-          <div className="mt-3 flex gap-2">
-            <input value={editingName} onChange={(e) => setEditingName(e.target.value)} className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]" />
-            <button onClick={() => void updateBusiness()} disabled={!canManageBusiness} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50">Save</button>
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <p className="text-sm font-semibold">Business profile</p>
+        <div className="mt-3 flex gap-2">
+            <input
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
+            />
+            <button
+              onClick={() => void updateBusiness()}
+              disabled={!canManageBusiness || !trimmedEditingName || !profileChanged || isSavingName}
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+            >
+              {isSavingName ? "Saving..." : "Save"}
+            </button>
             <button
               onClick={() => setShowDeactivateModal(true)}
               disabled={!isOwner}
-              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 disabled:opacity-50 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300"
+              className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/20"
             >
               Deactivate
             </button>
@@ -263,7 +376,7 @@ export default function BusinessManagePage() {
       )}
 
       {activeTab === "members" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
           <div className="space-y-3">
             {members.map((row) => (
               <div key={row.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
@@ -273,12 +386,12 @@ export default function BusinessManagePage() {
                     <p className="text-xs text-slate-500">{row.merchant.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select value={row.role} onChange={(e) => void patchMember(row.id, { role: e.target.value as "OWNER" | "ADMIN" | "MEMBER" })} disabled={!isOwner} className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:opacity-50 dark:border-white/10 dark:bg-[#0B0F17]">
+                    <select value={row.role} onChange={(e) => void patchMember(row.id, { role: e.target.value as "OWNER" | "ADMIN" | "MEMBER" })} disabled={!isOwner || isPatchingMember} className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
                       <option value="OWNER">OWNER</option>
                       <option value="ADMIN">ADMIN</option>
                       <option value="MEMBER">MEMBER</option>
                     </select>
-                    <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner} className="rounded-lg border px-2 py-1 text-xs disabled:opacity-50">{row.isActive ? "Deactivate" : "Activate"}</button>
+                    <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner || isPatchingMember} className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{row.isActive ? "Deactivate" : "Activate"}</button>
                   </div>
                 </div>
               </div>
@@ -294,29 +407,29 @@ export default function BusinessManagePage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
               <p className="text-sm font-semibold">Create invite code</p>
               <div className="mt-3 flex items-center gap-2">
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")} className="rounded-lg border border-slate-200 px-2 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]">
+                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")} className="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
                   <option value="MEMBER">MEMBER</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>
-                <button onClick={() => void createInvite()} disabled={!canManageBusiness} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">Generate</button>
+                <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
               </div>
               {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-white/[0.03]">{lastCode}</p>}
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
               <p className="text-sm font-semibold">Join with invite code</p>
               <div className="mt-3 flex items-center gap-2">
-                <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]" />
-                <button onClick={() => void joinBusiness()} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold dark:border-white/10">Join</button>
+                <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
+                <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{isJoiningBusiness ? "Joining..." : "Join"}</button>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
             <p className="text-sm font-semibold">Recent invites</p>
             <div className="mt-3 space-y-2">
               {invites.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
+                <div key={item.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
                   <p className="font-semibold">Role {item.role} • code ending {item.codeHint}</p>
                   <p className="text-slate-500">Expires: {new Date(item.expiresAt).toLocaleString()} • {item.usedAt ? "Used" : "Pending"}</p>
                 </div>
@@ -331,11 +444,11 @@ export default function BusinessManagePage() {
 
       {activeTab === "integrations" && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Webhook endpoint</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <input value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} placeholder="https://your-api.com/webhooks/trezalink" className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.03]" />
-              <button onClick={() => void saveWebhook()} disabled={!canManageBusiness} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">Save URL</button>
+              <input value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} placeholder="https://your-api.com/webhooks/trezalink" className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
+              <button onClick={() => void saveWebhook()} disabled={!canManageBusiness || isSavingWebhook} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{isSavingWebhook ? "Saving..." : "Save URL"}</button>
             </div>
           </div>
 

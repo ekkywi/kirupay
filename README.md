@@ -109,10 +109,20 @@ http://localhost:3000
 | `RPC_HEALTH_CRON_SECRET` | Optional | Shared secret for internal RPC health cron route |
 | `PAYMENT_LIFECYCLE_CRON_SECRET` | Optional | Shared secret for internal payment lifecycle cron route (`/api/internal/payment-lifecycle/cron`) |
 | `CRON_SECRET` | Optional | Fallback shared secret for internal cron routes when route-specific secret is not set |
-| `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows) |
+| `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows). Required to send activation email. |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 
 \* Optional for basic local boot, required if testing email-related auth flows.
+
+Email delivery notes:
+- Activation sender is `Trezalink <noreply@trezalink.com>`.
+- Ensure `trezalink.com` is verified in Resend before expecting successful delivery.
+- If registration succeeds but email delivery fails, API now returns non-2xx and logs structured delivery errors with request ID.
+- Go-live checklist:
+  - Domain `trezalink.com` status in Resend is `verified`.
+  - DNS records (SPF/DKIM/return-path) are applied and propagated.
+  - `RESEND_API_KEY` belongs to the same Resend workspace that owns the verified domain.
+  - Review Resend Email Logs for delivery status and rejection reasons using timestamp + `requestId`.
 
 ## Database & Prisma
 - Schema file: `prisma/schema.prisma`

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LinkIcon } from "lucide-react";
+import { toast } from "sonner";
 
 type InviteRow = {
   id: string;
@@ -16,6 +17,14 @@ export default function BusinessInvitesPage() {
   const [lastCode, setLastCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [role, setRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
+  const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+  const [isJoiningBusiness, setIsJoiningBusiness] = useState(false);
+
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const load = useCallback(async () => {
     const res = await fetch("/api/merchant/businesses/invites", { cache: "no-store" });
@@ -31,24 +40,52 @@ export default function BusinessInvitesPage() {
   }, [load]);
 
   const createInvite = async () => {
-    const res = await fetch("/api/merchant/businesses/invites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, expiresInHours: 72 }),
-    });
-    const json = (await res.json()) as { data?: { code?: string } };
-    setLastCode(json.data?.code || "");
-    await load();
+    if (isCreatingInvite) return;
+    setIsCreatingInvite(true);
+    const toastId = toast.loading("Generating invite code...");
+    try {
+      const res = await fetch("/api/merchant/businesses/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, expiresInHours: 72 }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { data?: { code?: string }; message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to create invite."), { id: toastId });
+        return;
+      }
+      setLastCode(json.data?.code || "");
+      await load();
+      toast.success("Invite code generated.", { id: toastId });
+    } catch {
+      toast.error("Failed to create invite.", { id: toastId });
+    } finally {
+      setIsCreatingInvite(false);
+    }
   };
 
   const joinBusiness = async () => {
-    if (!joinCode.trim()) return;
-    await fetch("/api/merchant/businesses/join", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: joinCode.trim(), setActive: true }),
-    });
-    setJoinCode("");
+    if (!joinCode.trim() || isJoiningBusiness) return;
+    setIsJoiningBusiness(true);
+    const toastId = toast.loading("Joining business...");
+    try {
+      const res = await fetch("/api/merchant/businesses/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: joinCode.trim(), setActive: true }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to join business."), { id: toastId });
+        return;
+      }
+      setJoinCode("");
+      toast.success("Successfully joined business.", { id: toastId });
+    } catch {
+      toast.error("Failed to join business.", { id: toastId });
+    } finally {
+      setIsJoiningBusiness(false);
+    }
   };
 
   return (
@@ -69,7 +106,7 @@ export default function BusinessInvitesPage() {
               <option value="MEMBER">MEMBER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
-            <button onClick={() => void createInvite()} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Generate</button>
+            <button onClick={() => void createInvite()} disabled={isCreatingInvite} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
           </div>
           {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-700 dark:bg-white/[0.03] dark:text-slate-200">{lastCode}</p>}
         </div>
@@ -78,7 +115,7 @@ export default function BusinessInvitesPage() {
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Join with invite code</p>
           <div className="mt-3 flex items-center gap-2">
             <input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]" />
-            <button onClick={() => void joinBusiness()} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold dark:border-white/10">Join</button>
+            <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-white/10">{isJoiningBusiness ? "Joining..." : "Join"}</button>
           </div>
         </div>
       </div>

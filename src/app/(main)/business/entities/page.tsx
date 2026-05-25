@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Building2, CheckCircle2, PlusCircle } from "lucide-react";
+import { toast } from "sonner";
 
 type BusinessMembership = {
   membershipId: string;
@@ -21,6 +22,13 @@ export default function BusinessEntitiesPage() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [switchingBusinessId, setSwitchingBusinessId] = useState<string | null>(null);
+
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -41,28 +49,53 @@ export default function BusinessEntitiesPage() {
   }, [load]);
 
   const createBusiness = async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || saving) return;
     setSaving(true);
+    const toastId = toast.loading("Creating business...");
     try {
-      await fetch("/api/merchant/businesses", {
+      const res = await fetch("/api/merchant/businesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), setActive: true }),
       });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to create business."), { id: toastId });
+        return;
+      }
       setName("");
       await load();
+      toast.success("Business created successfully.", { id: toastId });
+    } catch {
+      toast.error("Failed to create business.", { id: toastId });
     } finally {
       setSaving(false);
     }
   };
 
   const switchBusiness = async (businessId: string) => {
-    await fetch("/api/merchant/businesses/switch", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessId }),
-    });
-    await load();
+    if (switchingBusinessId) return;
+    setSwitchingBusinessId(businessId);
+    const toastId = toast.loading("Switching active business...");
+
+    try {
+      const res = await fetch("/api/merchant/businesses/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to switch business."), { id: toastId });
+        return;
+      }
+      await load();
+      toast.success("Active business switched.", { id: toastId });
+    } catch {
+      toast.error("Failed to switch business.", { id: toastId });
+    } finally {
+      setSwitchingBusinessId(null);
+    }
   };
 
   return (
@@ -117,9 +150,10 @@ export default function BusinessEntitiesPage() {
                   ) : (
                     <button
                       onClick={() => void switchBusiness(item.business.id)}
+                      disabled={switchingBusinessId === item.business.id}
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.05]"
                     >
-                      Switch
+                      {switchingBusinessId === item.business.id ? "Switching..." : "Switch"}
                     </button>
                   )}
                 </div>

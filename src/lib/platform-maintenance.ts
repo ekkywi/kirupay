@@ -226,6 +226,19 @@ export async function upsertPlatformMaintenanceState(input: PlatformMaintenanceI
 }
 
 export async function getPlatformOperationsSnapshot() {
+  const unresolvedFailedWebhookWhere = {
+    retriedFromLogId: null,
+    OR: [{ status: null }, { status: { lt: 200 } }, { status: { gte: 300 } }],
+    retryChildren: {
+      none: {
+        status: {
+          gte: 200,
+          lt: 300,
+        },
+      },
+    },
+  } as const;
+
   const [
     totalTransactions,
     pendingTransactions,
@@ -244,14 +257,10 @@ export async function getPlatformOperationsSnapshot() {
     prisma.merchant.count({ where: { isActive: true } }),
     prisma.webhookLog.count(),
     prisma.webhookLog.count({
-      where: {
-        OR: [{ status: null }, { status: { not: 200 } }],
-      },
+      where: unresolvedFailedWebhookWhere,
     }),
     prisma.webhookLog.findMany({
-      where: {
-        OR: [{ status: null }, { status: { not: 200 } }],
-      },
+      where: unresolvedFailedWebhookWhere,
       orderBy: { createdAt: "desc" },
       take: 8,
       include: {

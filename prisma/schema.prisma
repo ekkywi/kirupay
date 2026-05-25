@@ -262,15 +262,21 @@ model Transaction {
 }
 
 model WebhookLog {
-  id         String   @id @default(cuid())
-  businessId String
-  business   BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  event      String
-  url        String
-  status     Int?
-  payload    String
-  response   String?
-  createdAt  DateTime @default(now())
+  id               String      @id @default(cuid())
+  businessId       String
+  business         BusinessEntity @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  event            String
+  url              String
+  status           Int?
+  payload          String
+  response         String?
+  retriedFromLogId String?
+  retryParent      WebhookLog? @relation("WebhookLogRetryChain", fields: [retriedFromLogId], references: [id], onDelete: SetNull)
+  retryChildren    WebhookLog[] @relation("WebhookLogRetryChain")
+  createdAt        DateTime    @default(now())
+
+  @@index([retriedFromLogId])
+  @@index([status, createdAt])
 }
 
 model RpcHealthLog {

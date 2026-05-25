@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useNotifications, type MerchantNotification } from "@/hooks/api/merchant/useNotifications";
 import { createPortal } from "react-dom";
 import { formatLocalDateTime } from "@/lib/local-time";
+import { toast } from "sonner";
 
 interface TopNavProps {
   merchant: {
@@ -54,6 +55,11 @@ export function TopNav({ merchant }: TopNavProps) {
     `${iconControlBaseClass} border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:bg-white/[0.06]`;
   const iconControlProfileClass =
     `${iconControlBaseClass} border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20`;
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
 
   const loadBusinesses = useCallback(async () => {
     if (!merchant || merchant.actorType !== "merchant") return;
@@ -102,18 +108,26 @@ export function TopNav({ merchant }: TopNavProps) {
   const switchBusiness = async (businessId: string) => {
     if (!businessId || switchingBusiness) return;
     setSwitchingBusiness(true);
+    const targetBusiness = businesses.find((item) => item.business.id === businessId);
+    const toastId = toast.loading("Switching active business...");
     try {
       const res = await fetch("/api/merchant/businesses/switch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessId }),
       });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
       if (res.ok) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("merchant:business-switched", { detail: { businessId } }));
         }
         router.refresh();
+        toast.success(`Active business switched to ${targetBusiness?.business.name || "selected business"}.`, { id: toastId });
+      } else {
+        toast.error(readApiMessage(json, "Failed to switch active business."), { id: toastId });
       }
+    } catch {
+      toast.error("Failed to switch active business.", { id: toastId });
     } finally {
       setSwitchingBusiness(false);
     }

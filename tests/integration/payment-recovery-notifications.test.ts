@@ -107,6 +107,13 @@ describe("payment recovery notification integration", () => {
     const result = await retryWebhookDelivery("wl_old");
 
     expect(result.success).toBe(true);
+    expect(prismaMock.webhookLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          retriedFromLogId: "wl_old",
+        }),
+      }),
+    );
     expect(createMerchantNotificationMock).toHaveBeenCalledWith(expect.objectContaining({ type: "WEBHOOK_RECOVERED" }));
   });
 });
