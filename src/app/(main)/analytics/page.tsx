@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-// src/app/dashboard/analytics/page.tsx
 import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
@@ -8,6 +7,7 @@ import { TopCustomersTable } from "@/components/dashboard/analytics/TopCustomers
 import { RevenueSourceChart } from "@/components/dashboard/analytics/RevenueSourceChart";
 import { HistoricalVolumeChart } from "@/components/dashboard/analytics/HistoricalVolumeChart";
 import { PeakHoursChart } from "@/components/dashboard/analytics/PeakHoursChart";
+import { formatCurrencyDisplay, formatCurrencyNumber } from "@/lib/currency-format";
 import {
   Activity,
   ArrowUpRight,
@@ -22,6 +22,7 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
+import { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Analytics",
@@ -50,15 +51,97 @@ type HistoryPoint = {
 };
 
 type TransactionStatus = "PAID" | "PENDING" | "FAILED";
+type CurrencyView = "ALL" | string;
 
-export default async function AnalyticsPage() {
+type MonetarySummary = {
+  gross: number;
+  fee: number;
+  net: number;
+  avgOrderValue: number;
+  paidCount: number;
+};
+
+type TopCustomerView = {
+  displayName: string;
+  customerEmail: string | null;
+  buyerWallet: string | null;
+  totalOrders: number;
+  totalsByCurrency: Record<string, number>;
+};
+
+type TrendSnapshot = {
+  label: string;
+  gross: number;
+  fee: number;
+  net: number;
+  paidCount: number;
+  totalCount: number;
+  successRate: number;
+};
+
+const CURRENCY_SERIES_COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
+];
+
+function percentDelta(current: number, previous: number) {
+  if (previous > 0) return ((current - previous) / previous) * 100;
+  if (current > 0) return 100;
+  return 0;
+}
+
+function moneyWhere(base: Prisma.TransactionWhereInput, currency: CurrencyView): Prisma.TransactionWhereInput {
+  if (currency === "ALL") return base;
+  return { ...base, currency };
+}
+
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const ctx = await getCurrentMerchantBusinessContext();
   if (!ctx) redirect("/business");
   const business = ctx.business;
 
+  const params = await searchParams;
+  const selectedRaw = typeof params.currency === "string" ? params.currency.toUpperCase() : "ALL";
+
+  const discoveredCurrencies = await prisma.transaction.findMany({
+    where: { businessId: business.id },
+    distinct: ["currency"],
+    select: { currency: true },
+    orderBy: { currency: "asc" },
+  });
+
+  const currencyTabs = ["ALL", ...discoveredCurrencies.map((row) => row.currency)] as CurrencyView[];
+  const selectedCurrency: CurrencyView = currencyTabs.includes(selectedRaw) ? selectedRaw : "ALL";
+
+  const baseWhere: Prisma.TransactionWhereInput = { businessId: business.id };
+  const scopedWhere = moneyWhere(baseWhere, selectedCurrency);
+
+  const now = new Date();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+  const current7dStart = new Date(now.getTime() - sevenDaysMs);
+  const previous7dStart = new Date(now.getTime() - (sevenDaysMs * 2));
+  const current30dStart = new Date(now.getTime() - thirtyDaysMs);
+  const previous30dStart = new Date(now.getTime() - (thirtyDaysMs * 2));
+
+  const scopedSql = selectedCurrency === "ALL"
+    ? Prisma.sql`WHERE "businessId" = ${business.id}`
+    : Prisma.sql`WHERE "businessId" = ${business.id} AND currency = ${selectedCurrency}`;
+
   const [
-    statusDistribution, 
-    topCustomers, 
+    statusDistribution,
+    topCustomersRaw,
     totalStats,
     historicalRaw,
     peakHoursRaw,
@@ -68,124 +151,175 @@ export default async function AnalyticsPage() {
     failedWebhookCount,
     stalePendingRaw,
     sourceFunnel,
+    paidByCurrency,
+    paidCurrent7d,
+    paidPrevious7d,
+    paidCurrent30d,
+    paidPrevious30d,
+    allCurrent7d,
+    allPrevious7d,
+    allCurrent30d,
+    allPrevious30d,
   ] = await Promise.all([
-    // 1. Distribusi Status (Donut Chart)
     prisma.transaction.groupBy({
-      by: ['status'],
-      where: { businessId: business.id },
+      by: ["status"],
+      where: scopedWhere,
       _count: { id: true },
     }),
-
-    // 2. Pelanggan Teratas (Leaderboard)
     prisma.transaction.groupBy({
-      by: ['customerEmail', 'buyerWallet'], 
-      where: { businessId: business.id, status: 'PAID' },
+      by: ["customerEmail", "buyerWallet", "currency"],
+      where: { ...scopedWhere, status: "PAID" },
       _sum: { amount: true },
       _count: { id: true },
-      orderBy: { _sum: { amount: 'desc' } },
-      take: 5,
+      orderBy: { _sum: { amount: "desc" } },
+      take: 150,
     }),
-
-    // 3. Statistik Kartu Atas (UBAH KE NET AMOUNT & HANYA YANG PAID)
     prisma.transaction.aggregate({
-      where: { businessId: business.id },
+      where: scopedWhere,
       _count: { id: true },
-      _sum: { netAmount: true }, 
+      _sum: { netAmount: true },
     }),
-
-    // 4. Raw Query: Historical Volume
     prisma.$queryRaw`
-      SELECT 
-        to_char("createdAt", 'Mon YYYY') as month, 
-        status, 
-        COUNT(id) as count 
-      FROM "Transaction" 
-      WHERE "businessId" = ${business.id}
-      GROUP BY 1, 2 
+      SELECT
+        to_char("createdAt", 'Mon YYYY') as month,
+        status,
+        COUNT(id) as count
+      FROM "Transaction"
+      ${scopedSql}
+      GROUP BY 1, 2
       ORDER BY MIN("createdAt") ASC
     `,
-
-    // 5. Raw Query: Peak Buying Hours
     prisma.$queryRaw`
-      SELECT 
-        EXTRACT(HOUR FROM "createdAt") as hour, 
-        COUNT(id) as count 
-      FROM "Transaction" 
-      WHERE "businessId" = ${business.id} AND status = 'PAID'
-      GROUP BY 1 
+      SELECT
+        EXTRACT(HOUR FROM "createdAt") as hour,
+        COUNT(id) as count
+      FROM "Transaction"
+      ${scopedSql} AND status = 'PAID'
+      GROUP BY 1
       ORDER BY 1 ASC
     `,
-    
-    // 6. Query Baru: Revenue by Source
     prisma.transaction.groupBy({
-      by: ['source'],
-      where: { businessId: business.id, status: 'PAID' },
-      _count: { id: true }
+      by: ["source"],
+      where: { ...scopedWhere, status: "PAID" },
+      _count: { id: true },
     }),
-
     prisma.transaction.aggregate({
-      where: { businessId: business.id, status: 'PAID' },
+      where: { ...scopedWhere, status: "PAID" },
       _sum: { amount: true, feeAmount: true, netAmount: true },
       _avg: { amount: true },
       _count: { id: true },
     }),
-
     prisma.webhookLog.aggregate({
       where: { businessId: business.id },
       _count: { id: true },
     }),
-
     prisma.webhookLog.count({
       where: {
         businessId: business.id,
         OR: [{ status: null }, { status: { lt: 200 } }, { status: { gte: 300 } }],
       },
     }),
-
     prisma.$queryRaw`
       SELECT COUNT(id) as count
       FROM "Transaction"
-      WHERE "businessId" = ${business.id}
+      ${scopedSql}
         AND status = 'PENDING'
         AND "createdAt" < NOW() - INTERVAL '24 hours'
     `,
-
     prisma.transaction.groupBy({
-      by: ['source', 'status'],
-      where: { businessId: business.id },
+      by: ["source", "status"],
+      where: scopedWhere,
       _count: { id: true },
     }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: { ...baseWhere, status: "PAID" },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { amount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { ...scopedWhere, status: "PAID", createdAt: { gte: current7dStart, lt: now } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { ...scopedWhere, status: "PAID", createdAt: { gte: previous7dStart, lt: current7dStart } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { ...scopedWhere, status: "PAID", createdAt: { gte: current30dStart, lt: now } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { ...scopedWhere, status: "PAID", createdAt: { gte: previous30dStart, lt: current30dStart } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: current7dStart, lt: now } } }),
+    prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: previous7dStart, lt: current7dStart } } }),
+    prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: current30dStart, lt: now } } }),
+    prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: previous30dStart, lt: current30dStart } } }),
   ]);
 
-  const donutData = statusDistribution.map(item => ({
+  const donutData = statusDistribution.map((item) => ({
     name: item.status,
-    value: item._count.id
+    value: item._count.id,
   }));
 
-  const sourceData = sourceDistribution.map(item => ({
+  const sourceData = sourceDistribution.map((item, index) => ({
     name: item.source === "API" ? "API Integration" : "Payment Links",
-    value: Number(item._count.id)
+    value: Number(item._count.id),
+    color: CURRENCY_SERIES_COLORS[index % CURRENCY_SERIES_COLORS.length],
   }));
 
-  const formattedTopCustomers = topCustomers.map(c => ({
-    ...c,
-    displayName: c.customerEmail || (c.buyerWallet ? `${c.buyerWallet.slice(0, 6)}...${c.buyerWallet.slice(-4)}` : "Anonymous Wallet"),
-  }));
+  const topCustomerMap = new Map<string, TopCustomerView>();
+  for (const row of topCustomersRaw) {
+    const key = `${row.customerEmail ?? ""}::${row.buyerWallet ?? ""}`;
+    const existing = topCustomerMap.get(key) ?? {
+      displayName: row.customerEmail || (row.buyerWallet ? `${row.buyerWallet.slice(0, 6)}...${row.buyerWallet.slice(-4)}` : "Anonymous Wallet"),
+      customerEmail: row.customerEmail,
+      buyerWallet: row.buyerWallet,
+      totalOrders: 0,
+      totalsByCurrency: {},
+    };
 
-  const paidCount = donutData.find(d => d.name === "PAID")?.value || 0;
-  const pendingCount = donutData.find(d => d.name === "PENDING")?.value || 0;
-  const failedCount = donutData.find(d => d.name === "FAILED")?.value || 0;
+    existing.totalOrders += row._count.id;
+    existing.totalsByCurrency[row.currency] = (existing.totalsByCurrency[row.currency] ?? 0) + (row._sum.amount ?? 0);
+    topCustomerMap.set(key, existing);
+  }
+
+  const formattedTopCustomers = Array.from(topCustomerMap.values())
+    .sort((a, b) => {
+      const aGross = Object.values(a.totalsByCurrency).reduce((sum, val) => sum + val, 0);
+      const bGross = Object.values(b.totalsByCurrency).reduce((sum, val) => sum + val, 0);
+      return bGross - aGross;
+    })
+    .slice(0, 5);
+
+  const paidCount = donutData.find((d) => d.name === "PAID")?.value || 0;
+  const pendingCount = donutData.find((d) => d.name === "PENDING")?.value || 0;
+  const failedCount = donutData.find((d) => d.name === "FAILED")?.value || 0;
+
   const abandonedRate = totalStats._count.id > 0 ? (pendingCount / totalStats._count.id) * 100 : 0;
   const successRate = totalStats._count.id > 0 ? (paidCount / totalStats._count.id) * 100 : 0;
+
   const grossVolume = settlementStats._sum.amount || 0;
   const feeVolume = settlementStats._sum.feeAmount || 0;
   const netVolume = settlementStats._sum.netAmount || 0;
   const avgOrderValue = settlementStats._avg.amount || 0;
+
   const webhookTotal = webhookStats._count.id;
   const webhookSuccessRate = webhookTotal > 0 ? ((webhookTotal - failedWebhookCount) / webhookTotal) * 100 : 100;
   const stalePendingCount = Number((stalePendingRaw as CountRow[])[0]?.count || 0);
   const walletConnected = !(business.settlementWallet?.walletAddress || "pending").includes("pending");
-  const topCustomerGross = topCustomers.reduce((sum, customer) => sum + (customer._sum.amount || 0), 0);
+
+  const topCustomerGross = formattedTopCustomers.reduce(
+    (sum, customer) => sum + Object.values(customer.totalsByCurrency).reduce((inner, val) => inner + val, 0),
+    0
+  );
   const customerConcentration = grossVolume > 0 ? (topCustomerGross / grossVolume) * 100 : 0;
   const concentrationLevel = customerConcentration >= 60 ? "High" : customerConcentration >= 35 ? "Medium" : "Low";
 
@@ -205,30 +339,94 @@ export default async function AnalyticsPage() {
   ];
 
   const historyMap = new Map<string, HistoryPoint>();
-  (historicalRaw as HistoricalRow[]).forEach(row => {
+  (historicalRaw as HistoricalRow[]).forEach((row) => {
     const month = row.month;
     if (!historyMap.has(month)) historyMap.set(month, { month, PAID: 0, PENDING: 0, FAILED: 0 });
     const status = row.status as TransactionStatus;
     const historyPoint = historyMap.get(month);
-    if (historyPoint && status in historyPoint) {
-      historyPoint[status] = Number(row.count);
-    }
+    if (historyPoint && status in historyPoint) historyPoint[status] = Number(row.count);
   });
   const historicalData = Array.from(historyMap.values());
 
-  const peakHoursData = Array.from({ length: 24 }).map((_, i) => ({
-    hour: i.toString().padStart(2, '0'),
-    count: 0
-  }));
-  (peakHoursRaw as PeakHourRow[]).forEach(row => {
+  const peakHoursData = Array.from({ length: 24 }).map((_, i) => ({ hour: i.toString().padStart(2, "0"), count: 0 }));
+  (peakHoursRaw as PeakHourRow[]).forEach((row) => {
     const hourIdx = Number(row.hour);
     peakHoursData[hourIdx].count = Number(row.count);
   });
   const peakHour = peakHoursData.reduce((top, item) => (item.count > top.count ? item : top), peakHoursData[0]);
+
   const strongestSource = Object.entries(sourceSummary).sort((a, b) => b[1].paid - a[1].paid)[0];
+
+  const paidSummaryByCurrency: Record<string, MonetarySummary> = paidByCurrency.reduce((acc, item) => {
+    acc[item.currency] = {
+      gross: item._sum.amount ?? 0,
+      fee: item._sum.feeAmount ?? 0,
+      net: item._sum.netAmount ?? 0,
+      avgOrderValue: item._avg.amount ?? 0,
+      paidCount: item._count.id,
+    };
+    return acc;
+  }, {} as Record<string, MonetarySummary>);
+
+  const activeMonetarySummary: MonetarySummary = selectedCurrency === "ALL"
+    ? {
+      gross: grossVolume,
+      fee: feeVolume,
+      net: netVolume,
+      avgOrderValue: avgOrderValue,
+      paidCount,
+    }
+    : (paidSummaryByCurrency[selectedCurrency] ?? { gross: 0, fee: 0, net: 0, avgOrderValue: 0, paidCount: 0 });
+
+  const buildTrend = (
+    label: string,
+    paidAgg: { _sum: { amount: number | null; feeAmount: number | null; netAmount: number | null }; _count: { id: number } },
+    totalCount: number
+  ): TrendSnapshot => {
+    const paidCountSnapshot = paidAgg._count.id;
+    return {
+      label,
+      gross: paidAgg._sum.amount ?? 0,
+      fee: paidAgg._sum.feeAmount ?? 0,
+      net: paidAgg._sum.netAmount ?? 0,
+      paidCount: paidCountSnapshot,
+      totalCount,
+      successRate: totalCount > 0 ? (paidCountSnapshot / totalCount) * 100 : 0,
+    };
+  };
+
+  const trend7Current = buildTrend("Last 7 days", paidCurrent7d, allCurrent7d);
+  const trend7Previous = buildTrend("Previous 7 days", paidPrevious7d, allPrevious7d);
+  const trend30Current = buildTrend("Last 30 days", paidCurrent30d, allCurrent30d);
+  const trend30Previous = buildTrend("Previous 30 days", paidPrevious30d, allPrevious30d);
+
+  const trendCards = [
+    {
+      label: "7-day net",
+      value: formatCurrencyDisplay(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, trend7Current.net),
+      delta: percentDelta(trend7Current.net, trend7Previous.net),
+    },
+    {
+      label: "30-day net",
+      value: formatCurrencyDisplay(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, trend30Current.net),
+      delta: percentDelta(trend30Current.net, trend30Previous.net),
+    },
+    {
+      label: "7-day success",
+      value: `${trend7Current.successRate.toFixed(1)}%`,
+      delta: percentDelta(trend7Current.successRate, trend7Previous.successRate),
+    },
+    {
+      label: "30-day success",
+      value: `${trend30Current.successRate.toFixed(1)}%`,
+      delta: percentDelta(trend30Current.successRate, trend30Previous.successRate),
+    },
+  ];
+
+  const activeCurrencyLabel = selectedCurrency === "ALL" ? "All currencies" : selectedCurrency;
   const insightSummary = [
     paidCount > 0
-      ? `Net settlement is ${netVolume.toFixed(4)} SOL from ${paidCount} paid transactions.`
+      ? `Net settlement is ${formatCurrencyNumber(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, activeMonetarySummary.net)} ${selectedCurrency === "ALL" ? "(mixed by currency)" : selectedCurrency} from ${paidCount} paid transactions.`
       : "No paid settlement yet. Create payment links or API checkout sessions to start collecting.",
     peakHour.count > 0
       ? `Highest paid activity is around ${peakHour.hour}:00 with ${peakHour.count} paid checkout${peakHour.count === 1 ? "" : "s"}.`
@@ -255,6 +453,24 @@ export default async function AnalyticsPage() {
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Understand revenue quality, customer concentration, source mix, and payment behavior.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {currencyTabs.map((currency) => {
+              const isActive = currency === selectedCurrency;
+              return (
+                <Link
+                  key={currency}
+                  href={currency === "ALL" ? "/analytics" : `/analytics?currency=${encodeURIComponent(currency)}`}
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                    isActive
+                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-300"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.05]"
+                  }`}
+                >
+                  {currency}
+                </Link>
+              );
+            })}
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Link href="/payments" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
@@ -268,35 +484,49 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Row 1: Metrik Rata-rata */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* KARTU 1 DIUBAH MENJADI TOTAL NET REVENUE */}
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
-          <TrendingUp className="text-emerald-600 dark:text-emerald-400 mb-3" size={22} />
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">Total Net Revenue</p>
-          <h3 className="mt-2 text-2xl font-semibold dark:text-white font-mono text-slate-950">
-            {(totalStats._sum.netAmount || 0).toFixed(4)} SOL
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">After 0.3% platform fee</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <TrendingUp className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Total net revenue</p>
+          <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">
+            {selectedCurrency === "ALL"
+              ? "Per currency"
+              : formatCurrencyDisplay(selectedCurrency, totalStats._sum.netAmount ?? 0)}
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{activeCurrencyLabel} · after platform fee</p>
         </div>
-        
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
-          <Target className="text-blue-600 dark:text-blue-400 mb-3" size={22} />
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">Total Orders</p>
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white font-mono">{totalStats._count.id}</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">{paidCount} paid transactions</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <Target className="mb-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Total orders</p>
+          <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{totalStats._count.id}</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paidCount} paid transactions</p>
         </div>
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
-          <Activity className="text-amber-600 dark:text-amber-400 mb-3" size={22} />
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.18em]">Success / Pending</p>
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950 dark:text-white font-mono">
-            {successRate.toFixed(1)}% / {abandonedRate.toFixed(1)}%
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">Paid ratio vs pending checkout</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <Activity className="mb-4 h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Success / Pending</p>
+          <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{successRate.toFixed(1)}% / {abandonedRate.toFixed(1)}%</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Paid ratio vs pending checkout</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <Clock3 className="mb-4 h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">View mode</p>
+          <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{activeCurrencyLabel}</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Switch tabs to compare currency performance</p>
         </div>
       </div>
 
-      {/* High impact analytics blocks */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {trendCards.map((card) => (
+          <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
+            <p className="mt-2 font-mono text-lg font-semibold text-slate-950 dark:text-white">{card.value}</p>
+            <p className={`mt-1 text-xs font-semibold ${card.delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+              {card.delta >= 0 ? "+" : ""}{card.delta.toFixed(1)}% vs previous period
+            </p>
+          </div>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <div className="flex items-start justify-between gap-4 mb-6">
@@ -308,14 +538,14 @@ export default async function AnalyticsPage() {
               <h3 className="mt-2 font-semibold text-slate-950 dark:text-white text-base">Finance-ready settlement math</h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Gross, fee, net, and average order value from paid transactions.</p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">SOL</span>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">{activeCurrencyLabel}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Gross volume", value: `${grossVolume.toFixed(4)} SOL` },
-              { label: "Platform fee", value: `${feeVolume.toFixed(4)} SOL` },
-              { label: "Net settlement", value: `${netVolume.toFixed(4)} SOL` },
-              { label: "Avg order value", value: `${avgOrderValue.toFixed(4)} SOL` },
+              { label: "Gross volume", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.gross) },
+              { label: "Platform fee", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.fee) },
+              { label: "Net settlement", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.net) },
+              { label: "Avg order value", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.avgOrderValue) },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
@@ -323,6 +553,16 @@ export default async function AnalyticsPage() {
               </div>
             ))}
           </div>
+          {selectedCurrency === "ALL" && Object.keys(paidSummaryByCurrency).length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {Object.entries(paidSummaryByCurrency).map(([currency, summary]) => (
+                <div key={currency} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">{currency}</span>
+                  <span className="font-mono text-slate-950 dark:text-white">{formatCurrencyDisplay(currency, summary.net)}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
@@ -335,15 +575,12 @@ export default async function AnalyticsPage() {
               <h3 className="mt-2 font-semibold text-slate-950 dark:text-white text-base">Checkout completion quality</h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Track where payment intent turns into confirmed settlement.</p>
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              {successRate.toFixed(1)}% paid
-            </span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{successRate.toFixed(1)}% paid</span>
           </div>
           <div className="space-y-3">
             {funnelSteps.map((step) => {
               const width = totalStats._count.id > 0 ? Math.max((step.value / totalStats._count.id) * 100, step.value > 0 ? 6 : 0) : 0;
               const colorClass = step.tone === "emerald" ? "bg-emerald-500" : step.tone === "amber" ? "bg-amber-500" : step.tone === "red" ? "bg-red-500" : "bg-blue-500";
-
               return (
                 <div key={step.label}>
                   <div className="flex items-center justify-between text-sm">
@@ -351,7 +588,7 @@ export default async function AnalyticsPage() {
                     <span className="font-mono text-slate-950 dark:text-white">{step.value}</span>
                   </div>
                   <div className="mt-2 h-2 rounded-full bg-slate-100 dark:bg-white/[0.06]">
-                    <div className={`h-2 rounded-full ${colorClass}`} style={{ width: `${width}%` }} />
+                    <div className={`h-2 rounded-full transition-all duration-500 ${colorClass}`} style={{ width: `${width}%` }} />
                   </div>
                 </div>
               );
@@ -361,9 +598,7 @@ export default async function AnalyticsPage() {
             {Object.entries(sourceSummary).map(([source, values]) => (
               <div key={source} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{source}</p>
-                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                  {values.total > 0 ? ((values.paid / values.total) * 100).toFixed(1) : "0.0"}% conversion
-                </p>
+                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{values.total > 0 ? ((values.paid / values.total) * 100).toFixed(1) : "0.0"}% conversion</p>
               </div>
             ))}
           </div>
@@ -424,12 +659,11 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Row 2: Distribusi Status & Revenue Source */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <h3 className="font-semibold text-slate-950 dark:text-white text-base">Transaction success ratio</h3>
           <p className="mt-1 mb-6 text-sm text-slate-500 dark:text-slate-400">Distribution of paid, pending, and failed records.</p>
-          <StatusDonutChart data={donutData} />
+          <StatusDonutChart data={donutData} title={activeCurrencyLabel} />
         </div>
         <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <h3 className="font-semibold text-slate-950 dark:text-white text-base">Orders by source</h3>
@@ -438,7 +672,6 @@ export default async function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Row 3: Historical Volume (Full Width) */}
       <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -450,7 +683,6 @@ export default async function AnalyticsPage() {
         <HistoricalVolumeChart data={historicalData} />
       </div>
 
-      {/* Row 4: Peak Hours & Top Customers */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-7 bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <div className="mb-6 flex items-center justify-between gap-4">
@@ -460,14 +692,14 @@ export default async function AnalyticsPage() {
             </div>
             <Clock3 className="h-5 w-5 text-amber-600 dark:text-amber-400" />
           </div>
-          <PeakHoursChart data={peakHoursData} />
+          <PeakHoursChart data={peakHoursData} peakHour={peakHour.hour} />
         </div>
         <div className="lg:col-span-5 bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <div className="mb-6">
             <h3 className="font-semibold text-slate-950 dark:text-white text-base">Top spending customers</h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Highest gross SOL volume by email or wallet.</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Highest gross volume by email or wallet.</p>
           </div>
-          <TopCustomersTable customers={formattedTopCustomers} />
+          <TopCustomersTable customers={formattedTopCustomers} selectedCurrency={selectedCurrency} />
         </div>
       </div>
     </div>

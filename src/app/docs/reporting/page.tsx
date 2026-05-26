@@ -29,8 +29,8 @@ export default function DocsReportingPage() {
         and ERP/spreadsheet ingest with raw decimal values (no localized number formatting).
       </p>
       <p>
-        Default export filter is <code>status=PAID</code> for the last 30 days based on <code>createdAt</code>. If URL filters
-        are present (<code>status</code>, <code>from</code>, <code>to</code>), export follows those same filters.
+        From the Payments page, export is configured from a popup filter with date range, <code>status</code>, <code>source</code>,
+        and <code>currency</code>. Default date range is last 30 days based on <code>createdAt</code>, with a maximum range of 1 year.
       </p>
       <p>
         CSV columns are fixed: <code>transactionId</code>, <code>businessId</code>, <code>orderId</code>, <code>status</code>,

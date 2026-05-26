@@ -1,4 +1,3 @@
-// src/components/analytics/HistoricalVolumeChart.tsx
 "use client";
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -21,17 +20,19 @@ export function HistoricalVolumeChart({ data }: { data: HistoricalVolumePoint[] 
 
   return (
     <div className="w-full">
-      {/* Historical chart butuh lebih banyak ruang, kita beri height={350} */}
       <ResponsiveContainer width="100%" height={350} minWidth={0} minHeight={0}>
-        <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+        <BarChart data={data} margin={{ top: 10, right: 10, left: -16, bottom: 0 }} barGap={4}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" opacity={0.18} />
-          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
-          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
-          <Tooltip contentStyle={{ backgroundColor: '#0B0F17', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff' }} cursor={{ fill: '#94a3b8', opacity: 0.12 }} />
+          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} dy={10} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#94a3b8" }} allowDecimals={false} />
+          <Tooltip
+            contentStyle={{ backgroundColor: "#0B0F17", borderColor: "rgba(255,255,255,0.1)", borderRadius: "12px", color: "#fff" }}
+            cursor={{ fill: "#94a3b8", opacity: 0.08 }}
+          />
           <Legend verticalAlign="top" height={36} />
-          <Bar dataKey="PAID" stackId="a" fill="#22c55e" radius={[0, 0, 4, 4]} />
+          <Bar dataKey="PAID" stackId="a" fill="#22c55e" radius={[4, 4, 0, 0]} />
           <Bar dataKey="PENDING" stackId="a" fill="#eab308" />
-          <Bar dataKey="FAILED" stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="FAILED" stackId="a" fill="#ef4444" radius={[0, 0, 4, 4]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

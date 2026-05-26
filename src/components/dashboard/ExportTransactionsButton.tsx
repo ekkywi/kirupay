@@ -1,19 +1,43 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Download, X } from "lucide-react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
-function buildExportUrl(params: URLSearchParams) {
-  const query = new URLSearchParams();
-  const status = params.get("status") || "PAID";
-  const from = params.get("from");
-  const to = params.get("to");
+const EXPORT_STATUS_OPTIONS = ["ALL", "PAID", "PENDING", "FAILED"] as const;
+type ExportStatus = (typeof EXPORT_STATUS_OPTIONS)[number];
+const EXPORT_SOURCE_OPTIONS = ["ALL", "API", "PAYMENT_LINK"] as const;
+type ExportSource = (typeof EXPORT_SOURCE_OPTIONS)[number];
 
-  query.set("status", status);
-  if (from) query.set("from", from);
-  if (to) query.set("to", to);
+function toDateInputValue(date: Date) {
+  const year = date.getUTCFullYear();
+  const month = `${date.getUTCMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getUTCDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toStartOfDayIso(dateInput: string) {
+  return `${dateInput}T00:00:00.000Z`;
+}
+
+function toEndOfDayIso(dateInput: string) {
+  return `${dateInput}T23:59:59.999Z`;
+}
+
+function buildExportUrl(input: {
+  status: ExportStatus;
+  source: ExportSource;
+  currency: string;
+  fromDate: string;
+  toDate: string;
+}) {
+  const query = new URLSearchParams();
+
+  query.set("status", input.status);
+  query.set("source", input.source);
+  query.set("currency", input.currency);
+  query.set("from", toStartOfDayIso(input.fromDate));
+  query.set("to", toEndOfDayIso(input.toDate));
 
   return `/api/merchant/transactions/export?${query.toString()}`;
 }
@@ -26,12 +50,51 @@ function fallbackFilename() {
   return `transactions-reconciliation-${year}${month}${day}.csv`;
 }
 
-export function ExportTransactionsButton() {
-  const searchParams = useSearchParams();
+export function ExportTransactionsButton({ currencyOptions }: { currencyOptions: string[] }) {
   const [isExporting, setIsExporting] = useState(false);
-  const exportUrl = useMemo(() => buildExportUrl(searchParams), [searchParams]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<ExportSource>("ALL");
+  const [selectedStatus, setSelectedStatus] = useState<ExportStatus>("ALL");
+  const [selectedCurrency, setSelectedCurrency] = useState("ALL");
+  const [dateError, setDateError] = useState<string | null>(null);
+
+  const today = useMemo(() => new Date(), []);
+  const defaultFromDate = useMemo(() => {
+    const from = new Date(today);
+    from.setUTCDate(from.getUTCDate() - 30);
+    return toDateInputValue(from);
+  }, [today]);
+  const defaultToDate = useMemo(() => toDateInputValue(today), [today]);
+  const [fromDate, setFromDate] = useState(defaultFromDate);
+  const [toDate, setToDate] = useState(defaultToDate);
+
+  const exportUrl = useMemo(
+    () =>
+      buildExportUrl({
+        status: selectedStatus,
+        source: selectedSource,
+        currency: selectedCurrency,
+        fromDate,
+        toDate,
+      }),
+    [fromDate, selectedCurrency, selectedSource, selectedStatus, toDate],
+  );
+  const normalizedCurrencyOptions = useMemo(
+    () => ["ALL", ...Array.from(new Set(currencyOptions.filter((item) => item !== "ALL")))],
+    [currencyOptions],
+  );
 
   const onExport = async () => {
+    if (!fromDate || !toDate) {
+      setDateError("Please select both start and end date.");
+      return;
+    }
+    if (fromDate > toDate) {
+      setDateError("Start date cannot be later than end date.");
+      return;
+    }
+
+    setDateError(null);
     setIsExporting(true);
     try {
       const res = await fetch(exportUrl, {
@@ -58,6 +121,7 @@ export function ExportTransactionsButton() {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(blobUrl);
+      setIsModalOpen(false);
     } catch {
       alert("Export failed: network error, please try again.");
     } finally {
@@ -66,14 +130,114 @@ export function ExportTransactionsButton() {
   };
 
   return (
-    <button
-      type="button"
-      onClick={onExport}
-      disabled={isExporting}
-      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
-    >
-      <Download className="h-4 w-4" />
-      {isExporting ? "Exporting..." : "Export CSV"}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setIsModalOpen(true)}
+        disabled={isExporting}
+        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+      >
+        <Download className="h-4 w-4" />
+        Export CSV
+      </button>
+      {isModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
+          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-950 dark:text-white">Export transactions</h3>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+                aria-label="Close export modal"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                From
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                To
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                />
+              </label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Status
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value as ExportStatus)}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                >
+                  {EXPORT_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Source
+                <select
+                  value={selectedSource}
+                  onChange={(e) => setSelectedSource(e.target.value as ExportSource)}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                >
+                  {EXPORT_SOURCE_OPTIONS.map((source) => (
+                    <option key={source} value={source}>{source}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 sm:col-span-2">
+                Currency
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                >
+                  {normalizedCurrencyOptions.map((currency) => (
+                    <option key={currency} value={currency}>{currency}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {dateError ? <p className="mt-3 text-xs text-red-600 dark:text-red-400">{dateError}</p> : null}
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              Maximum export range is 1 year.
+            </p>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onExport}
+                disabled={isExporting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? "Exporting..." : "Download CSV"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

@@ -25,6 +25,7 @@ const CSV_HEADERS = [
 ] as const;
 
 const ALLOWED_STATUS = new Set(["PAID", "PENDING", "FAILED", "ALL"]);
+const ALLOWED_SOURCE = new Set(["API", "PAYMENT_LINK", "ALL"]);
 
 function toCsvCell(value: string) {
   if (/[",\n\r]/.test(value)) {
@@ -57,6 +58,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const statusParam = (searchParams.get("status") || "PAID").toUpperCase();
+    const sourceParam = (searchParams.get("source") || "ALL").toUpperCase();
+    const currencyParam = (searchParams.get("currency") || "ALL").toUpperCase();
     const fromParam = searchParams.get("from");
     const toParam = searchParams.get("to");
 
@@ -64,6 +67,22 @@ export async function GET(request: Request) {
       return apiError(400, {
         code: "MERCHANT_EXPORT_VALIDATION_FAILED",
         message: "Invalid status filter. Allowed values: PAID, PENDING, FAILED, ALL.",
+        requestId,
+        retryable: false,
+      });
+    }
+    if (!ALLOWED_SOURCE.has(sourceParam)) {
+      return apiError(400, {
+        code: "MERCHANT_EXPORT_VALIDATION_FAILED",
+        message: "Invalid source filter. Allowed values: API, PAYMENT_LINK, ALL.",
+        requestId,
+        retryable: false,
+      });
+    }
+    if (!currencyParam) {
+      return apiError(400, {
+        code: "MERCHANT_EXPORT_VALIDATION_FAILED",
+        message: "Invalid currency filter.",
         requestId,
         retryable: false,
       });
@@ -91,6 +110,16 @@ export async function GET(request: Request) {
         retryable: false,
       });
     }
+    const maxRangeEnd = new Date(fromDate);
+    maxRangeEnd.setUTCFullYear(maxRangeEnd.getUTCFullYear() + 1);
+    if (toDate > maxRangeEnd) {
+      return apiError(400, {
+        code: "MERCHANT_EXPORT_VALIDATION_FAILED",
+        message: "Date range cannot exceed 1 year.",
+        requestId,
+        retryable: false,
+      });
+    }
 
     const where: Prisma.TransactionWhereInput = {
       businessId,
@@ -99,6 +128,8 @@ export async function GET(request: Request) {
         lte: toDate,
       },
       ...(statusParam !== "ALL" ? { status: statusParam } : {}),
+      ...(sourceParam !== "ALL" ? { source: sourceParam } : {}),
+      ...(currencyParam !== "ALL" ? { currency: currencyParam } : {}),
     };
 
     const transactions = await prisma.transaction.findMany({

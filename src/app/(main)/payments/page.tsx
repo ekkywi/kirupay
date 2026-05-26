@@ -17,6 +17,12 @@ export const metadata: Metadata = {
 
 // Tentukan berapa banyak baris per halaman
 const ITEMS_PER_PAGE = 10;
+type CurrencyMetric = {
+  currency: string;
+  gross: number;
+  fee: number;
+  net: number;
+};
 
 export default async function PaymentsPage({
   searchParams,
@@ -71,16 +77,17 @@ export default async function PaymentsPage({
   // 3. Hitung TOTAL SELURUH DATA (untuk membuat nomor halaman)
   const [
     totalItems,
-    paidStats,
+    paidStatsByCurrency,
     pendingCount,
     failedCount,
     currencyList,
   ] = await Promise.all([
     prisma.transaction.count({ where: whereCondition }),
-    prisma.transaction.aggregate({
+    prisma.transaction.groupBy({
+      by: ["currency"],
       where: { ...baseWhere, status: "PAID" },
-      _count: { id: true },
       _sum: { amount: true, feeAmount: true, netAmount: true },
+      _count: { id: true },
     }),
     prisma.transaction.count({ where: { ...baseWhere, status: "PENDING" } }),
     prisma.transaction.count({ where: { ...baseWhere, status: "FAILED" } }),
@@ -102,12 +109,26 @@ export default async function PaymentsPage({
     take: ITEMS_PER_PAGE,
   });
 
-  const grossVolume = paidStats._sum.amount || 0;
-  const feeVolume = paidStats._sum.feeAmount || 0;
-  const netVolume = paidStats._sum.netAmount || 0;
-  const paidCount = paidStats._count.id;
+  const metricsByCurrency: CurrencyMetric[] = paidStatsByCurrency
+    .map((row) => ({
+      currency: row.currency,
+      gross: row._sum.amount ?? 0,
+      fee: row._sum.feeAmount ?? 0,
+      net: row._sum.netAmount ?? 0,
+    }))
+    .sort((a, b) => a.currency.localeCompare(b.currency));
+
+  const paidCount = paidStatsByCurrency.reduce((sum, row) => sum + row._count.id, 0);
   const selectedCurrency = currencyFilter !== "ALL" ? currencyFilter : null;
   const hasSingleCurrencyView = selectedCurrency && selectedCurrency !== "ALL";
+  const selectedMetric = hasSingleCurrencyView
+    ? metricsByCurrency.find((item) => item.currency === selectedCurrency) ?? {
+      currency: selectedCurrency,
+      gross: 0,
+      fee: 0,
+      net: 0,
+    }
+    : null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -126,7 +147,7 @@ export default async function PaymentsPage({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <ExportTransactionsButton />
+          <ExportTransactionsButton currencyOptions={currencyList.map((item) => item.currency)} />
           <Link href="/payment-links" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
             Payment links
             <ArrowUpRight className="h-4 w-4" />
@@ -143,16 +164,35 @@ export default async function PaymentsPage({
           {
             icon: TrendingUp,
             label: "Net settlement",
-            value: hasSingleCurrencyView ? formatCurrencyDisplay(selectedCurrency, netVolume) : `${netVolume.toFixed(4)} (mixed assets)`,
+            value: hasSingleCurrencyView
+              ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.net ?? 0)
+              : null,
             detail: "after platform fee",
             tone: "emerald",
+            rows: hasSingleCurrencyView
+              ? []
+              : metricsByCurrency.map((item) => ({
+                key: item.currency,
+                value: formatCurrencyDisplay(item.currency, item.net),
+              })),
           },
           {
             icon: ReceiptText,
             label: "Gross volume",
-            value: hasSingleCurrencyView ? formatCurrencyDisplay(selectedCurrency, grossVolume) : `${grossVolume.toFixed(4)} (mixed assets)`,
-            detail: hasSingleCurrencyView ? `${formatCurrencyDisplay(selectedCurrency, feeVolume)} fees` : `${feeVolume.toFixed(4)} mixed fees`,
+            value: hasSingleCurrencyView
+              ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.gross ?? 0)
+              : null,
+            detail: hasSingleCurrencyView
+              ? `${formatCurrencyDisplay(selectedCurrency, selectedMetric?.fee ?? 0)} fees`
+              : "fee breakdown per currency",
             tone: "blue",
+            rows: hasSingleCurrencyView
+              ? []
+              : metricsByCurrency.map((item) => ({
+                key: item.currency,
+                value: formatCurrencyDisplay(item.currency, item.gross),
+                subvalue: `${formatCurrencyDisplay(item.currency, item.fee)} fees`,
+              })),
           },
           { icon: CheckCircle2, label: "Paid transactions", value: paidCount.toString(), detail: "confirmed payments", tone: "emerald" },
           { icon: Clock3, label: "Pending / failed", value: `${pendingCount} / ${failedCount}`, detail: "open payment states", tone: "amber" },
@@ -160,7 +200,23 @@ export default async function PaymentsPage({
           <div key={metric.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
             <metric.icon className={`mb-4 h-5 w-5 ${metric.tone === "emerald" ? "text-emerald-600 dark:text-emerald-400" : metric.tone === "amber" ? "text-amber-600 dark:text-amber-400" : "text-blue-600 dark:text-blue-400"}`} />
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>
-            <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            {metric.value ? (
+              <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{metric.value}</p>
+            ) : metric.rows && metric.rows.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {metric.rows.map((row) => (
+                  <div key={row.key} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">{row.key}</span>
+                    <div className="text-right">
+                      <p className="font-mono font-semibold text-slate-950 dark:text-white">{row.value}</p>
+                      {row.subvalue ? <p className="text-[11px] text-slate-500 dark:text-slate-400">{row.subvalue}</p> : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 font-mono text-sm font-semibold text-slate-500 dark:text-slate-400">No paid transactions yet</p>
+            )}
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{metric.detail}</p>
           </div>
         ))}

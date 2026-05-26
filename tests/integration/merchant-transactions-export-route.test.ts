@@ -130,4 +130,67 @@ describe("GET /api/merchant/transactions/export", () => {
     expect(row[15]).toBe("2026-05-20T01:02:03.000Z");
     expect(row[16]).toBe("2026-05-20T04:05:06.000Z");
   });
+
+  it("supports status filters ALL, PENDING, and FAILED", async () => {
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "business_123" } });
+    prismaMock.transaction.findMany.mockResolvedValue([]);
+    const { GET } = await import("@/app/api/merchant/transactions/export/route");
+
+    await GET(new Request("http://localhost/api/merchant/transactions/export?status=ALL"));
+    await GET(new Request("http://localhost/api/merchant/transactions/export?status=PENDING"));
+    await GET(new Request("http://localhost/api/merchant/transactions/export?status=FAILED"));
+
+    expect(prismaMock.transaction.findMany).toHaveBeenCalledTimes(3);
+
+    const allCall = prismaMock.transaction.findMany.mock.calls[0][0] as {
+      where: { status?: string };
+    };
+    const pendingCall = prismaMock.transaction.findMany.mock.calls[1][0] as {
+      where: { status?: string };
+    };
+    const failedCall = prismaMock.transaction.findMany.mock.calls[2][0] as {
+      where: { status?: string };
+    };
+
+    expect(allCall.where.status).toBeUndefined();
+    expect(pendingCall.where.status).toBe("PENDING");
+    expect(failedCall.where.status).toBe("FAILED");
+  });
+
+  it("supports source and currency filters", async () => {
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "business_123" } });
+    prismaMock.transaction.findMany.mockResolvedValue([]);
+    const { GET } = await import("@/app/api/merchant/transactions/export/route");
+
+    await GET(new Request("http://localhost/api/merchant/transactions/export?source=API&currency=SOL"));
+    await GET(new Request("http://localhost/api/merchant/transactions/export?source=ALL&currency=ALL"));
+
+    expect(prismaMock.transaction.findMany).toHaveBeenCalledTimes(2);
+
+    const filteredCall = prismaMock.transaction.findMany.mock.calls[0][0] as {
+      where: { source?: string; currency?: string };
+    };
+    const allCall = prismaMock.transaction.findMany.mock.calls[1][0] as {
+      where: { source?: string; currency?: string };
+    };
+
+    expect(filteredCall.where.source).toBe("API");
+    expect(filteredCall.where.currency).toBe("SOL");
+    expect(allCall.where.source).toBeUndefined();
+    expect(allCall.where.currency).toBeUndefined();
+  });
+
+  it("returns 400 when date range exceeds 1 year", async () => {
+    requireBusinessMembershipMock.mockResolvedValue({ business: { id: "business_123" } });
+    const { GET } = await import("@/app/api/merchant/transactions/export/route");
+
+    const res = await GET(
+      new Request("http://localhost/api/merchant/transactions/export?from=2025-01-01T00:00:00.000Z&to=2026-01-02T00:00:00.000Z"),
+    );
+    const json = (await res.json()) as { error: { code: string; message: string } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("MERCHANT_EXPORT_VALIDATION_FAILED");
+    expect(json.error.message).toContain("1 year");
+  });
 });

@@ -1,13 +1,14 @@
-// src/components/dashboard/analytics/TopCustomersTable.tsx
+import { formatCurrencyDisplay } from "@/lib/currency-format";
+
 interface TopCustomer {
   displayName: string;
   customerEmail: string | null;
   buyerWallet: string | null;
-  _count?: { id?: number };
-  _sum?: { amount?: number | null };
+  totalOrders: number;
+  totalsByCurrency: Record<string, number>;
 }
 
-export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
+export function TopCustomersTable({ customers, selectedCurrency }: { customers: TopCustomer[]; selectedCurrency: string }) {
   if (!customers || customers.length === 0) {
     return (
       <div className="py-12 flex items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm font-medium text-slate-400 dark:border-white/10 dark:text-slate-500">
@@ -15,6 +16,21 @@ export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
       </div>
     );
   }
+
+  const renderTotalSpent = (customer: TopCustomer) => {
+    if (selectedCurrency !== "ALL") {
+      const value = customer.totalsByCurrency[selectedCurrency] ?? 0;
+      return formatCurrencyDisplay(selectedCurrency, value);
+    }
+
+    const entries = Object.entries(customer.totalsByCurrency)
+      .filter(([, amount]) => amount > 0)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+    if (entries.length === 0) return "-";
+
+    return entries.map(([currency, amount]) => formatCurrencyDisplay(currency, amount)).join(" + ");
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -27,24 +43,24 @@ export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-          {customers.map((c, i) => (
+          {customers.map((customer, i) => (
             <tr key={i} className="group transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03]">
               <td className="py-4">
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[150px] sm:max-w-none">
-                  {c.displayName}
+                  {customer.displayName}
                 </p>
-                {!c.customerEmail && c.buyerWallet && (
+                {!customer.customerEmail && customer.buyerWallet && (
                   <span className="inline-block mt-1 text-[9px] bg-slate-100 dark:bg-white/[0.05] px-1.5 py-0.5 rounded text-slate-500 font-bold uppercase tracking-wider">
                     Wallet Address
                   </span>
                 )}
               </td>
               <td className="py-4 text-center">
-                <span className="text-xs font-medium text-slate-500">{c._count?.id || 0} txs</span>
+                <span className="text-xs font-medium text-slate-500">{customer.totalOrders} txs</span>
               </td>
               <td className="py-4 text-right">
                 <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                  {(c._sum?.amount || 0).toFixed(3)} SOL
+                  {renderTotalSpent(customer)}
                 </p>
               </td>
             </tr>

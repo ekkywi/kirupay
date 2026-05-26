@@ -127,6 +127,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             <option value="ALL">All Status</option>
             <option value="PAID">Paid</option>
             <option value="PENDING">Pending</option>
+            <option value="FAILED">Failed</option>
           </select>
           <select
             value={currentSource}
@@ -202,7 +203,11 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                     {/* Status */}
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${
-                        tx.status === 'PAID' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        tx.status === "PAID"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                          : tx.status === "FAILED"
+                            ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
                       }`}>
                         {tx.status}
                       </span>
