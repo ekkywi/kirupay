@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 const API_CAPABILITIES = [
   { value: "POST", label: "/api/v1/checkout" },
   { value: "Bearer", label: "API key authentication" },
-  { value: "SOL", label: "Supported settlement asset" },
+  { value: "SOL + USDC", label: "Supported settlement assets" },
   { value: "24h", label: "Checkout session window" },
 ];
 
@@ -60,8 +60,8 @@ const INTEGRATION_STEPS = [
 
 const REQUEST_BODY = [
   { field: "orderId", type: "string", required: true, note: "Unique merchant order reference" },
-  { field: "amount", type: "number", required: true, note: "Positive SOL amount" },
-  { field: "currency", type: '"SOL"', required: true, note: "Only SOL is accepted today" },
+  { field: "amount", type: "number", required: true, note: "Positive amount based on selected currency" },
+  { field: "currency", type: '"SOL" | "USDC"', required: true, note: "USDC support is controlled by network configuration" },
   { field: "customerEmail", type: "string", required: false, note: "Optional receipt and reconciliation data" },
   { field: "customerReference", type: "string", required: false, note: "Optional customer lookup reference for support teams" },
   { field: "customerName", type: "string", required: false, note: "Optional display name for customer context" },
@@ -201,7 +201,7 @@ export default function DeveloperPage() {
                 </h2>
                 <p className="landing-body mb-8">
                   The production route validates bearer credentials, merchant wallet readiness,
-                  unique order IDs, positive SOL amounts, and optional redirect URLs.
+                  unique order IDs, positive currency amounts, and optional redirect URLs.
                 </p>
                 <div className="landing-panel rounded-2xl p-6">
                   <div className="flex items-center gap-3 mb-5">

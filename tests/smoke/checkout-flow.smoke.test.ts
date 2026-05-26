@@ -23,6 +23,9 @@ vi.mock("@/lib/maintenance-policy", () => ({
 describe("smoke: checkout create flow", () => {
   it("creates checkout URL for downstream /pay render flow", async () => {
     process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
+    process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.SOLANA_CLUSTER = "devnet";
     maintenanceMock.mockResolvedValue(null);
     prismaMock.businessCredential.findUnique.mockResolvedValue({
       businessId: "biz_smoke",
@@ -58,6 +61,48 @@ describe("smoke: checkout create flow", () => {
     expect(res.status).toBe(201);
     expect(json.transactionId).toBe("txn_smoke_1");
     expect(json.checkoutUrl).toBe("https://trezalink.test/pay/txn_smoke_1");
+  });
+
+  it("creates checkout URL for USDC flow", async () => {
+    process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
+    process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.SOLANA_CLUSTER = "devnet";
+    maintenanceMock.mockResolvedValue(null);
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_smoke",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+    prismaMock.transaction.findFirst.mockResolvedValue(null);
+    prismaMock.transaction.create.mockResolvedValue({
+      id: "txn_smoke_usdc_1",
+      expiresAt: new Date("2026-05-22T01:30:00.000Z"),
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer smoke_key",
+      },
+      body: JSON.stringify({
+        orderId: "SMOKE-USDC-1",
+        amount: 12,
+        currency: "USDC",
+      }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { transactionId: string; checkoutUrl: string };
+
+    expect(res.status).toBe(201);
+    expect(json.transactionId).toBe("txn_smoke_usdc_1");
+    expect(json.checkoutUrl).toBe("https://trezalink.test/pay/txn_smoke_usdc_1");
   });
 
   it("returns maintenance block for same flow when maintenance is enabled", async () => {

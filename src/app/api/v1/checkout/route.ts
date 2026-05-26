@@ -4,13 +4,14 @@ import prisma from "@/lib/neon";
 import { getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
+import { resolveAssetConfig } from "@/lib/asset-config";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
     orderId: z.string().min(1, "Order ID is required").max(100),
     amount: z.number().positive("Amount must be a positive number"),
-    currency: z.literal("SOL", {
-        errorMap: () => ({ message: "Only SOL currency is supported" })
+    currency: z.enum(["SOL", "USDC"], {
+        errorMap: () => ({ message: "Supported currencies: SOL, USDC" })
     }),
     customerEmail: z.string().email("Invalid email address format").optional().nullable(),
     customerReference: z.string().min(1, "Customer reference cannot be empty").max(80, "Customer reference cannot exceed 80 characters").optional().nullable(),
@@ -191,6 +192,28 @@ export async function POST(req: Request) {
             successUrl,
             cancelUrl,
         } = validation.data;
+
+        if (currency === "USDC") {
+            try {
+                resolveAssetConfig("USDC", "server");
+            } catch {
+                recordObservation(obs, {
+                    outcome: "error",
+                    status: 500,
+                    errorCode: "INTERNAL_SERVER_ERROR",
+                });
+                return apiError(
+                    500,
+                    {
+                        code: "INTERNAL_SERVER_ERROR",
+                        message: "USDC checkout is not configured for the active network.",
+                        requestId,
+                        retryable: false,
+                    },
+                    { headers: corsHeaders },
+                );
+            }
+        }
 
         const existingTransaction = await prisma.transaction.findFirst({
             where: {

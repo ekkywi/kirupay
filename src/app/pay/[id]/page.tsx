@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 
   return {
-    title: `Pay ${transaction.amount} SOL to ${transaction.business.name}`,
+    title: `Pay ${transaction.amount} ${transaction.currency} to ${transaction.business.name}`,
     description: `Secure Web3 checkout powered by Trezalink for Order #${transaction.orderId}`,
   };
 }
@@ -154,7 +154,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ id: s
               </div>
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-500 dark:text-gray-400">Amount paid</dt>
-                <dd className="font-semibold text-gray-900 dark:text-white text-right">{transaction.amount} SOL</dd>
+                <dd className="font-semibold text-gray-900 dark:text-white text-right">{transaction.amount} {transaction.currency}</dd>
               </div>
               {transaction.customerName ? (
                 <div className="flex items-start justify-between gap-4">

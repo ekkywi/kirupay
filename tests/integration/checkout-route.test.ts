@@ -24,6 +24,9 @@ describe("POST /api/v1/checkout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
+    process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.SOLANA_CLUSTER = "devnet";
     maintenanceMock.mockResolvedValue(null);
   });
 
@@ -203,5 +206,58 @@ describe("POST /api/v1/checkout", () => {
         }),
       }),
     );
+  });
+
+  it("returns 201 on USDC checkout when network config is available", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+    prismaMock.transaction.findFirst.mockResolvedValue(null);
+    const expiresAt = new Date("2026-05-22T01:30:00.000Z");
+    prismaMock.transaction.create.mockResolvedValue({ id: "txn_usdc", expiresAt });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-USDC-1", amount: 10, currency: "USDC" }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+  });
+
+  it("returns 400 for unsupported currency enum", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-BAD-1", amount: 10, currency: "BTC" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("CHECKOUT_VALIDATION_FAILED");
   });
 });

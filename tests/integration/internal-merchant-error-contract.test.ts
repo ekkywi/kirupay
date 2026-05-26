@@ -7,7 +7,11 @@ const prismaMock = {
   merchant: {
     update: vi.fn(),
   },
+  transaction: {
+    findUnique: vi.fn(),
+  },
 };
+const verifyCheckoutPaymentOnChainMock = vi.fn();
 
 vi.mock("@/lib/neon", () => ({
   default: prismaMock,
@@ -21,6 +25,10 @@ vi.mock("@/lib/payment-recovery", () => ({
   confirmTransactionPayment: confirmTransactionPaymentMock,
 }));
 
+vi.mock("@/lib/chain-verification", () => ({
+  verifyCheckoutPaymentOnChain: verifyCheckoutPaymentOnChainMock,
+}));
+
 vi.mock("@/lib/rpc-traffic", () => ({
   logRpcUsageEvent: logRpcUsageEventMock,
 }));
@@ -28,6 +36,21 @@ vi.mock("@/lib/rpc-traffic", () => ({
 describe("error contract consistency for internal/merchant routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.transaction.findUnique.mockResolvedValue({
+      id: "txn_1",
+      amount: 1,
+      currency: "SOL",
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2026-01-01T00:30:00.000Z"),
+      business: { settlementWallets: [{ walletAddress: "merchant_wallet_1" }] },
+    });
+    verifyCheckoutPaymentOnChainMock.mockResolvedValue({
+      ok: true,
+      buyerWallet: "buyer_wallet_1",
+      verifiedAt: new Date("2026-01-01T00:01:00.000Z").toISOString(),
+      verifiedSlot: 123,
+      verificationSource: "rpc.getParsedTransaction",
+    });
   });
 
   it("merchant API key regenerate returns MERCHANT_UNAUTHORIZED", async () => {
@@ -81,6 +104,7 @@ describe("error contract consistency for internal/merchant routes", () => {
       success: false,
       error: "Transaction mismatch",
       statusCode: 409,
+      code: "TX_NOT_PAYABLE",
     });
 
     const { POST } = await import("@/app/api/internal/confirm/route");
@@ -95,7 +119,7 @@ describe("error contract consistency for internal/merchant routes", () => {
     const json = (await res.json()) as { error: { code: string; message: string } };
 
     expect(res.status).toBe(409);
-    expect(json.error.code).toBe("INTERNAL_CONFIRMATION_REJECTED");
+    expect(json.error.code).toBe("TX_NOT_PAYABLE");
     expect(json.error.message).toContain("Transaction mismatch");
   });
 });

@@ -114,7 +114,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="Net Revenue (This Month)" value={`${thisMonthRev.toFixed(4)} SOL`} icon={<Activity size={18} />} trend={`${revenueTrend > 0 ? '+' : ''}${revenueTrend.toFixed(1)}%`} trendUp={revenueTrend >= 0} description="Compared with last month" />
+        <StatCard label="Net Revenue (This Month)" value={`${thisMonthRev.toFixed(4)} (mixed assets)`} icon={<Activity size={18} />} trend={`${revenueTrend > 0 ? '+' : ''}${revenueTrend.toFixed(1)}%`} trendUp={revenueTrend >= 0} description="Compared with last month" />
         <StatCard label="Total Transactions" value={totalTxCount.toString()} icon={<CreditCard size={18} />} trend="All-time" trendUp={true} description="Total payment attempts" />
         <StatCard label="Success Rate" value={`${successRate.toFixed(1)}%`} icon={<CheckCircle2 size={18} />} trend="Paid vs failed" trendUp={successRate >= 50} description="Payment conversion rate" />
       </div>
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
               <h3 className="font-semibold text-slate-950 dark:text-white text-base">Revenue trajectory</h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Net paid volume across the last 7 days.</p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">SOL</span>
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">Mixed assets</span>
           </div>
           <RevenueChart data={chartData} />
         </div>
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
             <div className="mt-5 space-y-3">
               {[
                 { label: "Settlement model", value: "Non-custodial" },
-                { label: "Checkout asset", value: "SOL" },
+                { label: "Checkout assets", value: "SOL / USDC" },
                 { label: "Webhook signing", value: "HMAC ready" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center justify-between border-b border-slate-100 pb-3 text-sm last:border-0 last:pb-0 dark:border-white/10">

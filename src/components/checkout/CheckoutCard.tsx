@@ -9,7 +9,7 @@ import type { Transaction } from "@prisma/client";
 import type { CheckoutTransaction as HookCheckoutTransaction } from "@/hooks/web3/useSolanaCheckout";
 import QRCode from "qrcode";
 
-type CheckoutTransaction = Pick<Transaction, "id" | "amount" | "orderId"> & {
+type CheckoutTransaction = Pick<Transaction, "id" | "amount" | "orderId" | "currency"> & {
   merchant: {
     businessName: string;
     walletAddress: string;
@@ -29,6 +29,7 @@ export function CheckoutCard({ transaction }: { transaction: CheckoutTransaction
   const paymentTransaction: HookCheckoutTransaction = {
     id: transaction.id,
     amount: transaction.amount,
+    currency: transaction.currency as "SOL" | "USDC",
     merchant: { walletAddress: transaction.merchant.walletAddress },
   };
   const { loading, success, error, connected, handlePayment } = useSolanaCheckout(paymentTransaction) as CheckoutHookResult;
@@ -132,7 +133,7 @@ export function CheckoutCard({ transaction }: { transaction: CheckoutTransaction
             {transaction.amount}
           </span>
           <span className="pb-1 text-sm font-bold tracking-[0.12em] text-gray-400 dark:text-gray-500">
-            SOL
+            {transaction.currency}
           </span>
         </div>
 
@@ -186,7 +187,7 @@ export function CheckoutCard({ transaction }: { transaction: CheckoutTransaction
             <div className="relative mt-4 rounded-xl border border-gray-200/80 bg-white/80 p-3 dark:border-white/10 dark:bg-black/10">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Payment amount</span>
-                <span className="text-sm font-bold text-gray-950 dark:text-white">{transaction.amount} SOL</span>
+                <span className="text-sm font-bold text-gray-950 dark:text-white">{transaction.amount} {transaction.currency}</span>
               </div>
               <div className="mt-2 flex items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Supported wallets</span>

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const prismaMock = {
   transaction: {
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     updateManyAndReturn: vi.fn(),
     updateMany: vi.fn(),
   },
@@ -26,6 +27,7 @@ describe("payment recovery notification integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
+    prismaMock.transaction.findFirst.mockResolvedValue(null);
   });
 
   it("creates payment success + webhook failure notification", async () => {

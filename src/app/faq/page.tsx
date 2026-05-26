@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const FAQS = [
   ["Does Trezalink hold merchant funds?", "No. Trezalink is designed around wallet-direct settlement. Funds move to the merchant wallet after the payer completes checkout."],
-  ["What asset is supported today?", "SOL is supported today. USDC SPL is planned for a later roadmap phase."],
+  ["What assets are supported?", "SOL is live. USDC SPL is available in controlled validation environments based on network configuration."],
   ["How much does Trezalink charge?", "The platform fee is 0.3% per successful transaction. There are no setup fees or monthly minimums shown in the current product."],
   ["Can I create payments without code?", "Yes. Merchants can create manual payment links from the dashboard."],
   ["Can I integrate from my backend?", "Yes. Use POST /api/v1/checkout with Authorization: Bearer <API_KEY> to create hosted checkout sessions."],

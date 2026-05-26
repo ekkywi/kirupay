@@ -11,6 +11,15 @@ type ConfirmTransactionInput = {
   walletProvider?: string | null;
 };
 
+type ConfirmTransactionFailureCode =
+  | "SIGNATURE_ALREADY_USED"
+  | "INVALID_BUYER_WALLET"
+  | "TX_NOT_FOUND"
+  | "TX_NOT_PAYABLE"
+  | "TX_EXPIRED"
+  | "SIGNATURE_MISSING"
+  | "TX_UPDATE_CONFLICT";
+
 type WebhookDeliveryResult = {
   statusCode: number | null;
   responseText: string | null;
@@ -73,7 +82,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
   });
 
   if (!existingTx) {
-    return { success: false, error: "Transaction not found.", statusCode: 404 };
+    return { success: false, error: "Transaction not found.", statusCode: 404, code: "TX_NOT_FOUND" as ConfirmTransactionFailureCode };
   }
 
   if (existingTx.status === "PAID") {
@@ -89,6 +98,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       success: false,
       error: "This checkout is no longer payable.",
       statusCode: 409,
+      code: "TX_NOT_PAYABLE" as ConfirmTransactionFailureCode,
     };
   }
 
@@ -127,6 +137,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       success: false,
       error: "Checkout has expired. Please create a new checkout.",
       statusCode: 409,
+      code: "TX_EXPIRED" as ConfirmTransactionFailureCode,
     };
   }
 
@@ -136,6 +147,32 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       success: false,
       error: "Signature is missing. Provide blockchain signature or save it on the transaction first.",
       statusCode: 400,
+      code: "SIGNATURE_MISSING" as ConfirmTransactionFailureCode,
+    };
+  }
+
+  const reusedSignature = await prisma.transaction.findFirst({
+    where: {
+      txSignature: resolvedSignature,
+      NOT: { id: input.transactionId },
+    },
+    select: { id: true },
+  });
+  if (reusedSignature) {
+    return {
+      success: false,
+      error: "Signature is already used by another transaction.",
+      statusCode: 409,
+      code: "SIGNATURE_ALREADY_USED" as ConfirmTransactionFailureCode,
+    };
+  }
+
+  if (input.buyerWallet && input.buyerWallet.length > 0 && existingTx.buyerWallet && existingTx.buyerWallet !== input.buyerWallet) {
+    return {
+      success: false,
+      error: "Buyer wallet mismatch.",
+      statusCode: 409,
+      code: "INVALID_BUYER_WALLET" as ConfirmTransactionFailureCode,
     };
   }
 
@@ -164,6 +201,7 @@ export async function confirmTransactionPayment(input: ConfirmTransactionInput) 
       success: false,
       error: "Transaction is no longer payable.",
       statusCode: 409,
+      code: "TX_UPDATE_CONFLICT" as ConfirmTransactionFailureCode,
     };
   }
 

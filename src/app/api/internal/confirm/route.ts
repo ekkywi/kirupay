@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { confirmTransactionPayment } from "@/lib/payment-recovery";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
+import prisma from "@/lib/neon";
+import { verifyCheckoutPaymentOnChain } from "@/lib/chain-verification";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -31,10 +33,87 @@ export async function POST(req: Request) {
       });
     }
 
+    const tx = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        business: {
+          include: {
+            settlementWallets: { where: { isActive: true }, take: 1 },
+          },
+        },
+      },
+    });
+
+    if (!tx) {
+      recordObservation(obs, {
+        outcome: "error",
+        status: 404,
+        errorCode: "INTERNAL_CONFIRMATION_TX_NOT_FOUND",
+      });
+      return apiError(404, {
+        code: "INTERNAL_CONFIRMATION_TX_NOT_FOUND",
+        message: "Transaction not found.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    const merchantWallet = tx.business.settlementWallets[0]?.walletAddress;
+    if (!merchantWallet) {
+      recordObservation(obs, {
+        outcome: "error",
+        status: 400,
+        errorCode: "INTERNAL_CONFIRMATION_MERCHANT_WALLET_MISSING",
+      });
+      return apiError(400, {
+        code: "INTERNAL_CONFIRMATION_MERCHANT_WALLET_MISSING",
+        message: "Merchant settlement wallet is not configured.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    const verification = await verifyCheckoutPaymentOnChain({
+      signature,
+      amount: tx.amount,
+      currency: tx.currency === "USDC" ? "USDC" : "SOL",
+      merchantWallet,
+      createdAt: tx.createdAt,
+      expiresAt: tx.expiresAt,
+    });
+
+    if (!verification.ok) {
+      recordObservation(obs, {
+        outcome: "error",
+        status: 409,
+        errorCode: verification.code,
+      });
+      return apiError(409, {
+        code: verification.code,
+        message: verification.message,
+        requestId,
+        retryable: false,
+      });
+    }
+
+    if (buyerWallet && buyerWallet !== verification.buyerWallet) {
+      recordObservation(obs, {
+        outcome: "error",
+        status: 409,
+        errorCode: "CHAIN_PAYER_MISMATCH",
+      });
+      return apiError(409, {
+        code: "CHAIN_PAYER_MISMATCH",
+        message: "Provided buyer wallet does not match on-chain payer.",
+        requestId,
+        retryable: false,
+      });
+    }
+
     const result = await confirmTransactionPayment({
       transactionId,
       signature,
-      buyerWallet: buyerWallet || null,
+      buyerWallet: verification.buyerWallet,
       walletProvider: walletProvider || null,
     });
 
@@ -45,7 +124,7 @@ export async function POST(req: Request) {
         errorCode: "INTERNAL_CONFIRMATION_REJECTED",
       });
       return apiError(result.statusCode ?? 400, {
-        code: "INTERNAL_CONFIRMATION_REJECTED",
+        code: result.code ?? "INTERNAL_CONFIRMATION_REJECTED",
         message: result.error ?? "Transaction confirmation was rejected.",
         requestId,
         retryable: false,
@@ -60,6 +139,11 @@ export async function POST(req: Request) {
       success: true, 
       message: "Transaction marked as PAID",
       webhookLogId: result.webhookLogId,
+      verification: {
+        verifiedAt: verification.verifiedAt,
+        verifiedSlot: verification.verifiedSlot,
+        verificationSource: verification.verificationSource,
+      },
       data: result.transaction 
     });
 

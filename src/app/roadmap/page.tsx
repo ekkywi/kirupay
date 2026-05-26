@@ -83,7 +83,7 @@ const ROADMAP_TIMELINE = [
       },
       {
         quarter: "Q2 2026",
-        status: "In Progress",
+        status: "Delivered",
         title: "Foundation & operations hardening",
         summary: "Core SOL foundation, operational reliability controls, and merchant workflow readiness were delivered in this phase.",
         items: [
@@ -106,16 +106,15 @@ const ROADMAP_TIMELINE = [
       {
         quarter: "Q3 2026",
         status: "Planned",
-        title: "USDC integration sprint",
-        summary: "Primary milestone for thesis-aligned USDC capability rollout.",
+        title: "USDC readiness & controlled validation",
+        summary: "USDC capability is advanced through reliability-gated validation before broader rollout.",
         items: [
           { label: "USDC checkout + API currency support", implemented: false },
           { label: "USDC webhook + reconciliation parity", implemented: false },
           { label: "Feature grant control + global kill switch", implemented: false },
-          { label: "Pilot rollout strategy and validation", implemented: false },
-          { label: "Testing and validation after partial pilot results", implemented: false },
-          { label: "Public test / public beta rollout under monitoring", implemented: false },
-          { label: "Global release decision and full rollout", implemented: false },
+          { label: "Controlled validation strategy with phased checkpoints", implemented: false },
+          { label: "Reliability and reconciliation validation gates", implemented: false },
+          { label: "Rollout decisions based on validation outcomes", implemented: false },
         ],
       },
       {
@@ -294,8 +293,8 @@ export default function RoadmapPage() {
                 },
                 {
                   quarter: "Q3 2026",
-                  title: "USDC integration sprint",
-                  desc: "USDC checkout/API/webhook parity, access control, and pilot validation.",
+                  title: "USDC readiness validation",
+                  desc: "USDC checkout/API/webhook parity with phased, reliability-gated rollout decisions.",
                 },
                 {
                   quarter: "Q4 2026",
@@ -436,14 +435,14 @@ export default function RoadmapPage() {
                 <div className="flex items-center justify-between pb-5 mb-5 border-b landing-border">
                   <div>
                     <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Asset roadmap</p>
-                    <h3 className="text-lg font-semibold landing-heading">SOL first, USDC later</h3>
+                    <h3 className="text-lg font-semibold landing-heading">SOL live, USDC in controlled validation</h3>
                   </div>
                   <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <p className="landing-body mb-6">
                   The current application supports SOL for checkout and settlement. USDC SPL is a
-                  later-stage expansion once observability, incident response, and reconciliation are
-                  production-proven.
+                  controlled validation track that advances through observability, incident response,
+                  and reconciliation readiness gates.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl border landing-border bg-slate-50 dark:bg-white/[0.03] p-4">
@@ -451,8 +450,8 @@ export default function RoadmapPage() {
                     <p className="mt-1 text-2xl font-bold landing-heading">SOL</p>
                   </div>
                   <div className="rounded-xl border landing-border bg-slate-50 dark:bg-white/[0.03] p-4">
-                    <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Exploring</p>
-                    <p className="mt-1 text-2xl font-bold landing-heading">USDC</p>
+                    <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Validation</p>
+                    <p className="mt-1 text-2xl font-bold landing-heading">USDC Validation</p>
                   </div>
                 </div>
               </ScrollReveal>
