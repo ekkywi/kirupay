@@ -6,6 +6,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, Activity, ArrowUpRight } fro
 import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDateTime } from "@/lib/local-time";
+import { formatCurrencyDisplay, formatCurrencyNumber } from "@/lib/currency-format";
 import Link from "next/link";
 
 interface TransactionRow {
@@ -26,9 +27,10 @@ interface TransactionTableProps {
   transactions: TransactionRow[];
   totalPages?: number;
   showControls?: boolean;
+  currencyOptions?: string[];
 }
 
-export function TransactionTable({ transactions, totalPages = 1, showControls = true }: TransactionTableProps) {
+export function TransactionTable({ transactions, totalPages = 1, showControls = true, currencyOptions = [] }: TransactionTableProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
@@ -36,13 +38,14 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
   const currentSearch = searchParams.get("search") || "";
   const currentStatus = searchParams.get("status") || "ALL";
   const currentSource = searchParams.get("source") || "ALL";
+  const currentCurrency = searchParams.get("currency") || "ALL";
   const [searchInput, setSearchInput] = useState(currentSearch);
   const debouncedSearch = useDebounce(searchInput, 500);
 
   const updateURL = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
     
-    if (key === "search" || key === "status" || key === "source") {
+    if (key === "search" || key === "status" || key === "source" || key === "currency") {
       params.set("page", "1");
     }
 
@@ -134,6 +137,16 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             <option value="API">API</option>
             <option value="PAYMENT_LINK">Payment Link</option>
           </select>
+          <select
+            value={currentCurrency}
+            onChange={(e) => updateURL("currency", e.target.value)}
+            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+          >
+            <option value="ALL">All Currencies</option>
+            {currencyOptions.map((currency) => (
+              <option key={currency} value={currency}>{currency}</option>
+            ))}
+          </select>
         </div>
       </div>}
 
@@ -175,15 +188,15 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                     
                     {/* Gross */}
                     <td className="p-4 text-xs font-mono font-medium text-gray-500 dark:text-gray-400">
-                      {tx.amount} {tx.currency}
+                      {formatCurrencyDisplay(tx.currency, tx.amount)}
                     </td>
                     {/* Fee */}
                     <td className="p-4 text-xs font-mono font-medium text-red-500 dark:text-red-400">
-                      {tx.feeAmount ? `-${tx.feeAmount} ${tx.currency}` : '-'}
+                      {tx.feeAmount != null ? `-${formatCurrencyNumber(tx.currency, tx.feeAmount)} ${tx.currency}` : '-'}
                     </td>
                     {/* Net */}
                     <td className="p-4 text-xs font-mono font-bold text-green-600 dark:text-green-500">
-                      {tx.netAmount ? `${tx.netAmount} ${tx.currency}` : '-'}
+                      {formatCurrencyDisplay(tx.currency, tx.netAmount)}
                     </td>
 
                     {/* Status */}

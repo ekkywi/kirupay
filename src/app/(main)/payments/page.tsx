@@ -9,6 +9,7 @@ import { Activity, ArrowUpRight, CheckCircle2, Clock3, ReceiptText, TrendingUp }
 import type { Prisma } from "@prisma/client";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { formatCurrencyDisplay } from "@/lib/currency-format";
 
 export const metadata: Metadata = {
   title: "Payments",
@@ -34,6 +35,7 @@ export default async function PaymentsPage({
   const search = typeof params.search === "string" ? params.search : "";
   const statusFilter = typeof params.status === "string" ? params.status : "ALL";
   const sourceFilter = typeof params.source === "string" ? params.source : "ALL";
+  const currencyFilter = typeof params.currency === "string" ? params.currency : "ALL";
 
   // 2. Buat kondisi filter untuk Prisma (WHERE clause dinamis)
   const whereCondition: Prisma.TransactionWhereInput = {
@@ -60,6 +62,10 @@ export default async function PaymentsPage({
     whereCondition.source = sourceFilter;
   }
 
+  if (currencyFilter !== "ALL") {
+    whereCondition.currency = currencyFilter;
+  }
+
   const baseWhere: Prisma.TransactionWhereInput = { businessId: business.id };
 
   // 3. Hitung TOTAL SELURUH DATA (untuk membuat nomor halaman)
@@ -68,6 +74,7 @@ export default async function PaymentsPage({
     paidStats,
     pendingCount,
     failedCount,
+    currencyList,
   ] = await Promise.all([
     prisma.transaction.count({ where: whereCondition }),
     prisma.transaction.aggregate({
@@ -77,6 +84,12 @@ export default async function PaymentsPage({
     }),
     prisma.transaction.count({ where: { ...baseWhere, status: "PENDING" } }),
     prisma.transaction.count({ where: { ...baseWhere, status: "FAILED" } }),
+    prisma.transaction.findMany({
+      where: baseWhere,
+      distinct: ["currency"],
+      select: { currency: true },
+      orderBy: { currency: "asc" },
+    }),
   ]);
   
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
@@ -93,6 +106,8 @@ export default async function PaymentsPage({
   const feeVolume = paidStats._sum.feeAmount || 0;
   const netVolume = paidStats._sum.netAmount || 0;
   const paidCount = paidStats._count.id;
+  const selectedCurrency = currencyFilter !== "ALL" ? currencyFilter : null;
+  const hasSingleCurrencyView = selectedCurrency && selectedCurrency !== "ALL";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -125,8 +140,20 @@ export default async function PaymentsPage({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         {[
-          { icon: TrendingUp, label: "Net settlement", value: `${netVolume.toFixed(4)} SOL`, detail: "after platform fee", tone: "emerald" },
-          { icon: ReceiptText, label: "Gross volume", value: `${grossVolume.toFixed(4)} SOL`, detail: `${feeVolume.toFixed(4)} SOL fees`, tone: "blue" },
+          {
+            icon: TrendingUp,
+            label: "Net settlement",
+            value: hasSingleCurrencyView ? formatCurrencyDisplay(selectedCurrency, netVolume) : `${netVolume.toFixed(4)} (mixed assets)`,
+            detail: "after platform fee",
+            tone: "emerald",
+          },
+          {
+            icon: ReceiptText,
+            label: "Gross volume",
+            value: hasSingleCurrencyView ? formatCurrencyDisplay(selectedCurrency, grossVolume) : `${grossVolume.toFixed(4)} (mixed assets)`,
+            detail: hasSingleCurrencyView ? `${formatCurrencyDisplay(selectedCurrency, feeVolume)} fees` : `${feeVolume.toFixed(4)} mixed fees`,
+            tone: "blue",
+          },
           { icon: CheckCircle2, label: "Paid transactions", value: paidCount.toString(), detail: "confirmed payments", tone: "emerald" },
           { icon: Clock3, label: "Pending / failed", value: `${pendingCount} / ${failedCount}`, detail: "open payment states", tone: "amber" },
         ].map((metric) => (
@@ -142,7 +169,8 @@ export default async function PaymentsPage({
       {/* Kirim data yang sudah difilter dan total halaman ke tabel */}
       <TransactionTable 
         transactions={transactions} 
-        totalPages={totalPages} 
+        totalPages={totalPages}
+        currencyOptions={currencyList.map((item) => item.currency)}
       />
     </div>
   );

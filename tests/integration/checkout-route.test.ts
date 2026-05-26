@@ -26,7 +26,10 @@ describe("POST /api/v1/checkout", () => {
     process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
     process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
     process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.NEXT_PUBLIC_USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
     process.env.SOLANA_CLUSTER = "devnet";
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER = "devnet";
     maintenanceMock.mockResolvedValue(null);
   });
 
@@ -233,6 +236,41 @@ describe("POST /api/v1/checkout", () => {
 
     const res = await POST(req);
     expect(res.status).toBe(201);
+  });
+
+  it("returns 400 when USDC client config is missing and does not create transaction", async () => {
+    process.env.NEXT_PUBLIC_USDC_MINT_DEVNET = "";
+    process.env.NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET = "";
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-USDC-MISSING-CLIENT", amount: 10, currency: "USDC" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as {
+      error: { code: string; details?: { cluster?: string; missingKeys?: string[] } };
+    };
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("USDC_CLIENT_CONFIG_MISSING");
+    expect(json.error.details?.cluster).toBe("devnet");
+    expect(json.error.details?.missingKeys).toEqual(
+      expect.arrayContaining(["NEXT_PUBLIC_USDC_MINT_DEVNET", "NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET"]),
+    );
+    expect(prismaMock.transaction.create).not.toHaveBeenCalled();
   });
 
   it("returns 400 for unsupported currency enum", async () => {

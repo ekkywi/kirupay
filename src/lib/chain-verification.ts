@@ -24,6 +24,7 @@ export type VerificationFailureCode =
   | "CHAIN_TX_FAILED"
   | "CHAIN_TIME_WINDOW_MISMATCH"
   | "CHAIN_PAYER_MISMATCH"
+  | "CHAIN_TREASURY_SELF_PAYMENT_BLOCKED"
   | "CHAIN_AMOUNT_MISMATCH"
   | "CHAIN_DESTINATION_MISMATCH"
   | "CHAIN_MINT_MISMATCH";
@@ -106,6 +107,13 @@ export async function verifyCheckoutPaymentOnChain(input: VerificationInput): Pr
     if (!treasuryWallet) {
       return { ok: false, code: "CHAIN_DESTINATION_MISMATCH", message: "Treasury wallet is not configured." };
     }
+    if (buyerWallet === treasuryWallet) {
+      return {
+        ok: false,
+        code: "CHAIN_TREASURY_SELF_PAYMENT_BLOCKED",
+        message: `Treasury self-payment is blocked. buyerWallet=${buyerWallet} treasuryWallet=${treasuryWallet}`,
+      };
+    }
 
     let merchantLamports = 0;
     let treasuryLamports = 0;
@@ -126,6 +134,14 @@ export async function verifyCheckoutPaymentOnChain(input: VerificationInput): Pr
     }
   } else {
     const usdcConfig = resolveAssetConfig("USDC", "server");
+    const treasuryWallet = (process.env.NEXT_PUBLIC_TREASURY_WALLET || "").trim();
+    if (treasuryWallet && buyerWallet === treasuryWallet) {
+      return {
+        ok: false,
+        code: "CHAIN_TREASURY_SELF_PAYMENT_BLOCKED",
+        message: `Treasury self-payment is blocked. buyerWallet=${buyerWallet} treasuryWallet=${treasuryWallet}`,
+      };
+    }
     const merchantAta = getAtaAddress(new PublicKey(usdcConfig.mint), new PublicKey(input.merchantWallet));
     const expectedTotal = roundedAmount(input.amount, USDC_DECIMALS);
     const expectedMerchant = expectedTotal - feeUnits;
@@ -166,6 +182,15 @@ export async function verifyCheckoutPaymentOnChain(input: VerificationInput): Pr
 
     if (merchantUnits !== expectedMerchant || treasuryUnits !== expectedTreasury) {
       return { ok: false, code: "CHAIN_AMOUNT_MISMATCH", message: "USDC transfer amounts do not match invoice split." };
+    }
+
+    const payerAta = getAtaAddress(new PublicKey(usdcConfig.mint), new PublicKey(buyerWallet));
+    if (payerAta === usdcConfig.treasuryAta) {
+      return {
+        ok: false,
+        code: "CHAIN_TREASURY_SELF_PAYMENT_BLOCKED",
+        message: `Treasury self-payment is blocked. buyerWallet=${buyerWallet} payerAta=${payerAta} treasuryAta=${usdcConfig.treasuryAta}`,
+      };
     }
 
     if (merchantUnits === 0 && treasuryUnits === 0) {

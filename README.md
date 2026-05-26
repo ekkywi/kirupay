@@ -102,6 +102,14 @@ http://localhost:3000
 | `NEXT_PUBLIC_SOLANA_CLUSTER` | Optional | Client-side cluster fallback (`devnet`, `testnet`, or `mainnet-beta`) |
 | `NEXT_PUBLIC_SOLANA_RPC_PRIMARY` | Optional | Client-side primary Solana RPC endpoint (checkout + balance fetch) |
 | `NEXT_PUBLIC_SOLANA_RPC_FALLBACK` | Optional | Client-side backup Solana RPC endpoint (auto failover target) |
+| `USDC_MINT_DEVNET` | Optional* | Server-side USDC mint address for devnet |
+| `TREASURY_USDC_ATA_DEVNET` | Optional* | Server-side treasury USDC ATA for devnet |
+| `NEXT_PUBLIC_USDC_MINT_DEVNET` | Optional* | Client-side USDC mint address for devnet checkout |
+| `NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET` | Optional* | Client-side treasury USDC ATA for devnet checkout |
+| `USDC_MINT_MAINNET` | Optional* | Server-side USDC mint address for mainnet-beta |
+| `TREASURY_USDC_ATA_MAINNET` | Optional* | Server-side treasury USDC ATA for mainnet-beta |
+| `NEXT_PUBLIC_USDC_MINT_MAINNET` | Optional* | Client-side USDC mint address for mainnet-beta checkout |
+| `NEXT_PUBLIC_TREASURY_USDC_ATA_MAINNET` | Optional* | Client-side treasury USDC ATA for mainnet-beta checkout |
 | `RPC_LATENCY_WARN_MS` | Optional | Warning latency threshold for RPC monitor |
 | `RPC_LATENCY_DOWN_MS` | Optional | Down latency threshold for RPC monitor |
 | `RPC_RATE_LIMIT_WARN_PERCENT` | Optional | Warning threshold (%) for 1h rate-limited checks |
@@ -113,7 +121,14 @@ http://localhost:3000
 | `SUPPORT_EMAIL` | Optional | Destination inbox for `/contact` form submissions. Defaults to `support@trezalink.com`. |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 
-\* Optional for basic local boot, required if testing email-related auth flows.
+\* Optional for basic local boot. Required when testing feature-specific flows (for example: email delivery or USDC checkout).
+
+USDC configuration notes:
+- For `currency=USDC`, server and client keys must both be present for the active cluster.
+- Keep `SOLANA_CLUSTER` and `NEXT_PUBLIC_SOLANA_CLUSTER` aligned (for local USDC devnet testing, use `devnet`).
+- If `NEXT_PUBLIC_USDC_*` is missing, `POST /api/v1/checkout` will return `400` with error code `USDC_CLIENT_CONFIG_MISSING`.
+- Client bundle reads `NEXT_PUBLIC_*` via static env access; avoid dynamic env access patterns for client-side config.
+- After changing any `NEXT_PUBLIC_*` values, restart the dev server so the client bundle reads latest values.
 
 Email delivery notes:
 - Activation sender is `Trezalink <noreply@trezalink.com>`.
@@ -221,6 +236,14 @@ npx prisma generate
 ### 3) Unexpected redirects on private routes
 - Private app routes are guarded by middleware and `auth-token`.
 - Invalid/expired tokens are cleared and redirected to `/login`.
+
+### 4) USDC checkout created but cannot be paid
+- Check API response from `POST /api/v1/checkout`. If you get `USDC_CLIENT_CONFIG_MISSING`, set the listed `NEXT_PUBLIC_*` keys.
+- Ensure both server and client USDC keys exist for the active cluster:
+  - Server: `USDC_MINT_*`, `TREASURY_USDC_ATA_*`
+  - Client: `NEXT_PUBLIC_USDC_MINT_*`, `NEXT_PUBLIC_TREASURY_USDC_ATA_*`
+- Verify cluster alignment: `SOLANA_CLUSTER` and `NEXT_PUBLIC_SOLANA_CLUSTER`.
+- Restart `npm run dev` after env updates.
 
 ## Project Planning
 Maintenance implementation and validation record is tracked in:

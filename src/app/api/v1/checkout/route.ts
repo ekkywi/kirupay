@@ -4,7 +4,8 @@ import prisma from "@/lib/neon";
 import { getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
-import { resolveAssetConfig } from "@/lib/asset-config";
+import { getMissingUsdcConfigKeys, resolveAssetConfig, UsdcConfigError } from "@/lib/asset-config";
+import { resolveSolanaRpcConfig } from "@/lib/solana-rpc";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -194,9 +195,54 @@ export async function POST(req: Request) {
         } = validation.data;
 
         if (currency === "USDC") {
+            const clientCluster = resolveSolanaRpcConfig("client").cluster;
+            const missingClientKeys = getMissingUsdcConfigKeys(clientCluster, "client");
+            if (missingClientKeys.length > 0) {
+                recordObservation(obs, {
+                    outcome: "error",
+                    status: 400,
+                    errorCode: "USDC_CLIENT_CONFIG_MISSING",
+                });
+                return apiError(
+                    400,
+                    {
+                        code: "USDC_CLIENT_CONFIG_MISSING",
+                        message: "USDC checkout client configuration is missing. Please set required NEXT_PUBLIC USDC variables.",
+                        requestId,
+                        retryable: false,
+                        details: {
+                            cluster: clientCluster,
+                            missingKeys: missingClientKeys,
+                        },
+                    },
+                    { headers: corsHeaders },
+                );
+            }
+
             try {
                 resolveAssetConfig("USDC", "server");
-            } catch {
+            } catch (error: unknown) {
+                if (error instanceof UsdcConfigError) {
+                    recordObservation(obs, {
+                        outcome: "error",
+                        status: 500,
+                        errorCode: "USDC_ASSET_CONFIG_MISSING",
+                    });
+                    return apiError(
+                        500,
+                        {
+                            code: "USDC_ASSET_CONFIG_MISSING",
+                            message: "USDC checkout server configuration is missing for the active network.",
+                            requestId,
+                            retryable: false,
+                            details: {
+                                cluster: error.cluster,
+                                missingKeys: error.missingKeys ?? [],
+                            },
+                        },
+                        { headers: corsHeaders },
+                    );
+                }
                 recordObservation(obs, {
                     outcome: "error",
                     status: 500,
