@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { mapMerchantAccessError, requireBusinessMembership } from "@/lib/auth-service";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { getOrCreateNotificationPreferences, NOTIFICATION_PREF_DEFAULTS } from "@/lib/merchant-notifications";
 import prisma from "@/lib/neon";
@@ -8,19 +8,21 @@ export async function GET() {
   const requestId = createRequestId();
 
   try {
-    const merchant = await getCurrentMerchant();
-    if (!merchant) {
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
+    const ctx = await requireBusinessMembership();
+    const businessId = ctx.business.id;
+
+    const preference = await getOrCreateNotificationPreferences(businessId);
+    return NextResponse.json({ success: true, data: preference });
+  } catch (error) {
+    if (error instanceof Error && (error.message === "Unauthorized" || error.message === "Forbidden")) {
+      const mapped = mapMerchantAccessError(error);
+      return apiError(mapped.status, {
+        code: mapped.code,
+        message: mapped.message,
         requestId,
         retryable: false,
       });
     }
-
-    const preference = await getOrCreateNotificationPreferences(merchant.id);
-    return NextResponse.json({ success: true, data: preference });
-  } catch (error) {
     console.error("Fetch notification preferences error", { requestId, error });
     return apiError(500, {
       code: "INTERNAL_SERVER_ERROR",
@@ -35,22 +37,15 @@ export async function POST(req: Request) {
   const requestId = createRequestId();
 
   try {
-    const merchant = await getCurrentMerchant();
-    if (!merchant) {
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
-        requestId,
-        retryable: false,
-      });
-    }
+    const ctx = await requireBusinessMembership();
+    const businessId = ctx.business.id;
 
     const body = (await req.json()) as Partial<typeof NOTIFICATION_PREF_DEFAULTS>;
-    const updates: Partial<typeof NOTIFICATION_PREF_DEFAULTS> = {};
+    const updates: Partial<Record<keyof typeof NOTIFICATION_PREF_DEFAULTS, boolean>> = {};
 
     for (const key of Object.keys(NOTIFICATION_PREF_DEFAULTS) as Array<keyof typeof NOTIFICATION_PREF_DEFAULTS>) {
       if (typeof body[key] === "boolean") {
-        updates[key] = body[key];
+        updates[key] = body[key] as boolean;
       }
     }
 
@@ -64,8 +59,8 @@ export async function POST(req: Request) {
     }
 
     const updated = await prisma.merchantNotificationPreference.upsert({
-      where: { merchantId: merchant.id },
-      create: { merchantId: merchant.id, ...NOTIFICATION_PREF_DEFAULTS, ...updates },
+      where: { businessId },
+      create: { businessId, ...NOTIFICATION_PREF_DEFAULTS, ...updates },
       update: updates,
     });
 

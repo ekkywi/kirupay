@@ -93,10 +93,10 @@ export default async function AdminTransactionsPage({
       { buyerWallet: { contains: search, mode: "insensitive" } },
       { txSignature: { contains: search, mode: "insensitive" } },
       {
-        merchant: {
+        business: {
           OR: [
-            { businessName: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
+            { name: { contains: search, mode: "insensitive" } },
+            { contactEmail: { contains: search, mode: "insensitive" } },
           ],
         },
       },
@@ -121,7 +121,7 @@ export default async function AdminTransactionsPage({
       skip,
       take: ITEMS_PER_PAGE,
       include: {
-        merchant: { select: { businessName: true, email: true } },
+        business: { select: { name: true, contactEmail: true } },
       },
     }),
     prisma.transaction.count({ where: whereClause }),
@@ -156,7 +156,7 @@ export default async function AdminTransactionsPage({
             Network transaction audit
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Search, filter, and inspect every checkout and payment-link transaction across all merchants.
+            Search, filter, and inspect every checkout and payment-link transaction across all businesses.
           </p>
         </div>
 
@@ -222,7 +222,7 @@ export default async function AdminTransactionsPage({
               type="text"
               name="search"
               defaultValue={search}
-            placeholder="Search order, reference, merchant, email, wallet, tx signature..."
+              placeholder="Search order, reference, business, email, wallet, tx signature..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
@@ -284,7 +284,7 @@ export default async function AdminTransactionsPage({
             <table className="w-full min-w-[1120px] text-left text-sm">
               <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
                 <tr>
-                  <th className="px-5 py-4">Merchant</th>
+                  <th className="px-5 py-4">Business</th>
                   <th className="px-5 py-4">Order / Source</th>
                   <th className="px-5 py-4">Customer</th>
                   <th className="px-5 py-4">Gross</th>
@@ -299,8 +299,8 @@ export default async function AdminTransactionsPage({
                 {transactions.map((transaction) => (
                   <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
-                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.business.name || "Unnamed business"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.business.contactEmail || "No contact email"}</p>
                     </td>
                     <td className="px-5 py-4">
                       <p className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">{transaction.orderId}</p>

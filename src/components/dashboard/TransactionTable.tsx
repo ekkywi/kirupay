@@ -6,6 +6,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, Activity, ArrowUpRight } fro
 import { useState, useEffect, useCallback } from "react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDateTime } from "@/lib/local-time";
+import Link from "next/link";
 
 interface TransactionRow {
   id: string;
@@ -156,7 +157,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Net</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date</th>
-                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right rounded-tr-xl">Explorer</th>
+                  <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right rounded-tr-xl">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/10">
@@ -199,21 +200,32 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                       {formatLocalDateTime(tx.createdAt, { preset: "date" })}
                     </td>
 
-                    {/* Explorer Link (NEW) */}
+                    {/* Actions */}
                     <td className="p-4 text-right">
-                      <a 
-                        href={tx.txSignature ? `https://explorer.solana.com/tx/${tx.txSignature}?cluster=devnet` : '#'} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex p-2 rounded-lg transition-all ${
-                          tx.txSignature 
-                            ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100" 
-                            : "text-gray-300 dark:text-[#2A2A2A] cursor-not-allowed opacity-50"
-                        }`}
-                        title={tx.txSignature ? "Verify on Solana Explorer" : "No blockchain record yet"}
-                      >
-                        <ArrowUpRight size={16} />
-                      </a>
+                      <div className="inline-flex items-center gap-1">
+                        <Link
+                          href={`/pay/${tx.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                          title={tx.status === "PAID" ? "Open receipt page" : "Open checkout page"}
+                        >
+                          {tx.status === "PAID" ? "View Receipt" : "View Checkout"}
+                        </Link>
+                        <a
+                          href={tx.txSignature ? `https://explorer.solana.com/tx/${tx.txSignature}?cluster=devnet` : "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`inline-flex p-2 rounded-lg transition-all ${
+                            tx.txSignature
+                              ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100"
+                              : "text-gray-300 dark:text-[#2A2A2A] cursor-not-allowed opacity-50"
+                          }`}
+                          title={tx.txSignature ? "Verify on Solana Explorer" : "No blockchain record yet"}
+                        >
+                          <ArrowUpRight size={16} />
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 ))}

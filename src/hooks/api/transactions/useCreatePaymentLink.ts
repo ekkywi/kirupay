@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { createManualPaymentLink } from "@/app/actions/payment-link";
 
-export function useCreatePaymentLink(merchantId: string) {
+export function useCreatePaymentLink(businessId: string) {
   const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -13,7 +13,7 @@ export function useCreatePaymentLink(merchantId: string) {
     
     try {
       const result = await createManualPaymentLink({
-        merchantId,
+        businessId,
         amount: parseFloat(formData.get("amount") as string),
         orderId: formData.get("orderId") as string,
         customerReference: formData.get("customerReference") as string,

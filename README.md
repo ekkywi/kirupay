@@ -59,7 +59,7 @@ It provides:
 - Checkout runtime: `/pay/[id]` + `POST /api/v1/checkout`.
 - Merchant area: dashboard, payments, payment links, analytics, settings, developers.
 - Admin area: overview, transactions, revenue, merchants, maintenance.
-- Persistence: Prisma models for `Merchant`, `Transaction`, `WebhookLog`, `PlatformMaintenance`.
+- Persistence: Prisma models for `Merchant`, `BusinessEntity`, `BusinessMembership`, `BusinessCredential`, `Transaction`, `WebhookLog`, and `PlatformMaintenance`.
 
 ## Local Setup
 1. Install dependencies
@@ -109,10 +109,21 @@ http://localhost:3000
 | `RPC_HEALTH_CRON_SECRET` | Optional | Shared secret for internal RPC health cron route |
 | `PAYMENT_LIFECYCLE_CRON_SECRET` | Optional | Shared secret for internal payment lifecycle cron route (`/api/internal/payment-lifecycle/cron`) |
 | `CRON_SECRET` | Optional | Fallback shared secret for internal cron routes when route-specific secret is not set |
-| `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows) |
+| `RESEND_API_KEY` | Optional* | Email delivery (activation/profile flows). Required to send activation email. |
+| `SUPPORT_EMAIL` | Optional | Destination inbox for `/contact` form submissions. Defaults to `support@trezalink.com`. |
 | `FRONTEND_URL` | Optional* | Email link base URL |
 
 \* Optional for basic local boot, required if testing email-related auth flows.
+
+Email delivery notes:
+- Activation sender is `Trezalink <noreply@trezalink.com>`.
+- Ensure `trezalink.com` is verified in Resend before expecting successful delivery.
+- If registration succeeds but email delivery fails, API now returns non-2xx and logs structured delivery errors with request ID.
+- Go-live checklist:
+  - Domain `trezalink.com` status in Resend is `verified`.
+  - DNS records (SPF/DKIM/return-path) are applied and propagated.
+  - `RESEND_API_KEY` belongs to the same Resend workspace that owns the verified domain.
+  - Review Resend Email Logs for delivery status and rejection reasons using timestamp + `requestId`.
 
 ## Database & Prisma
 - Schema file: `prisma/schema.prisma`
@@ -214,3 +225,5 @@ npx prisma generate
 ## Project Planning
 Maintenance implementation and validation record is tracked in:
 - [`plan.md`](./plan.md)
+- Backend migration baseline and shim policy for Phase 1 closure:
+  - [`PHASE1_BACKEND_MIGRATION.md`](./PHASE1_BACKEND_MIGRATION.md)

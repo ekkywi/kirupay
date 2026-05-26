@@ -98,7 +98,7 @@ const ROADMAP_TIMELINE = [
           { label: "Reconciliation-ready exports for finance operations", implemented: true },
           { label: "Customer-facing receipt improvements", implemented: true },
           { label: "Saved customer references and payment metadata", implemented: true },
-          { label: "Team-ready roles and access boundaries", implemented: false },
+          { label: "Team-ready roles and access boundaries", implemented: true },
           { label: "Notification settings for payment and webhook events", implemented: true },
           { label: "Backend integration templates and implementation examples", implemented: false },
         ],

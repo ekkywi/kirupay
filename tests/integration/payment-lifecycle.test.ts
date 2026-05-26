@@ -28,7 +28,7 @@ describe("payment lifecycle evaluator", () => {
       .mockResolvedValueOnce([
         {
           id: "tx_warn",
-          merchantId: "m1",
+          businessId: "m1",
           orderId: "INV-WARN",
           amount: 1,
           currency: "SOL",
@@ -38,7 +38,7 @@ describe("payment lifecycle evaluator", () => {
       .mockResolvedValueOnce([
         {
           id: "tx_fail",
-          merchantId: "m1",
+          businessId: "m1",
           orderId: "INV-FAIL",
           amount: 2,
           currency: "SOL",
@@ -69,7 +69,7 @@ describe("payment lifecycle evaluator", () => {
       .mockResolvedValueOnce([
         {
           id: "tx_fail",
-          merchantId: "m1",
+          businessId: "m1",
           orderId: "INV-FAIL",
           amount: 2,
           currency: "SOL",

@@ -10,6 +10,7 @@ import { TabWebhookLogs } from "./TabWebhookLogs";
 export type DeveloperTab = "credentials" | "docs" | "logs";
 
 export type DeveloperMerchant = {
+  businessId?: string | null;
   apiKey?: string | null;
   webhookSecret?: string | null;
   webhookUrl?: string | null;
@@ -41,7 +42,7 @@ const tabs: Array<{
   },
 ];
 
-export function DeveloperView({ merchant }: { merchant: DeveloperMerchant }) {
+export function DeveloperView({ merchant, canManage = true }: { merchant: DeveloperMerchant; canManage?: boolean }) {
   const [activeTab, setActiveTab] = useState<DeveloperTab>("credentials");
 
   return (
@@ -73,9 +74,9 @@ export function DeveloperView({ merchant }: { merchant: DeveloperMerchant }) {
         })}
       </div>
 
-      {activeTab === "credentials" && <TabCredentials merchant={merchant} />}
+      {activeTab === "credentials" && <TabCredentials merchant={merchant} canManage={canManage} />}
       {activeTab === "docs" && <TabApiDocs />}
-      {activeTab === "logs" && <TabWebhookLogs activeTab={activeTab} />}
+      {activeTab === "logs" && <TabWebhookLogs activeTab={activeTab} businessId={merchant.businessId ?? undefined} />}
     </div>
   );
 }

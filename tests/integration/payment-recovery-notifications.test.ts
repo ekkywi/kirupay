@@ -37,9 +37,9 @@ describe("payment recovery notification integration", () => {
       expiresAt: new Date(Date.now() + 5 * 60 * 1000),
       currency: "SOL",
       txSignature: null,
-      merchantId: "m1",
+      businessId: "b1",
       orderId: "INV-001",
-      merchant: { webhookUrl: "https://merchant.test/webhook", webhookSecret: "whsec_abc" },
+      business: { credentials: { webhookUrl: "https://merchant.test/webhook", webhookSecret: "whsec_abc" } },
     });
 
     prismaMock.transaction.updateManyAndReturn.mockResolvedValue([{
@@ -53,9 +53,9 @@ describe("payment recovery notification integration", () => {
       buyerWallet: null,
       walletProvider: null,
       updatedAt: now,
-      merchantId: "m1",
+      businessId: "b1",
       orderId: "INV-001",
-      merchant: { webhookUrl: "https://merchant.test/webhook", webhookSecret: "whsec_abc" },
+      business: { credentials: { webhookUrl: "https://merchant.test/webhook", webhookSecret: "whsec_abc" } },
     }]);
 
     vi.mocked(fetch).mockResolvedValue(
@@ -66,7 +66,7 @@ describe("payment recovery notification integration", () => {
 
     prismaMock.webhookLog.create.mockResolvedValue({
       id: "wl_1",
-      merchantId: "m1",
+      businessId: "b1",
       event: "payment.success",
       status: 500,
       response: "failed",
@@ -85,11 +85,13 @@ describe("payment recovery notification integration", () => {
       id: "wl_old",
       event: "payment.success",
       payload: "{\"event\":\"payment.success\"}",
-      merchantId: "m1",
-      merchant: {
-        webhookUrl: "https://merchant.test/webhook",
-        webhookSecret: "whsec_abc",
-        businessName: "Acme",
+      businessId: "b1",
+      business: {
+        name: "Acme",
+        credentials: {
+          webhookUrl: "https://merchant.test/webhook",
+          webhookSecret: "whsec_abc",
+        },
       },
     });
 
@@ -97,7 +99,7 @@ describe("payment recovery notification integration", () => {
     prismaMock.webhookLog.create.mockResolvedValue({
       id: "wl_retry",
       event: "payment.success.retry",
-      merchantId: "m1",
+      businessId: "b1",
       status: 200,
     });
 
@@ -105,6 +107,13 @@ describe("payment recovery notification integration", () => {
     const result = await retryWebhookDelivery("wl_old");
 
     expect(result.success).toBe(true);
+    expect(prismaMock.webhookLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          retriedFromLogId: "wl_old",
+        }),
+      }),
+    );
     expect(createMerchantNotificationMock).toHaveBeenCalledWith(expect.objectContaining({ type: "WEBHOOK_RECOVERED" }));
   });
 });

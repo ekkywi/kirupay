@@ -1,32 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRef } from "react";
 import type { FormEvent } from "react";
-import { Activity, Bell, CheckCheck, LogOut, Search, Settings, User } from "lucide-react";
+import { Activity, Bell, Building2, Check, CheckCheck, ChevronDown, Loader2, LogOut, Search, Settings, User } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useNotifications, type MerchantNotification } from "@/hooks/api/merchant/useNotifications";
 import { createPortal } from "react-dom";
 import { formatLocalDateTime } from "@/lib/local-time";
+import { toast } from "sonner";
 
 interface TopNavProps {
   merchant: {
     businessName?: string | null;
+    displayName?: string | null;
     email?: string | null;
-    role?: string | null;
+    activeBusinessId?: string | null;
+    actorType: "merchant" | "internal";
   } | null;
 }
 
+type BusinessItem = {
+  role: "OWNER" | "ADMIN" | "MEMBER";
+  business: { id: string; name: string; code: string };
+  isCurrent: boolean;
+};
+
 export function TopNav({ merchant }: TopNavProps) {
-  const isAdmin = merchant?.role === "ADMIN";
+  const isAdmin = merchant?.actorType === "internal";
+  const [isHydrated] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isBusinessMenuOpen, setIsBusinessMenuOpen] = useState(false);
   const [transactionSearch, setTransactionSearch] = useState("");
+  const [businesses, setBusinesses] = useState<BusinessItem[]>([]);
+  const [switchingBusiness, setSwitchingBusiness] = useState(false);
   const [notificationPosition, setNotificationPosition] = useState({ top: 56, left: 0, width: 360 });
   const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
   const notificationPanelRef = useRef<HTMLDivElement | null>(null);
+  const businessMenuRef = useRef<HTMLDivElement | null>(null);
+  const businessMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,15 +55,82 @@ export function TopNav({ merchant }: TopNavProps) {
     `${iconControlBaseClass} border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:bg-white/[0.06]`;
   const iconControlProfileClass =
     `${iconControlBaseClass} border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20`;
+  const readApiMessage = (body: unknown, fallback: string) => {
+    if (!body || typeof body !== "object") return fallback;
+    const payload = body as { message?: string; error?: { message?: string } };
+    return payload.error?.message || payload.message || fallback;
+  };
+
+  const loadBusinesses = useCallback(async () => {
+    if (!merchant || merchant.actorType !== "merchant") return;
+
+    try {
+      const res = await fetch("/api/merchant/businesses", { cache: "no-store" });
+      if (!res.ok) return;
+      const json = (await res.json()) as { data?: BusinessItem[] };
+      setBusinesses(json.data || []);
+    } catch {
+      // noop
+    }
+  }, [merchant]);
 
   const resolveNotificationLink = (item: MerchantNotification) => {
-    if (item.source === "WEBHOOK") return "/developers";
+    if (item.source === "WEBHOOK") return "/business";
     return "/payments";
   };
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+  };
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadBusinesses();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [loadBusinesses]);
+
+  useEffect(() => {
+    const handleBusinessEvent = () => {
+      void loadBusinesses();
+    };
+
+    window.addEventListener("merchant:business-switched", handleBusinessEvent);
+    window.addEventListener("merchant:business-updated", handleBusinessEvent);
+
+    return () => {
+      window.removeEventListener("merchant:business-switched", handleBusinessEvent);
+      window.removeEventListener("merchant:business-updated", handleBusinessEvent);
+    };
+  }, [loadBusinesses]);
+
+  const switchBusiness = async (businessId: string) => {
+    if (!businessId || switchingBusiness) return;
+    setSwitchingBusiness(true);
+    const targetBusiness = businesses.find((item) => item.business.id === businessId);
+    const toastId = toast.loading("Switching active business...");
+    try {
+      const res = await fetch("/api/merchant/businesses/switch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (res.ok) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("merchant:business-switched", { detail: { businessId } }));
+        }
+        router.refresh();
+        toast.success(`Active business switched to ${targetBusiness?.business.name || "selected business"}.`, { id: toastId });
+      } else {
+        toast.error(readApiMessage(json, "Failed to switch active business."), { id: toastId });
+      }
+    } catch {
+      toast.error("Failed to switch active business.", { id: toastId });
+    } finally {
+      setSwitchingBusiness(false);
+    }
   };
 
   useEffect(() => {
@@ -137,6 +219,42 @@ export function TopNav({ merchant }: TopNavProps) {
     const query = params.toString();
     router.push(query ? `/payments?${query}` : "/payments");
   };
+  const currentBusiness = businesses.find((item) => item.isCurrent) || (!businesses.length ? businesses.find((item) => item.business.id === merchant?.activeBusinessId) || null : null);
+  const manageBusinessId = currentBusiness?.business.id || (businesses.length === 0 ? merchant?.activeBusinessId || null : null);
+  const manageHref = manageBusinessId ? `/business/manage/${manageBusinessId}` : "/business";
+  const manageDisabled = !isHydrated || !manageBusinessId;
+  const switchDisabled = isHydrated ? switchingBusiness || businesses.length === 0 : undefined;
+  const displayBusinessName = isHydrated ? currentBusiness?.business.name || "Select business" : merchant?.businessName || "Select business";
+  const displayBusinessMeta = isHydrated
+    ? currentBusiness?.role
+      ? `${currentBusiness.role} · Active`
+      : "No active business"
+    : "Loading business context";
+
+  useEffect(() => {
+    if (!isBusinessMenuOpen) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const panel = businessMenuRef.current;
+      const trigger = businessMenuButtonRef.current;
+      if (!panel || !trigger) return;
+      if (panel.contains(target) || trigger.contains(target)) return;
+      setIsBusinessMenuOpen(false);
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsBusinessMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, [isBusinessMenuOpen]);
 
   return (
     <header className="h-16 bg-white/95 dark:bg-[#0B0F17]/95 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -146,7 +264,7 @@ export function TopNav({ merchant }: TopNavProps) {
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">
-            {merchant?.businessName || (isAdmin ? "Admin console" : "Merchant dashboard")}
+            {merchant?.displayName || (isAdmin ? "Admin Console" : "Business Dashboard")}
           </p>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="hidden sm:inline">Network</span>
@@ -159,6 +277,93 @@ export function TopNav({ merchant }: TopNavProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {!isAdmin && (
+          <div className="relative hidden md:flex items-center gap-2">
+            <button
+              ref={businessMenuButtonRef}
+              type="button"
+              disabled={switchDisabled}
+              onClick={() => {
+                if (!isHydrated || switchingBusiness || businesses.length === 0) return;
+                setIsProfileOpen(false);
+                setIsNotificationOpen(false);
+                setIsBusinessMenuOpen((value) => !value);
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+            >
+              <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              <div className="max-w-[220px] leading-tight">
+                <p className="truncate text-xs font-semibold text-slate-900 dark:text-slate-100">
+                  {displayBusinessName}
+                </p>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  {displayBusinessMeta}
+                </p>
+              </div>
+              {switchingBusiness ? (
+                <Loader2 className="h-4 w-4 animate-spin text-slate-500 dark:text-slate-300" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+              )}
+            </button>
+            <Link
+              href={manageHref}
+              aria-disabled={manageDisabled}
+              onClick={(event) => {
+                if (manageDisabled) {
+                  event.preventDefault();
+                }
+              }}
+              className={`rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold dark:border-white/10 dark:bg-white/[0.03] ${
+                manageDisabled
+                  ? "cursor-not-allowed text-slate-400 opacity-70 dark:text-slate-500"
+                  : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              }`}
+            >
+              Manage
+            </Link>
+
+            {isBusinessMenuOpen && (
+              <div
+                ref={businessMenuRef}
+                className="absolute left-0 top-[calc(100%+8px)] z-40 w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-black/30"
+              >
+                <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Switch business</p>
+                <div className="max-h-64 space-y-1 overflow-y-auto">
+                  {businesses.map((item) => {
+                    const isActive = item.isCurrent;
+                    return (
+                      <button
+                        key={item.business.id}
+                        type="button"
+                        onClick={() => {
+                          if (isActive || switchingBusiness) return;
+                          void switchBusiness(item.business.id);
+                          setIsBusinessMenuOpen(false);
+                        }}
+                        disabled={switchingBusiness}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-colors ${
+                          isActive
+                            ? "bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-200"
+                            : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{item.business.name}</p>
+                          <p className={`truncate text-[11px] ${isActive ? "text-blue-700 dark:text-blue-300" : "text-slate-500 dark:text-slate-400"}`}>
+                            {item.role} · {isActive ? "Current" : item.business.code}
+                          </p>
+                        </div>
+                        {isActive ? <Check className="h-4 w-4 shrink-0" /> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <form onSubmit={handleTransactionSearch} className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input
@@ -209,17 +414,17 @@ export function TopNav({ merchant }: TopNavProps) {
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 py-2 animate-in fade-in zoom-in duration-150">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
-                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Merchant account"}</p>
+                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Business account"}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white truncate">
-                  {merchant?.email || "merchant@trezalink.com"}
+                  {merchant?.email || "business@trezalink.com"}
                 </p>
               </div>
               <Link
-                href="/settings"
+                href={isAdmin ? "/admin/overview" : "/settings"}
                 onClick={() => setIsProfileOpen(false)}
                 className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-white/[0.04]"
               >
-                <Settings size={14} /> Settings
+                <Settings size={14} /> {isAdmin ? "Admin Home" : "Settings"}
               </Link>
               <div className="mx-4 my-1 flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
                 <Activity size={14} className="text-emerald-500" />
@@ -271,7 +476,7 @@ export function TopNav({ merchant }: TopNavProps) {
                   <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No notifications yet.</p>
                 ) : (
                   items.map((item) => (
-                    <div key={item.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-white/10">
+                    <div key={item.id} className="relative border-b border-slate-100 px-4 py-3 last:border-b-0 dark:border-white/10">
                       <div className="flex items-start justify-between gap-3">
                         <Link href={resolveNotificationLink(item)} onClick={() => setIsNotificationOpen(false)} className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">{item.title}</p>
@@ -281,12 +486,15 @@ export function TopNav({ merchant }: TopNavProps) {
                           </p>
                         </Link>
                         {!item.readAt && (
-                          <button
-                            onClick={() => void markRead(item.id)}
-                            className="rounded-md px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
-                          >
-                            Mark read
-                          </button>
+                          <div className="flex shrink-0 flex-col items-end gap-1">
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread notification" />
+                            <button
+                              onClick={() => void markRead(item.id)}
+                              className="rounded-md px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
+                            >
+                              Mark read
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

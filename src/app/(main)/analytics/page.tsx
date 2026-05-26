@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 // src/app/dashboard/analytics/page.tsx
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
 import { StatusDonutChart } from "@/components/dashboard/analytics/StatusDonutChart";
@@ -52,8 +52,9 @@ type HistoryPoint = {
 type TransactionStatus = "PAID" | "PENDING" | "FAILED";
 
 export default async function AnalyticsPage() {
-  const merchant = await getCurrentMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentMerchantBusinessContext();
+  if (!ctx) redirect("/business");
+  const business = ctx.business;
 
   const [
     statusDistribution, 
@@ -71,14 +72,14 @@ export default async function AnalyticsPage() {
     // 1. Distribusi Status (Donut Chart)
     prisma.transaction.groupBy({
       by: ['status'],
-      where: { merchantId: merchant.id },
+      where: { businessId: business.id },
       _count: { id: true },
     }),
 
     // 2. Pelanggan Teratas (Leaderboard)
     prisma.transaction.groupBy({
       by: ['customerEmail', 'buyerWallet'], 
-      where: { merchantId: merchant.id, status: 'PAID' },
+      where: { businessId: business.id, status: 'PAID' },
       _sum: { amount: true },
       _count: { id: true },
       orderBy: { _sum: { amount: 'desc' } },
@@ -87,7 +88,7 @@ export default async function AnalyticsPage() {
 
     // 3. Statistik Kartu Atas (UBAH KE NET AMOUNT & HANYA YANG PAID)
     prisma.transaction.aggregate({
-      where: { merchantId: merchant.id },
+      where: { businessId: business.id },
       _count: { id: true },
       _sum: { netAmount: true }, 
     }),
@@ -99,7 +100,7 @@ export default async function AnalyticsPage() {
         status, 
         COUNT(id) as count 
       FROM "Transaction" 
-      WHERE "merchantId" = ${merchant.id} 
+      WHERE "businessId" = ${business.id}
       GROUP BY 1, 2 
       ORDER BY MIN("createdAt") ASC
     `,
@@ -110,7 +111,7 @@ export default async function AnalyticsPage() {
         EXTRACT(HOUR FROM "createdAt") as hour, 
         COUNT(id) as count 
       FROM "Transaction" 
-      WHERE "merchantId" = ${merchant.id} AND status = 'PAID'
+      WHERE "businessId" = ${business.id} AND status = 'PAID'
       GROUP BY 1 
       ORDER BY 1 ASC
     `,
@@ -118,25 +119,25 @@ export default async function AnalyticsPage() {
     // 6. Query Baru: Revenue by Source
     prisma.transaction.groupBy({
       by: ['source'],
-      where: { merchantId: merchant.id, status: 'PAID' },
+      where: { businessId: business.id, status: 'PAID' },
       _count: { id: true }
     }),
 
     prisma.transaction.aggregate({
-      where: { merchantId: merchant.id, status: 'PAID' },
+      where: { businessId: business.id, status: 'PAID' },
       _sum: { amount: true, feeAmount: true, netAmount: true },
       _avg: { amount: true },
       _count: { id: true },
     }),
 
     prisma.webhookLog.aggregate({
-      where: { merchantId: merchant.id },
+      where: { businessId: business.id },
       _count: { id: true },
     }),
 
     prisma.webhookLog.count({
       where: {
-        merchantId: merchant.id,
+        businessId: business.id,
         OR: [{ status: null }, { status: { lt: 200 } }, { status: { gte: 300 } }],
       },
     }),
@@ -144,14 +145,14 @@ export default async function AnalyticsPage() {
     prisma.$queryRaw`
       SELECT COUNT(id) as count
       FROM "Transaction"
-      WHERE "merchantId" = ${merchant.id}
+      WHERE "businessId" = ${business.id}
         AND status = 'PENDING'
         AND "createdAt" < NOW() - INTERVAL '24 hours'
     `,
 
     prisma.transaction.groupBy({
       by: ['source', 'status'],
-      where: { merchantId: merchant.id },
+      where: { businessId: business.id },
       _count: { id: true },
     }),
   ]);
@@ -183,7 +184,7 @@ export default async function AnalyticsPage() {
   const webhookTotal = webhookStats._count.id;
   const webhookSuccessRate = webhookTotal > 0 ? ((webhookTotal - failedWebhookCount) / webhookTotal) * 100 : 100;
   const stalePendingCount = Number((stalePendingRaw as CountRow[])[0]?.count || 0);
-  const walletConnected = !merchant.walletAddress.includes("pending");
+  const walletConnected = !(business.settlementWallet?.walletAddress || "pending").includes("pending");
   const topCustomerGross = topCustomers.reduce((sum, customer) => sum + (customer._sum.amount || 0), 0);
   const customerConcentration = grossVolume > 0 ? (topCustomerGross / grossVolume) * 100 : 0;
   const concentrationLevel = customerConcentration >= 60 ? "High" : customerConcentration >= 35 ? "Medium" : "Low";

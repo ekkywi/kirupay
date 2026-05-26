@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-// src/app/dashboard/page.tsx
 import { StatCard } from "@/components/dashboard/StatCard";
-import { WalletOverview } from "@/components/dashboard/WalletOverview";
+import { SettlementWalletStatusCard } from "@/components/dashboard/SettlementWalletStatusCard";
 import { TransactionTable } from "@/components/dashboard/TransactionTable";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
-import { getCurrentMerchant } from "@/lib/auth-service";
+import { getCurrentMerchantBusinessContext } from "@/lib/auth-service";
 import prisma from "@/lib/neon";
 import { redirect } from "next/navigation";
 import { Activity, CreditCard, CheckCircle2, LayoutDashboard, ArrowUpRight, ShieldCheck } from "lucide-react";
@@ -16,14 +15,17 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const merchant = await getCurrentMerchant();
-  if (!merchant) redirect("/login");
+  const ctx = await getCurrentMerchantBusinessContext();
+  if (!ctx) redirect("/business");
+  const merchant = ctx.merchant;
+  const business = ctx.business;
+  const userLabel = merchant.businessName?.trim() || merchant.email.split("@")[0] || "Merchant";
 
   const isWalletDummyEmail = merchant.email.includes("@wallet.auth");
   const isUnverified = merchant.emailVerified === false;
 
   if (isWalletDummyEmail || isUnverified) {
-    return <SetupGatekeeper merchantId={merchant.id} currentEmail={merchant.email} isWalletUser={isWalletDummyEmail} />;
+    return <SetupGatekeeper businessId={business.id} currentEmail={merchant.email} isWalletUser={isWalletDummyEmail} />;
   }
 
   const now = new Date();
@@ -43,20 +45,17 @@ export default async function DashboardPage() {
     paidTxCount,
     last7DaysTx 
   ] = await Promise.all([
-    prisma.transaction.findMany({ where: { merchantId: merchant.id }, orderBy: { createdAt: "desc" }, take: 5 }),
-    // PERBAIKAN: Tambahkan netAmount ke dalam _sum
-    prisma.transaction.aggregate({ where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: startOfThisMonth } }, _sum: { netAmount: true, amount: true } }),
-    prisma.transaction.aggregate({ where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { netAmount: true, amount: true } }),
-    prisma.transaction.count({ where: { merchantId: merchant.id } }),
-    prisma.transaction.count({ where: { merchantId: merchant.id, status: "PAID" } }),
-    // PERBAIKAN: Tambahkan netAmount ke dalam select
+    prisma.transaction.findMany({ where: { businessId: business.id }, orderBy: { createdAt: "desc" }, take: 5 }),
+    prisma.transaction.aggregate({ where: { businessId: business.id, status: "PAID", createdAt: { gte: startOfThisMonth } }, _sum: { netAmount: true, amount: true } }),
+    prisma.transaction.aggregate({ where: { businessId: business.id, status: "PAID", createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { netAmount: true, amount: true } }),
+    prisma.transaction.count({ where: { businessId: business.id } }),
+    prisma.transaction.count({ where: { businessId: business.id, status: "PAID" } }),
     prisma.transaction.findMany({ 
-      where: { merchantId: merchant.id, status: "PAID", createdAt: { gte: sevenDaysAgo } },
+      where: { businessId: business.id, status: "PAID", createdAt: { gte: sevenDaysAgo } },
       select: { netAmount: true, amount: true, createdAt: true }
     }),
   ]);
 
-  // PERBAIKAN: Prioritaskan netAmount
   const thisMonthRev = thisMonthRevAgg._sum.netAmount ?? thisMonthRevAgg._sum.amount ?? 0;
   const lastMonthRev = lastMonthRevAgg._sum.netAmount ?? lastMonthRevAgg._sum.amount ?? 0;
   
@@ -79,49 +78,47 @@ export default async function DashboardPage() {
     const txDateStr = new Date(tx.createdAt).toDateString();
     const dayIndex = chartData.findIndex(d => d.fullDateString === txDateStr);
     if (dayIndex !== -1) {
-      // PERBAIKAN: Masukkan netAmount ke grafik
       chartData[dayIndex].amount += (tx.netAmount ?? tx.amount ?? 0);
     }
   });
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      
-      {/* Header */}
       <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
             <LayoutDashboard className="h-4 w-4" />
-            Executive overview
+            Business overview
           </div>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-            Welcome back, {merchant.businessName || "Merchant"}
+            Welcome back, {userLabel}
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Monitor wallet settlement, payment conversion, and recent operational activity.
+            Monitor business settlement, payment conversion, and recent operational activity.
           </p>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+            Managing: {business.name} · Active business
+          </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Link href="/payment-links" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
-            Payment links
+            Payment Links
             <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <Link href="/developers" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
-            API console
+          <Link href="/business" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+            Business Hub
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
 
-      {/* Baris 1: Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Opsional: Anda bisa mengubah label menjadi "Net Revenue (This Month)" agar lebih informatif */}
-        <StatCard label="Net Revenue (This Month)" value={`${thisMonthRev.toFixed(4)} SOL`} icon={<Activity size={18} />} trend={`${revenueTrend > 0 ? '+' : ''}${revenueTrend.toFixed(1)}%`} trendUp={revenueTrend >= 0} description="vs last month" />
-        <StatCard label="Total Transactions" value={totalTxCount.toString()} icon={<CreditCard size={18} />} trend="All time" trendUp={true} description="total volume" />
-        <StatCard label="Success Rate" value={`${successRate.toFixed(1)}%`} icon={<CheckCircle2 size={18} />} trend="Paid vs Failed" trendUp={successRate >= 50} description="conversion rate" />
+        <StatCard label="Net Revenue (This Month)" value={`${thisMonthRev.toFixed(4)} SOL`} icon={<Activity size={18} />} trend={`${revenueTrend > 0 ? '+' : ''}${revenueTrend.toFixed(1)}%`} trendUp={revenueTrend >= 0} description="Compared with last month" />
+        <StatCard label="Total Transactions" value={totalTxCount.toString()} icon={<CreditCard size={18} />} trend="All-time" trendUp={true} description="Total payment attempts" />
+        <StatCard label="Success Rate" value={`${successRate.toFixed(1)}%`} icon={<CheckCircle2 size={18} />} trend="Paid vs failed" trendUp={successRate >= 50} description="Payment conversion rate" />
       </div>
 
-      {/* Baris 2: Chart (Kiri) dan Wallet (Kanan) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-sm shadow-slate-200/60 dark:shadow-none">
           <div className="mb-6 flex items-start justify-between gap-4">
@@ -135,7 +132,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <WalletOverview initialWallet={merchant.walletAddress} />
+          <SettlementWalletStatusCard walletAddress={business.settlementWallet?.walletAddress || null} />
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -157,7 +154,6 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Baris 3: Tabel Transaksi */}
       <div className="bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl p-6 shadow-sm shadow-slate-200/60 dark:shadow-none">
         <div className="flex justify-between items-center mb-6">
           <div>

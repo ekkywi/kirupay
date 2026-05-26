@@ -49,24 +49,41 @@ export default async function MerchantDetailPage({
 
   const merchant = await prisma.merchant.findUnique({
     where: { id: merchantId },
+    include: {
+      memberships: {
+        where: { isActive: true },
+        include: {
+          business: {
+            include: {
+              settlementWallets: {
+                where: { isActive: true },
+                take: 1,
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!merchant) {
     notFound();
   }
 
+  const businessIds = merchant.memberships.map((membership) => membership.businessId);
+
   const [stats, recentTransactions, totalTx] = await Promise.all([
     prisma.transaction.aggregate({
-      where: { merchantId: merchantId, status: "PAID" },
+      where: { businessId: { in: businessIds }, status: "PAID" },
       _sum: { amount: true, feeAmount: true }
     }),
     prisma.transaction.findMany({
-      where: { merchantId: merchantId },
+      where: { businessId: { in: businessIds } },
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
     prisma.transaction.count({
-      where: { merchantId: merchantId }
+      where: { businessId: { in: businessIds } }
     })
   ]);
 
@@ -126,12 +143,31 @@ export default async function MerchantDetailPage({
             </p>
           </div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Settlement wallet</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Active businesses</p>
             <p className="mt-2 flex items-center gap-2 break-all font-mono text-xs text-slate-600 dark:text-slate-300">
               <Wallet className="h-4 w-4 shrink-0 text-slate-400" />
-              {merchant.walletAddress || "Not configured yet"}
+              {merchant.memberships.length}
             </p>
           </div>
+        </div>
+      </AdminSurface>
+
+      <AdminSurface>
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Business memberships</p>
+          {merchant.memberships.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">No active business memberships.</p>
+          ) : (
+            merchant.memberships.map((membership) => (
+              <div key={membership.id} className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{membership.business.name}</p>
+                <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">{membership.business.contactEmail || membership.business.code}</p>
+                <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                  Settlement: {membership.business.settlementWallets[0]?.walletAddress || "Not configured yet"}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </AdminSurface>
 

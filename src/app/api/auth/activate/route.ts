@@ -1,6 +1,6 @@
-import prisma from "@/lib/neon";
 import { NextResponse } from "next/server";
 import { apiError, createRequestId } from "@/lib/api-errors";
+import { consumeMerchantVerificationToken } from "@/lib/email-verification";
 
 export async function POST(req: Request) {
   const requestId = createRequestId();
@@ -18,9 +18,9 @@ export async function POST(req: Request) {
       });
     }
 
-    const merchant = await prisma.merchant.findUnique({ where: { activationToken: token } });
+    const merchantId = await consumeMerchantVerificationToken(token);
 
-    if (!merchant) {
+    if (!merchantId) {
       return apiError(400, {
         code: "AUTH_ACTIVATION_TOKEN_INVALID",
         message: "Invalid or expired activation link.",
@@ -28,14 +28,6 @@ export async function POST(req: Request) {
         retryable: false,
       });
     }
-
-    await prisma.merchant.update({
-      where: { id: merchant.id },
-      data: {
-        emailVerified: true,
-        activationToken: null,
-      },
-    });
 
     return NextResponse.json({ message: "Account activated successfully." }, { status: 200 });
   } catch (error) {

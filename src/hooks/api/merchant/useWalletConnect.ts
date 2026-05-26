@@ -1,4 +1,3 @@
-// src/hooks/api/merchant/useWalletConnect.ts
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -13,12 +12,12 @@ type SolanaProvider = {
 };
 
 type WalletUpdateResponse = {
-  walletAddress: string;
+  walletAddress: string | null;
 };
 
-export function useWalletConnect(initialWallet: string) {
+export function useWalletConnect(initialWallet: string | null, businessId?: string) {
   const router = useRouter();
-  const [wallet, setWallet] = useState(initialWallet);
+  const [wallet, setWallet] = useState<string | null>(initialWallet || null);
   const [balance, setBalance] = useState<number | null>(null);
   const [isFetchingBalance, setIsFetchingBalance] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -29,9 +28,9 @@ export function useWalletConnect(initialWallet: string) {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchBalance = async (walletAddress: string) => {
-    if (walletAddress.includes("pending")) return;
-    
+  const fetchBalance = async (walletAddress: string | null) => {
+    if (!walletAddress || walletAddress.includes("pending")) return;
+
     setIsFetchingBalance(true);
     try {
       const pubKey = new PublicKey(walletAddress);
@@ -52,7 +51,7 @@ export function useWalletConnect(initialWallet: string) {
     let cancelled = false;
 
     const syncBalance = async () => {
-      if (wallet.includes("pending")) {
+      if (!wallet || wallet.includes("pending")) {
         if (!cancelled) setBalance(null);
         return;
       }
@@ -75,17 +74,17 @@ export function useWalletConnect(initialWallet: string) {
 
       const resp = await provider.connect();
       const pubKey = resp.publicKey.toString();
-      const message = `Sign this message to link your wallet to Trezalink.\nTimestamp: ${Date.now()}`;
+      const message = `Sign this message to link your business settlement wallet to Trezalink.\nTimestamp: ${Date.now()}`;
       const encodedMessage = new TextEncoder().encode(message);
       const signedMessage = await provider.signMessage(encodedMessage, "utf8");
-      const signatureBase58 = (await import('bs58')).default.encode(signedMessage.signature);
-      
+      const signatureBase58 = (await import("bs58")).default.encode(signedMessage.signature);
+
       const res = await fetch("/api/merchant/wallet/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "link", publicKey: pubKey, signature: signatureBase58, message })
+        body: JSON.stringify({ action: "link", publicKey: pubKey, signature: signatureBase58, message, businessId }),
       });
-      
+
       if (!res.ok) {
         const apiError = await parseApiErrorResponse(res);
         throw new Error(toDiagnosticMessage(apiError));
@@ -110,7 +109,7 @@ export function useWalletConnect(initialWallet: string) {
       const res = await fetch("/api/merchant/wallet/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "unlink" })
+        body: JSON.stringify({ action: "unlink", businessId }),
       });
 
       if (!res.ok) {
@@ -122,10 +121,10 @@ export function useWalletConnect(initialWallet: string) {
 
       setWallet(data.walletAddress);
       setBalance(null);
-      
+
       const provider = (window as { solana?: SolanaProvider }).solana;
       if (provider) await provider.disconnect();
-      
+
       router.refresh();
       showToast("Wallet unlinked successfully!", "success");
       return true;

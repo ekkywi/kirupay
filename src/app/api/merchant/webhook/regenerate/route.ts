@@ -1,21 +1,36 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/neon";
-import { getCurrentMerchant } from "@/lib/auth-service";
 import crypto from "crypto";
 import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
+import { requireBusinessMembership, requireBusinessMembershipById } from "@/lib/auth-service";
 
-export async function POST() {
+function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
+  if (error instanceof Error && error.message === "Forbidden") {
+    return { status: 403, code: "MERCHANT_FORBIDDEN", message: "Forbidden." };
+  }
+  return { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." };
+}
+
+export async function POST(req?: Request) {
   const requestId = createRequestId();
   const obs = startObservation(requestId, "POST /api/merchant/webhook/regenerate");
 
   try {
-    const merchant = await getCurrentMerchant();
-    if (!merchant) {
-      recordObservation(obs, { outcome: "error", status: 401, errorCode: "MERCHANT_UNAUTHORIZED" });
-      return apiError(401, {
-        code: "MERCHANT_UNAUTHORIZED",
-        message: "Unauthorized.",
+    const body = ((await req?.json?.().catch(() => ({}))) || {}) as { businessId?: string };
+    const targetBusinessId = typeof body.businessId === "string" ? body.businessId : null;
+
+    let ctx;
+    try {
+      ctx = targetBusinessId
+        ? await requireBusinessMembershipById(targetBusinessId, { roles: ["OWNER", "ADMIN"] })
+        : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
+    } catch (error) {
+      const accessError = mapAccessError(error);
+      recordObservation(obs, { outcome: "error", status: accessError.status, errorCode: accessError.code });
+      return apiError(accessError.status, {
+        code: accessError.code,
+        message: accessError.message,
         requestId,
         retryable: false,
       });
@@ -23,16 +38,17 @@ export async function POST() {
 
     const newWebhookSecret = `whsec_${crypto.randomBytes(24).toString("hex")}`;
 
-    const updatedMerchant = await prisma.merchant.update({
-      where: { id: merchant.id },
-      data: { webhookSecret: newWebhookSecret },
+    const updatedCredential = await prisma.businessCredential.upsert({
+      where: { businessId: ctx.business.id },
+      create: { businessId: ctx.business.id, apiKey: `tl_live_${crypto.randomBytes(32).toString("hex")}`, webhookSecret: newWebhookSecret },
+      update: { webhookSecret: newWebhookSecret },
     });
 
     recordObservation(obs, { outcome: "success", status: 200 });
     return NextResponse.json(
       {
         success: true,
-        webhookSecret: updatedMerchant.webhookSecret,
+        webhookSecret: updatedCredential.webhookSecret,
       },
       { status: 200 },
     );

@@ -42,15 +42,6 @@ export async function POST(req: Request) {
       });
     }
 
-    if (merchant.password === "WALLET_AUTH_NO_PASSWORD") {
-      return apiError(403, {
-        code: "AUTH_PROFILE_SETUP_REQUIRED",
-        message: "Please complete your profile setup before using email login.",
-        requestId,
-        retryable: false,
-      });
-    }
-
     const isPasswordValid = await bcrypt.compare(password, merchant.password);
     if (!isPasswordValid) {
       return apiError(401, {
@@ -61,8 +52,23 @@ export async function POST(req: Request) {
       });
     }
 
+    const firstMembership = await prisma.businessMembership.findFirst({
+      where: { merchantId: merchant.id, isActive: true, business: { isActive: true } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    const activeBusinessId = merchant.activeBusinessId ?? firstMembership?.businessId ?? null;
+    if (activeBusinessId !== merchant.activeBusinessId) {
+      await prisma.merchant.update({ where: { id: merchant.id }, data: { activeBusinessId } });
+    }
+
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-    const token = await new SignJWT({ merchantId: merchant.id, email: merchant.email })
+    const token = await new SignJWT({
+      actorType: "merchant",
+      actorId: merchant.id,
+      email: merchant.email,
+      activeBusinessId,
+    })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("24h")
@@ -84,6 +90,7 @@ export async function POST(req: Request) {
           id: merchant.id,
           businessName: merchant.businessName,
           email: merchant.email,
+          activeBusinessId,
         },
       },
       { status: 200 },

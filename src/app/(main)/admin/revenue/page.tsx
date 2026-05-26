@@ -75,11 +75,11 @@ export default async function AdminRevenuePage() {
       orderBy: { createdAt: "desc" },
       take: 15,
       include: {
-        merchant: { select: { businessName: true, email: true } },
+        business: { select: { name: true, contactEmail: true } },
       },
     }),
     prisma.transaction.groupBy({
-      by: ["merchantId"],
+      by: ["businessId"],
       where: { status: "PAID", feeAmount: { gt: 0 } },
       _count: { id: true },
       _sum: { amount: true, feeAmount: true },
@@ -88,9 +88,9 @@ export default async function AdminRevenuePage() {
     }),
   ]);
 
-  const topMerchantProfiles = await prisma.merchant.findMany({
-    where: { id: { in: topFeeMerchants.map((merchant) => merchant.merchantId) } },
-    select: { id: true, businessName: true, email: true },
+  const topMerchantProfiles = await prisma.businessEntity.findMany({
+    where: { id: { in: topFeeMerchants.map((merchant) => merchant.businessId) } },
+    select: { id: true, name: true, contactEmail: true },
   });
 
   const merchantById = new Map(topMerchantProfiles.map((merchant) => [merchant.id, merchant]));
@@ -240,17 +240,17 @@ export default async function AdminRevenuePage() {
               <div className="p-10 text-center text-sm text-slate-500 dark:text-slate-400">No fee contribution has been recorded yet.</div>
             ) : (
               topFeeMerchants.map((merchantStat, index) => {
-                const merchant = merchantById.get(merchantStat.merchantId);
+                const merchant = merchantById.get(merchantStat.businessId);
                 const contribution = totalRevenue > 0 ? ((merchantStat._sum.feeAmount || 0) / totalRevenue) * 100 : 0;
 
                 return (
-                  <div key={merchantStat.merchantId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
+                  <div key={merchantStat.businessId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
                       {index + 1}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.businessName || "Unknown merchant"}</p>
-                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.email || merchantStat.merchantId}</p>
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.name || "Unknown business"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.contactEmail || merchantStat.businessId}</p>
                       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/[0.06]">
                         <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(contribution, 100)}%` }} />
                       </div>
@@ -290,7 +290,7 @@ export default async function AdminRevenuePage() {
               <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
                 <tr>
                   <th className="px-5 py-4">Time</th>
-                  <th className="px-5 py-4">Source merchant</th>
+                  <th className="px-5 py-4">Source business</th>
                   <th className="px-5 py-4">Order ID</th>
                   <th className="px-5 py-4">Gross volume</th>
                   <th className="px-5 py-4">Net settlement</th>
@@ -302,8 +302,8 @@ export default async function AdminRevenuePage() {
                   <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
                     <td className="px-5 py-4 text-xs text-slate-500 dark:text-slate-400">{formatCompactDate(transaction.createdAt)}</td>
                     <td className="px-5 py-4">
-                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
-                      <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                      <p className="font-semibold text-slate-950 dark:text-white">{transaction.business.name || "Unnamed merchant"}</p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.business.contactEmail}</p>
                     </td>
                     <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{transaction.orderId}</td>
                     <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">{formatSOL(transaction.amount)} SOL</td>

@@ -3,10 +3,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
+import TrackingLink from "@/components/landing/TrackingLink";
 import AutoRefresh from "@/components/admin/AutoRefresh";
+import StatusAnalytics from "@/components/status/StatusAnalytics";
 import { getPublicStatusSummary, type PublicComponentStatus, type PublicIncident, type PublicSystemStatus } from "@/lib/public-status";
-import Link from "next/link";
-import { AlertTriangle, ArrowRight, BadgeCheck, Server, ShieldCheck, Waves } from "lucide-react";
+import { ArrowRight, BadgeCheck, Clock3, Server, ShieldCheck, Waves } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Status",
@@ -52,14 +53,16 @@ function incidentImpactTone(impact: PublicIncident["impact"]) {
 
 export default async function StatusPage() {
   const summary = await getPublicStatusSummary();
+  const showSignupNudge = summary.systemStatus === "OPERATIONAL" && !summary.maintenance.enabled;
 
   return (
     <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
       <AutoRefresh intervalMs={45000} />
       <PageBackground />
+      <StatusAnalytics />
       <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4"><Navbar /></div>
       <main>
-        <section className="landing-section relative pt-28 pb-10">
+        <section data-track-section="status-hero" className="landing-section relative pt-28 pb-10">
           <div className="max-w-7xl mx-auto px-6">
             <ScrollReveal immediate className="landing-panel rounded-3xl p-7 md:p-9">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -81,11 +84,30 @@ export default async function StatusPage() {
                   <p className="mt-1 text-xs">ETA: {formatDateTime(summary.maintenance.maintenanceEndsAt)}</p>
                 </div>
               )}
+
+              <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.03] p-4">
+                  <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">System status</p>
+                  <p className="mt-1 text-sm font-semibold landing-heading">{statusLabel(summary.systemStatus)}</p>
+                </div>
+                <div className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.03] p-4">
+                  <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Active incidents</p>
+                  <p className="mt-1 text-sm font-semibold landing-heading">{summary.activeIncidents.length}</p>
+                </div>
+                <div className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.03] p-4">
+                  <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Resolved window</p>
+                  <p className="mt-1 text-sm font-semibold landing-heading">{summary.resolvedIncidents.length} entries</p>
+                </div>
+                <div className="rounded-xl border landing-border bg-white/70 dark:bg-white/[0.03] p-4">
+                  <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Auto refresh</p>
+                  <p className="mt-1 text-sm font-semibold landing-heading">Every 45s</p>
+                </div>
+              </div>
             </ScrollReveal>
           </div>
         </section>
 
-        <section className="landing-section relative py-12 border-t landing-border">
+        <section data-track-section="component-health" className="landing-section relative py-12">
           <div className="max-w-7xl mx-auto px-6">
             <ScrollReveal className="max-w-2xl mb-8">
               <span className="landing-label">Affected components</span>
@@ -111,7 +133,7 @@ export default async function StatusPage() {
           </div>
         </section>
 
-        <section className="landing-section relative py-12 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
+        <section data-track-section="incidents" className="landing-section relative py-12 bg-slate-100/50 dark:bg-white/[0.02]">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid lg:grid-cols-2 gap-6">
               <ScrollReveal className="landing-panel rounded-2xl p-6">
@@ -171,16 +193,42 @@ export default async function StatusPage() {
           </div>
         </section>
 
-        <section className="landing-section relative py-20 border-t landing-border">
+        <section data-track-section="status-cta" className="landing-section relative py-20">
           <div className="max-w-4xl mx-auto px-6 text-center">
             <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-14">
-              <AlertTriangle className="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400" />
-              <h2 className="mt-4 text-3xl font-bold tracking-tight landing-heading">Need implementation details?</h2>
-              <p className="mt-3 landing-body">Engineering-level details, diagnostics, and recovery controls are available in the admin maintenance console.</p>
+              <Clock3 className="w-8 h-8 mx-auto text-blue-600 dark:text-blue-400" />
+              <h2 className="mt-4 text-3xl font-bold tracking-tight landing-heading">Need operational references?</h2>
+              <p className="mt-3 landing-body">Use docs and security references to align your team on incident handling, monitoring expectations, and implementation boundaries.</p>
               <div className="mt-7 flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/roadmap" className="landing-btn-primary">View roadmap <ArrowRight className="w-4 h-4" /></Link>
-                <Link href="/docs" className="landing-btn-secondary">Read docs</Link>
+                <TrackingLink
+                  href="/docs"
+                  eventName="cta_click"
+                  eventData={{ placement: "status_final_primary_docs" }}
+                  className="landing-btn-primary"
+                >
+                  View docs
+                  <ArrowRight className="w-4 h-4" />
+                </TrackingLink>
+                <TrackingLink
+                  href="/security"
+                  eventName="cta_click"
+                  eventData={{ placement: "status_final_secondary_security" }}
+                  className="landing-btn-secondary"
+                >
+                  Security overview
+                </TrackingLink>
               </div>
+              {showSignupNudge && (
+                <TrackingLink
+                  href="/register"
+                  eventName="cta_click"
+                  eventData={{ placement: "status_final_signup_nudge" }}
+                  className="inline-flex items-center gap-1.5 mt-6 text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  System is operational. Create merchant account
+                  <ArrowRight className="w-4 h-4" />
+                </TrackingLink>
+              )}
             </ScrollReveal>
           </div>
         </section>

@@ -6,9 +6,11 @@ import { Sidebar } from "./Sidebar";
 import { TopNav } from "./TopNav";
 
 interface ShellMerchant {
-  role?: string | null;
   businessName?: string | null;
+  displayName?: string | null;
   email?: string | null;
+  activeBusinessId?: string | null;
+  actorType: "merchant" | "internal";
 }
 
 export function DashboardShell({ 
@@ -22,7 +24,7 @@ export function DashboardShell({
 }) {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-100 text-slate-950 dark:bg-[#080B12] dark:text-slate-100 transition-colors duration-300">
-      <Sidebar role={merchant?.role ?? undefined} />
+      <Sidebar actorType={merchant.actorType} />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <TopNav merchant={merchant} />

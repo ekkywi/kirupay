@@ -62,7 +62,7 @@ export default async function AdminOverviewPage() {
     activeMerchants,
     verifiedMerchants,
     walletConnectedMerchants,
-    webhookConfiguredMerchants,
+    webhookConfiguredBusinesses,
     webhookTotal,
     webhookFailed,
     recentTransactions,
@@ -87,34 +87,33 @@ export default async function AdminOverviewPage() {
     prisma.transaction.count(),
     prisma.transaction.count({ where: { status: "PENDING" } }),
     prisma.transaction.count({ where: { status: "FAILED" } }),
-    prisma.merchant.count(),
-    prisma.merchant.count({ where: { isActive: true } }),
-    prisma.merchant.count({ where: { emailVerified: true } }),
-    prisma.merchant.count({ where: { walletAddress: { not: { contains: "pending" } } } }),
-    prisma.merchant.count({ where: { webhookUrl: { not: null } } }),
+    prisma.businessEntity.count(),
+    prisma.businessEntity.count({ where: { isActive: true } }),
+    prisma.businessMembership.count({ where: { role: "OWNER", merchant: { emailVerified: true } } }),
+    prisma.businessWalletIdentity.count({ where: { isActive: true, walletAddress: { not: { contains: "pending" } } } }),
+    prisma.businessCredential.count({ where: { webhookUrl: { not: null } } }),
     prisma.webhookLog.count(),
     prisma.webhookLog.count({ where: { OR: [{ status: null }, { status: { not: 200 } }] } }),
     prisma.transaction.findMany({
       orderBy: { createdAt: "desc" },
       take: 10,
       include: {
-        merchant: { select: { businessName: true, email: true } },
+        business: { select: { name: true, contactEmail: true } },
       },
     }),
-    prisma.merchant.findMany({
+    prisma.businessEntity.findMany({
       orderBy: { createdAt: "desc" },
       take: 5,
       select: {
         id: true,
-        businessName: true,
-        email: true,
+        name: true,
+        contactEmail: true,
         isActive: true,
-        emailVerified: true,
         createdAt: true,
       },
     }),
     prisma.transaction.groupBy({
-      by: ["merchantId"],
+      by: ["businessId"],
       where: { status: "PAID" },
       _count: { id: true },
       _sum: { amount: true, feeAmount: true },
@@ -123,9 +122,9 @@ export default async function AdminOverviewPage() {
     }),
   ]);
 
-  const topMerchantProfiles = await prisma.merchant.findMany({
-    where: { id: { in: topMerchantStats.map((item) => item.merchantId) } },
-    select: { id: true, businessName: true, email: true },
+  const topMerchantProfiles = await prisma.businessEntity.findMany({
+    where: { id: { in: topMerchantStats.map((item) => item.businessId) } },
+    select: { id: true, name: true, contactEmail: true },
   });
 
   const merchantProfileById = new Map(topMerchantProfiles.map((merchant) => [merchant.id, merchant]));
@@ -245,8 +244,8 @@ export default async function AdminOverviewPage() {
                   {recentTransactions.map((transaction) => (
                     <tr key={transaction.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.03]">
                       <td className="px-5 py-4">
-                        <p className="font-semibold text-slate-950 dark:text-white">{transaction.merchant.businessName || "Unnamed merchant"}</p>
-                        <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.merchant.email}</p>
+                        <p className="font-semibold text-slate-950 dark:text-white">{transaction.business.name || "Unnamed merchant"}</p>
+                        <p className="mt-0.5 font-mono text-[10px] text-slate-500 dark:text-slate-400">{transaction.business.contactEmail}</p>
                       </td>
                       <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{transaction.orderId}</td>
                       <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">{formatSOL(transaction.amount)} SOL</td>
@@ -294,7 +293,7 @@ export default async function AdminOverviewPage() {
               {[
                 { label: "Verified merchants", value: `${verifiedMerchants}/${totalMerchants}`, detail: "email verified", ok: verifiedMerchants === totalMerchants && totalMerchants > 0 },
                 { label: "Wallet connected", value: `${walletConnectedMerchants}/${totalMerchants}`, detail: "can receive SOL", ok: walletConnectedMerchants === totalMerchants && totalMerchants > 0 },
-                { label: "Webhook configured", value: `${webhookConfiguredMerchants}/${totalMerchants}`, detail: "event delivery ready", ok: webhookConfiguredMerchants === totalMerchants && totalMerchants > 0 },
+                { label: "Webhook configured", value: `${webhookConfiguredBusinesses}/${totalMerchants}`, detail: "event delivery ready", ok: webhookConfiguredBusinesses === totalMerchants && totalMerchants > 0 },
                 { label: "Webhook failure rate", value: `${webhookFailureRate.toFixed(1)}%`, detail: `${webhookFailed}/${webhookTotal} failed`, ok: webhookFailureRate < 5 },
               ].map((item) => (
                 <div key={item.label} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0 dark:border-white/10">
@@ -344,17 +343,17 @@ export default async function AdminOverviewPage() {
             </Link>
           </div>
           <div className="divide-y divide-slate-200 dark:divide-white/10">
-            {recentMerchants.map((merchant) => (
-              <div key={merchant.id} className="flex items-center justify-between gap-4 p-5">
+            {recentMerchants.map((business) => (
+              <div key={business.id} className="flex items-center justify-between gap-4 p-5">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant.businessName}</p>
-                  <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant.email}</p>
+                  <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{business.name}</p>
+                  <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{business.contactEmail || business.id}</p>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${merchant.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
-                    {merchant.isActive ? "Active" : "Paused"}
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${business.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+                    {business.isActive ? "Active" : "Paused"}
                   </span>
-                  <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{formatCompactDate(merchant.createdAt)}</p>
+                  <p className="mt-1 text-[10px] text-slate-500 dark:text-slate-400">{formatCompactDate(business.createdAt)}</p>
                 </div>
               </div>
             ))}
@@ -374,16 +373,16 @@ export default async function AdminOverviewPage() {
               <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">No paid merchant volume yet.</div>
             ) : (
               topMerchantStats.map((merchantStat, index) => {
-                const merchant = merchantProfileById.get(merchantStat.merchantId);
+                const merchant = merchantProfileById.get(merchantStat.businessId);
 
                 return (
-                  <div key={merchantStat.merchantId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
+                  <div key={merchantStat.businessId} className="grid grid-cols-[32px_1fr_auto] items-center gap-4 p-5">
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
                       {index + 1}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.businessName || "Unknown merchant"}</p>
-                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.email || merchantStat.merchantId}</p>
+                      <p className="truncate text-sm font-semibold text-slate-950 dark:text-white">{merchant?.name || "Unknown business"}</p>
+                      <p className="mt-0.5 truncate font-mono text-[10px] text-slate-500 dark:text-slate-400">{merchant?.contactEmail || merchantStat.businessId}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-mono text-sm font-semibold text-slate-950 dark:text-white">{formatSOL(merchantStat._sum.amount)} SOL</p>

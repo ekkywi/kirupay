@@ -15,6 +15,7 @@ type SecretFieldProps = {
   actionLabel: string;
   loadingLabel: string;
   actionTone: "red" | "amber";
+  canManage: boolean;
   onToggleVisibility: () => void;
   onCopy: () => void;
   onRoll: () => void;
@@ -30,6 +31,7 @@ function SecretField({
   actionLabel,
   loadingLabel,
   actionTone,
+  canManage,
   onToggleVisibility,
   onCopy,
   onRoll,
@@ -83,7 +85,7 @@ function SecretField({
           <button
             type="button"
             onClick={onRoll}
-            disabled={isLoading}
+            disabled={isLoading || !canManage}
             className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${rollClasses}`}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
@@ -151,14 +153,14 @@ function ConfirmModal({
   );
 }
 
-export function TabCredentials({ merchant }: { merchant: DeveloperMerchant }) {
+export function TabCredentials({ merchant, canManage = true }: { merchant: DeveloperMerchant; canManage?: boolean }) {
   const [showKey, setShowKey] = useState(false);
   const [showWebhookSecret, setShowWebhookSecret] = useState(false);
   const [showKeyConfirmModal, setShowKeyConfirmModal] = useState(false);
   const [showWebhookConfirmModal, setShowWebhookConfirmModal] = useState(false);
 
   const { currentKey, currentWebhookSecret, isRollingKey, isRollingWebhook, toast, handleCopy, executeRollKey, executeRollWebhookSecret } =
-    useCredentialsManager(merchant.apiKey, merchant.webhookSecret);
+    useCredentialsManager(merchant.apiKey, merchant.webhookSecret, merchant.businessId ?? undefined);
 
   const onConfirmRollKey = async () => {
     const success = await executeRollKey();
@@ -181,7 +183,7 @@ export function TabCredentials({ merchant }: { merchant: DeveloperMerchant }) {
         </div>
       )}
 
-      {showKeyConfirmModal && (
+      {showKeyConfirmModal && canManage && (
         <ConfirmModal
           title="Roll production API key"
           description="Your current key will be invalid immediately. Update backend environment variables before sending new checkout requests."
@@ -193,7 +195,7 @@ export function TabCredentials({ merchant }: { merchant: DeveloperMerchant }) {
         />
       )}
 
-      {showWebhookConfirmModal && (
+      {showWebhookConfirmModal && canManage && (
         <ConfirmModal
           title="Roll webhook secret"
           description="Existing webhook signature validation will fail until your receiving server is updated with the new secret."
@@ -227,9 +229,13 @@ export function TabCredentials({ merchant }: { merchant: DeveloperMerchant }) {
         actionLabel="Roll key"
         loadingLabel="Rolling"
         actionTone="red"
+        canManage={canManage}
         onToggleVisibility={() => setShowKey((value) => !value)}
         onCopy={() => handleCopy(currentKey, "API Key")}
-        onRoll={() => setShowKeyConfirmModal(true)}
+        onRoll={() => {
+          if (!canManage) return;
+          setShowKeyConfirmModal(true);
+        }}
       />
 
       <SecretField
@@ -242,9 +248,13 @@ export function TabCredentials({ merchant }: { merchant: DeveloperMerchant }) {
         actionLabel="Roll secret"
         loadingLabel="Rolling"
         actionTone="amber"
+        canManage={canManage}
         onToggleVisibility={() => setShowWebhookSecret((value) => !value)}
         onCopy={() => handleCopy(currentWebhookSecret, "Webhook Secret")}
-        onRoll={() => setShowWebhookConfirmModal(true)}
+        onRoll={() => {
+          if (!canManage) return;
+          setShowWebhookConfirmModal(true);
+        }}
       />
     </div>
   );

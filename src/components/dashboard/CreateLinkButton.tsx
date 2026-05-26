@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Plus, Copy, Check, AlertCircle } from "lucide-react";
 import { useCreatePaymentLink } from "@/hooks/api/transactions/useCreatePaymentLink";
 
-export function CreateLinkButton({ merchantId }: { merchantId: string }) {
-  const { loading, generatedLink, errorMsg, generateLink, resetState } = useCreatePaymentLink(merchantId);
+export function CreateLinkButton({ businessId }: { businessId: string }) {
+  const { loading, generatedLink, errorMsg, generateLink, resetState } = useCreatePaymentLink(businessId);
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 

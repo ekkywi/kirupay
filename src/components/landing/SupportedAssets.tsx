@@ -1,4 +1,5 @@
 import { Layers, Coins } from "lucide-react";
+import Link from "next/link";
 import ScrollReveal from "@/components/landing/ScrollReveal";
 
 const NETWORKS = [
@@ -113,7 +114,11 @@ export default function SupportedAssets() {
               ))}
               <li className="flex items-center gap-3 p-4 rounded-xl border border-dashed landing-border text-sm landing-muted">
                 <span className="text-lg opacity-40">+</span>
-                More networks planned — follow our changelog for updates.
+                More networks planned. Follow our{" "}
+                <Link href="/changelog" className="text-blue-600 dark:text-blue-400 hover:underline">
+                  changelog
+                </Link>{" "}
+                for updates.
               </li>
             </ul>
           </ScrollReveal>

@@ -3,9 +3,12 @@
 
 import prisma from "@/lib/neon";
 import { revalidatePath } from "next/cache";
+import { requireInternalUser } from "@/lib/auth-service";
 
 export async function toggleMerchantStatus(merchantId: string, currentStatus: boolean) {
   try {
+    await requireInternalUser({ roles: ["SUPERADMIN", "SUPPORT"] });
+
     const merchant = await prisma.merchant.update({
       where: { id: merchantId },
       data: { isActive: !currentStatus },

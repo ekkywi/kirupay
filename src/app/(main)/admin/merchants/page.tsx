@@ -15,7 +15,7 @@ import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Admin Merchants",
+  title: "Admin Merchant Accounts",
 };
 
 type AdminMerchantSearchParams = {
@@ -43,7 +43,7 @@ export default async function AdminMerchantsPage({
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
-        select: { transactions: true },
+        select: { memberships: true, privateWallets: true, verificationTokens: true },
       },
     },
   });
@@ -57,13 +57,13 @@ export default async function AdminMerchantsPage({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
             <ShieldCheck className="h-4 w-4" />
-            Merchant governance
+            Account governance
           </div>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 dark:text-white">
-            Merchant directory
+            Merchant accounts
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Review merchant accounts, inspect profile activity, and manage account suspension state.
+            Review merchant login identities, membership coverage, and account suspension state.
           </p>
         </div>
 
@@ -74,6 +74,10 @@ export default async function AdminMerchantsPage({
           </Link>
           <Link href="/admin/transactions" className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700">
             Global ledger
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+          <Link href="/admin/businesses" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+            Businesses
             <ArrowUpRight className="h-4 w-4" />
           </Link>
         </div>
@@ -93,7 +97,7 @@ export default async function AdminMerchantsPage({
               type="text"
               name="search"
               defaultValue={search}
-              placeholder="Search by business name or merchant email..."
+              placeholder="Search by display name or merchant email..."
               className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
@@ -115,7 +119,8 @@ export default async function AdminMerchantsPage({
               <tr>
                 <th className="px-5 py-4">Merchant</th>
                 <th className="px-5 py-4">Registered</th>
-                <th className="px-5 py-4">Transactions</th>
+                <th className="px-5 py-4">Memberships</th>
+                <th className="px-5 py-4">Wallets</th>
                 <th className="px-5 py-4">Account status</th>
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
@@ -123,7 +128,7 @@ export default async function AdminMerchantsPage({
             <tbody className="divide-y divide-slate-200 dark:divide-white/10">
               {merchants.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-12 text-center">
+                  <td colSpan={6} className="p-12 text-center">
                     <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-white/[0.06]">
                       <Users className="h-6 w-6" />
                     </div>
@@ -155,7 +160,11 @@ export default async function AdminMerchantsPage({
                   </td>
 
                   <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">
-                    {merchant._count.transactions} TX
+                    {merchant._count.memberships} active
+                  </td>
+
+                  <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">
+                    {merchant._count.privateWallets} linked
                   </td>
 
                   <td className="px-5 py-4">

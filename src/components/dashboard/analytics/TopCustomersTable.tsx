@@ -8,8 +8,6 @@ interface TopCustomer {
 }
 
 export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
-  
-  // Jika database masih kosong, tampilkan pesan ini
   if (!customers || customers.length === 0) {
     return (
       <div className="py-12 flex items-center justify-center rounded-xl border border-dashed border-slate-200 text-sm font-medium text-slate-400 dark:border-white/10 dark:text-slate-500">
@@ -32,12 +30,9 @@ export function TopCustomersTable({ customers }: { customers: TopCustomer[] }) {
           {customers.map((c, i) => (
             <tr key={i} className="group transition-colors hover:bg-slate-50/70 dark:hover:bg-white/[0.03]">
               <td className="py-4">
-                {/* 1. Menggunakan displayName hasil dari formatting di server */}
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[150px] sm:max-w-none">
                   {c.displayName}
                 </p>
-                
-                {/* 2. Menambahkan badge khusus untuk pengguna anonim Web3 */}
                 {!c.customerEmail && c.buyerWallet && (
                   <span className="inline-block mt-1 text-[9px] bg-slate-100 dark:bg-white/[0.05] px-1.5 py-0.5 rounded text-slate-500 font-bold uppercase tracking-wider">
                     Wallet Address

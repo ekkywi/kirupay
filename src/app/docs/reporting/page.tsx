@@ -16,6 +16,7 @@ export default function DocsReportingPage() {
         { id: "fee-model", label: "Fee model" },
         { id: "reconciliation-export", label: "Reconciliation export" },
         { id: "ops-health", label: "Operational health" },
+        { id: "business-role-matrix", label: "Business role matrix" },
       ]}
     >
       <h2 id="transaction-metrics">Transaction metrics</h2>
@@ -32,7 +33,7 @@ export default function DocsReportingPage() {
         are present (<code>status</code>, <code>from</code>, <code>to</code>), export follows those same filters.
       </p>
       <p>
-        CSV columns are fixed: <code>transactionId</code>, <code>merchantId</code>, <code>orderId</code>, <code>status</code>,
+        CSV columns are fixed: <code>transactionId</code>, <code>businessId</code>, <code>orderId</code>, <code>status</code>,
         <code>currency</code>, <code>grossAmount</code>, <code>feeAmount</code>, <code>netAmount</code>, <code>txSignature</code>,
         <code>source</code>, <code>buyerWallet</code>, <code>customerEmail</code>, <code>createdAtUtc</code>, <code>updatedAtUtc</code>.
       </p>
@@ -41,6 +42,11 @@ export default function DocsReportingPage() {
       </p>
       <h2 id="ops-health">Operational health</h2>
       <p>Use maintenance RPC Health and public Status page to correlate integration behavior with platform conditions.</p>
+      <h2 id="business-role-matrix">Business role matrix</h2>
+      <p>
+        Role access is business-scoped: <code>OWNER</code> can manage members, invites, credentials, and settlement wallet;
+        <code>ADMIN</code> can run operations and create invites; <code>MEMBER</code> can access limited operational flows.
+      </p>
       <p>
         Internal operators can inspect metrics-lite snapshots from <code>/api/internal/observability/metrics</code> for
         request volume, error-rate trend by endpoint, and average latency checks.

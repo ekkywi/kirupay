@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, 
   Activity, 
-  Terminal, 
   Settings, 
   LinkIcon, 
   BarChart3,
+  Building2,
   UserCog,
+  Users,
   Wrench,
   Landmark,
   Globe,
@@ -20,10 +21,9 @@ import {
 interface SidebarProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
-  role?: string;
+  actorType: "merchant" | "internal";
 }
 
-// Definisikan tipe untuk struktur menu
 type MenuItem = {
   href: string;
   label: string;
@@ -39,9 +39,9 @@ type MenuCategory = {
   items: MenuItem[];
 };
 
-export function Sidebar({ role }: SidebarProps) {
+export function Sidebar({ actorType }: SidebarProps) {
   const pathname = usePathname();
-  const isAdmin = role === "ADMIN";
+  const isAdmin = actorType === "internal";
 
   const merchantMenuCategories: MenuCategory[] = [
     {
@@ -61,8 +61,13 @@ export function Sidebar({ role }: SidebarProps) {
     {
       title: "MANAGEMENT",
       items: [
-        { href: "/developers", label: "Developers", icon: <Terminal size={16}/> },
         { href: "/settings", label: "Settings", icon: <Settings size={16}/> },
+      ]
+    },
+    {
+      title: "BUSINESS",
+      items: [
+        { href: "/business", label: "Business Hub", icon: <Building2 size={16}/> },
       ]
     }
   ];
@@ -73,7 +78,9 @@ export function Sidebar({ role }: SidebarProps) {
       { href: "/admin/overview", label: "Overview", icon: <LayoutDashboard size={16}/> },
       { href: "/admin/revenue", label: "Revenue & Treasury", icon: <Landmark size={16}/> },
       { href: "/admin/transactions", label: "Global Ledger", icon: <Globe size={16}/> },
-      { href: "/admin/merchants", label: "Merchant List", icon: <UserCog size={16}/> },
+      { href: "/admin/merchants", label: "Merchant Accounts", icon: <UserCog size={16}/> },
+      { href: "/admin/businesses", label: "Businesses", icon: <Building2 size={16}/> },
+      { href: "/admin/internal-users", label: "Internal Users", icon: <Users size={16}/> },
       {
         href: "/admin/maintenance",
         label: "Maintenance",
@@ -120,11 +127,8 @@ export function Sidebar({ role }: SidebarProps) {
             {/* Category Items */}
             <div className="space-y-0.5">
               {category.items.map((item) => {
-                // Logika aktif yang akurat
                 const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                 const isMaintenanceParent = Boolean(item.children && pathname.startsWith("/admin/maintenance"));
-                
-                // Pembeda warna khusus untuk rute Admin agar terlihat eksklusif
                 const isAdminRoute = item.href.startsWith("/admin");
                 
                 return (
@@ -207,6 +211,3 @@ export function Sidebar({ role }: SidebarProps) {
     </>
   );
 }
-
-// Placeholder to fix type error if Sidebar is meant to handle tabs
-// In a real scenario, Sidebar properties should be updated in the interface.

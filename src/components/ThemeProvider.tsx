@@ -20,6 +20,10 @@ type ThemeProviderProps = {
 
 const STORAGE_KEY = "trezalink-theme";
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+const THEME_VALUES: Theme[] = ["light", "dark", "system"];
+
+let hasWarnedStorageRead = false;
+let hasWarnedStorageWrite = false;
 
 function getSystemTheme(): ResolvedTheme {
   if (typeof window === "undefined") return "dark";
@@ -35,12 +39,41 @@ function applyTheme(theme: ResolvedTheme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
+function isTheme(value: string): value is Theme {
+  return THEME_VALUES.includes(value as Theme);
+}
+
+function safeReadTheme(): Theme | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw || !isTheme(raw)) return null;
+    return raw;
+  } catch {
+    if (process.env.NODE_ENV !== "production" && !hasWarnedStorageRead) {
+      hasWarnedStorageRead = true;
+      console.warn("ThemeProvider: localStorage read blocked by browser policy. Falling back to default theme.");
+    }
+    return null;
+  }
+}
+
+function safeWriteTheme(theme: Theme) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    if (process.env.NODE_ENV !== "production" && !hasWarnedStorageWrite) {
+      hasWarnedStorageWrite = true;
+      console.warn("ThemeProvider: localStorage write blocked by browser policy. Theme persistence disabled.");
+    }
+  }
+}
+
 export function ThemeProvider({ children, defaultTheme = "dark", enableSystem = true }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(defaultTheme === "light" ? "light" : "dark");
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
+    const storedTheme = safeReadTheme();
     const initialTheme = storedTheme || defaultTheme;
     const initialResolvedTheme = resolveTheme(initialTheme, enableSystem);
     const frame = requestAnimationFrame(() => {
@@ -70,7 +103,7 @@ export function ThemeProvider({ children, defaultTheme = "dark", enableSystem = 
   const setTheme = useCallback(
     (nextTheme: Theme) => {
       const nextResolvedTheme = resolveTheme(nextTheme, enableSystem);
-      window.localStorage.setItem(STORAGE_KEY, nextTheme);
+      safeWriteTheme(nextTheme);
       setThemeState(nextTheme);
       setResolvedTheme(nextResolvedTheme);
       applyTheme(nextResolvedTheme);

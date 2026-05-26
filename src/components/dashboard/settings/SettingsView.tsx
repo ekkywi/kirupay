@@ -17,7 +17,6 @@ type SettingsMerchant = {
   webhookSecret?: string | null;
   emailVerified: boolean;
   isActive: boolean;
-  role: string;
   createdAt: Date | string;
 };
 
@@ -163,9 +162,9 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="mb-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <LockKeyhole className="h-4 w-4" />
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Access role</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Account status</p>
                   </div>
-                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{merchant.role}</p>
+                  <p className="text-sm font-semibold text-slate-950 dark:text-white">{merchant.isActive ? "Active" : "Paused"}</p>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{merchant.isActive ? "Account can create live checkouts." : "Account is currently paused."}</p>
                 </div>
               </div>

@@ -33,6 +33,27 @@ const corsHeaders = {
 }
 const CHECKOUT_TTL_MS = 30 * 60 * 1000;
 
+type CheckoutCredential = {
+    businessId: string;
+    business: {
+        isActive: boolean;
+        settlementWallets: Array<{ walletAddress: string }>;
+    };
+};
+
+type BusinessCredentialClient = {
+    findUnique: (args: {
+        where: { apiKey: string };
+        include: {
+            business: {
+                include: {
+                    settlementWallets: { where: { isActive: true }; take: number };
+                };
+            };
+        };
+    }) => Promise<CheckoutCredential | null>;
+};
+
 export async function POST(req: Request) {
     const requestId = createRequestId();
     const obs = startObservation(requestId, "POST /api/v1/checkout");
@@ -86,11 +107,22 @@ export async function POST(req: Request) {
         }
 
         const apiKey = authHeader.split(" ")[1];
-        const merchant = await prisma.merchant.findUnique({
-            where: { apiKey }
-        });
+        const businessCredentialClient = (prisma as unknown as { businessCredential?: BusinessCredentialClient }).businessCredential;
+        let credential: CheckoutCredential | null = null;
+        if (businessCredentialClient?.findUnique) {
+            credential = await businessCredentialClient.findUnique({
+                where: { apiKey },
+                include: {
+                  business: {
+                    include: {
+                      settlementWallets: { where: { isActive: true }, take: 1 },
+                    },
+                  },
+                },
+            });
+        }
 
-        if (!merchant || !merchant.isActive) {
+        if (!credential || !credential.business.isActive) {
             recordObservation(obs, {
                 outcome: "error",
                 status: 401,
@@ -108,7 +140,7 @@ export async function POST(req: Request) {
             );
         }
 
-        if (!merchant.walletAddress || merchant.walletAddress.includes("pending")) {
+        if (!credential.business.settlementWallets[0]) {
             recordObservation(obs, {
                 outcome: "error",
                 status: 400,
@@ -162,7 +194,7 @@ export async function POST(req: Request) {
 
         const existingTransaction = await prisma.transaction.findFirst({
             where: {
-                merchantId: merchant.id,
+                businessId: credential.businessId,
                 orderId: orderId,
             }
         });
@@ -177,7 +209,7 @@ export async function POST(req: Request) {
                 409,
                 {
                     code: "CHECKOUT_DUPLICATE_ORDER_ID",
-                    message: "Order ID already exists for this merchant. Please use a unique orderId.",
+                    message: "Order ID already exists for this business. Please use a unique orderId.",
                     requestId,
                     retryable: false,
                     details: {
@@ -193,7 +225,7 @@ export async function POST(req: Request) {
 
         const transaction = await prisma.transaction.create({
             data: {
-                merchantId: merchant.id,
+                businessId: credential.businessId,
                 orderId: orderId,
                 amount: amount,
                 currency: currency,
