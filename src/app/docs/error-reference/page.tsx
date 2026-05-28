@@ -97,7 +97,7 @@ export default function DocsErrorReferencePage() {
               {group.items.map((item) => (
                 <article key={item.code} id={item.id} className="grid gap-2 px-4 py-4 md:grid-cols-[1.1fr_90px_1.6fr] md:items-start">
                   <div>
-                    <p className="font-mono text-[13px] text-blue-700 dark:text-blue-300">{item.code}</p>
+                    <p className="font-mono text-[13px] font-semibold text-emerald-700 dark:text-emerald-300">{item.code}</p>
                   </div>
                   <div>
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ${statusTone(item.status)}`}>

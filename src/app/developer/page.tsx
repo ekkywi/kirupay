@@ -3,7 +3,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackground from "@/components/landing/PageBackground";
 import ScrollReveal from "@/components/landing/ScrollReveal";
-import Link from "next/link";
+import TrackingLink from "@/components/landing/TrackingLink";
+import LandingAnalytics from "@/components/landing/LandingAnalytics";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -26,6 +27,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Developer",
+  description:
+    "Create Solana checkout sessions with Trezalink's checkout API, Bearer API key authentication, signed webhooks, and wallet-direct settlement.",
 };
 
 const API_CAPABILITIES = [
@@ -101,145 +104,164 @@ const RESPONSE_SNIPPET = `{
 
 export default function DeveloperPage() {
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-500/20">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
       <PageBackground />
+      <LandingAnalytics />
 
-      <div className="fixed top-0 inset-x-0 z-50 px-4 pt-4">
+      <div className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
         <Navbar />
       </div>
 
       <main>
-        <section className="landing-section relative min-h-screen flex items-center pt-28 pb-16">
-          <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-            <div className="grid lg:grid-cols-[1fr_0.95fr] gap-12 items-center">
+        <section data-track-section="developer-hero" className="landing-section relative min-h-screen pt-28 pb-16 md:pt-36">
+          <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-12 px-6">
+            <div className="grid items-center gap-10 lg:grid-cols-[0.94fr_1.06fr]">
               <ScrollReveal immediate className="text-center lg:text-left">
-                <span className="inline-flex items-center gap-2 rounded-md border landing-border bg-white/80 dark:bg-white/5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-300 mb-6">
-                  <Terminal className="w-3.5 h-3.5" />
+                <span className="landing-pill mb-6 inline-flex items-center gap-2">
+                  <Terminal className="h-3.5 w-3.5" />
                   Developer portal
                 </span>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[3.75rem] font-bold tracking-tight leading-[1.08]">
-                  <span className="gradient-text">Create Solana checkout</span>
-                  <br />
-                  <span className="landing-heading">from one API request</span>
+                <h1 className="max-w-5xl text-5xl font-black leading-[0.96] tracking-[-0.065em] text-slate-950 sm:text-6xl md:text-7xl lg:text-[5rem] dark:text-white">
+                  Create Solana checkout from one API request.
                 </h1>
-                <p className="mt-6 text-lg md:text-xl landing-body max-w-2xl mx-auto lg:mx-0">
+                <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl lg:mx-0 dark:text-slate-300">
                   Integrate hosted checkout, merchant API keys, payment redirects, and webhook
                   status delivery while Trezalink keeps settlement wallet-direct.
                 </p>
-                <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/register" className="landing-btn-primary">
+                <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+                  <TrackingLink
+                    href="/register"
+                    eventName="cta_click"
+                    eventData={{ placement: "developer_hero_primary" }}
+                    className="landing-btn-primary"
+                  >
                     Get API key
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/docs" className="landing-btn-secondary">
-                    Read docs
-                    <ArrowUpRight className="w-4 h-4" />
-                  </Link>
+                    <ArrowRight className="h-4 w-4" />
+                  </TrackingLink>
+                  <TrackingLink
+                    href="/docs/checkout-api"
+                    eventName="cta_click"
+                    eventData={{ placement: "developer_hero_docs" }}
+                    className="landing-btn-secondary"
+                  >
+                    Read checkout docs
+                    <ArrowUpRight className="h-4 w-4" />
+                  </TrackingLink>
                 </div>
               </ScrollReveal>
 
-              <ScrollReveal immediate delay={120} variant="right">
-                <div className="landing-panel rounded-2xl overflow-hidden">
-                  <div className="flex items-center justify-between px-5 py-4 border-b landing-border">
+              <ScrollReveal immediate delay={120} variant="right" className="landing-showcase overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/76 shadow-2xl shadow-slate-900/8 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:shadow-black/30">
+                  <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
                     <div className="flex items-center gap-2">
-                      <Code2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                      <span className="text-sm font-semibold landing-heading">Create checkout</span>
+                      <span className="grid h-9 w-9 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                        <Code2 className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-black text-slate-950 dark:text-white">Create checkout</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">POST /api/v1/checkout</p>
+                      </div>
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider landing-subtle">curl</span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">curl</span>
                   </div>
-                  <pre className="text-xs font-mono landing-muted bg-slate-100 dark:bg-black/40 p-5 overflow-x-auto">
+                  <pre className="overflow-x-auto bg-slate-950 p-5 font-mono text-xs leading-6 text-slate-100 dark:bg-black/55">
                     {CHECKOUT_SNIPPET}
                   </pre>
                 </div>
               </ScrollReveal>
             </div>
 
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {API_CAPABILITIES.map((capability, index) => (
-                <ScrollReveal key={capability.label} delay={index * 70} className="landing-panel rounded-xl px-5 py-4 h-full">
-                  <p className="text-2xl md:text-3xl font-bold landing-heading">{capability.value}</p>
-                  <p className="text-xs landing-subtle mt-0.5 font-medium">{capability.label}</p>
+                <ScrollReveal key={capability.label} delay={index * 70} className="landing-card h-full rounded-[1.4rem] px-5 py-4">
+                  <p className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl dark:text-white">{capability.value}</p>
+                  <p className="mt-1 text-xs font-bold text-slate-500 dark:text-slate-400">{capability.label}</p>
                 </ScrollReveal>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <ScrollReveal className="max-w-2xl mb-14">
+        <section data-track-section="integration-path" className="landing-section relative py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <ScrollReveal className="mb-14 max-w-3xl">
               <span className="landing-label">Integration path</span>
-              <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading">
-                Ship checkout without owning payment infrastructure
-              </h2>
-              <p className="mt-4 landing-body">
+              <h2 className="landing-display mt-3">Ship checkout without owning payment infrastructure.</h2>
+              <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-400">
                 Start from the merchant dashboard, move checkout creation to your backend,
                 and use webhook logs when your application needs reliable payment state.
               </p>
             </ScrollReveal>
 
-            <div className="grid md:grid-cols-4 gap-4">
-              {INTEGRATION_STEPS.map((step, index) => (
-                <ScrollReveal key={step.title} delay={index * 90} className="landing-panel rounded-2xl p-6 relative h-full">
-                  <span className="absolute top-5 right-5 text-xs font-bold landing-subtle">0{index + 1}</span>
-                  <step.icon className="w-6 h-6 text-blue-600 dark:text-blue-400 mb-6" />
-                  <h3 className="font-semibold landing-heading mb-2">{step.title}</h3>
-                  <p className="text-sm landing-body">{step.desc}</p>
-                </ScrollReveal>
-              ))}
+            <div className="grid gap-4 md:grid-cols-4">
+              {INTEGRATION_STEPS.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <ScrollReveal key={step.title} delay={index * 90} className="landing-card group relative h-full rounded-[1.7rem] p-6">
+                    <span className="absolute right-5 top-5 text-xs font-black text-slate-300 dark:text-slate-600">0{index + 1}</span>
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:-translate-y-1 dark:bg-emerald-400/10 dark:text-emerald-300">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-black tracking-tight text-slate-950 dark:text-white">{step.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">{step.desc}</p>
+                  </ScrollReveal>
+                );
+              })}
             </div>
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 items-start">
-              <ScrollReveal variant="left">
+        <section data-track-section="checkout-endpoint" className="landing-section relative py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+              <ScrollReveal>
                 <span className="landing-label">Endpoint</span>
-                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
-                  Checkout API shaped for backend services
-                </h2>
-                <p className="landing-body mb-8">
+                <h2 className="landing-display mt-3">Checkout API shaped for backend services.</h2>
+                <p className="mt-5 text-base leading-7 text-slate-600 dark:text-slate-400">
                   The production route validates bearer credentials, merchant wallet readiness,
                   unique order IDs, positive currency amounts, and optional redirect URLs.
                 </p>
-                <div className="landing-panel rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-5">
-                    <Server className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Route</p>
-                      <p className="text-sm font-mono landing-heading">POST /api/v1/checkout</p>
-                    </div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {["201 created", "400 validation error", "401 invalid key", "409 duplicate order"].map((status) => (
-                      <div key={status} className="rounded-lg border landing-border bg-slate-50 dark:bg-white/[0.03] px-3 py-2 text-xs font-semibold landing-muted">
-                        {status}
+                <div className="landing-showcase mt-8 rounded-[2rem] p-5 sm:p-6">
+                  <div className="rounded-[1.5rem] border border-white/70 bg-white/76 p-6 dark:border-white/10 dark:bg-slate-950/62">
+                    <div className="mb-6 flex items-center gap-3">
+                      <span className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-950 text-white dark:bg-white dark:text-slate-950">
+                        <Server className="h-5 w-5" />
+                      </span>
+                      <div>
+                        <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-slate-400">Route</p>
+                        <p className="mt-1 font-mono text-sm font-black text-slate-950 dark:text-white">POST /api/v1/checkout</p>
                       </div>
-                    ))}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {["201 created", "400 validation error", "401 invalid key", "409 duplicate order"].map((status) => (
+                        <div key={status} className="rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-xs font-black text-slate-600 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-300">
+                          {status}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </ScrollReveal>
 
-              <ScrollReveal variant="right" delay={100} className="landing-panel rounded-2xl p-6 md:p-8">
-                <h3 className="text-lg font-semibold landing-heading mb-6">Request body</h3>
+              <ScrollReveal variant="right" delay={100} className="landing-card rounded-[1.7rem] p-6 md:p-8">
+                <h3 className="mb-6 text-xl font-black tracking-tight text-slate-950 dark:text-white">Request body</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b landing-border">
-                        <th className="pb-3 pr-4 landing-subtle font-semibold">Field</th>
-                        <th className="pb-3 pr-4 landing-subtle font-semibold">Type</th>
-                        <th className="pb-3 pr-4 landing-subtle font-semibold">Required</th>
-                        <th className="pb-3 landing-subtle font-semibold">Notes</th>
+                      <tr className="border-b border-slate-200/80 dark:border-white/10">
+                        <th className="pb-3 pr-4 text-xs font-black uppercase tracking-[0.14em] text-slate-400">Field</th>
+                        <th className="pb-3 pr-4 text-xs font-black uppercase tracking-[0.14em] text-slate-400">Type</th>
+                        <th className="pb-3 pr-4 text-xs font-black uppercase tracking-[0.14em] text-slate-400">Required</th>
+                        <th className="pb-3 text-xs font-black uppercase tracking-[0.14em] text-slate-400">Notes</th>
                       </tr>
                     </thead>
                     <tbody>
                       {REQUEST_BODY.map((row) => (
-                        <tr key={row.field} className="border-b landing-border last:border-0">
-                          <td className="py-3 pr-4 font-mono text-blue-700 dark:text-blue-300">{row.field}</td>
-                          <td className="py-3 pr-4 landing-muted">{row.type}</td>
-                          <td className="py-3 pr-4 landing-muted">{row.required ? "Yes" : "No"}</td>
-                          <td className="py-3 landing-body">{row.note}</td>
+                        <tr key={row.field} className="border-b border-slate-200/70 last:border-0 dark:border-white/10">
+                          <td className="py-3 pr-4 font-mono text-xs font-black text-emerald-700 dark:text-emerald-300">{row.field}</td>
+                          <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">{row.type}</td>
+                          <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">{row.required ? "Yes" : "No"}</td>
+                          <td className="py-3 leading-6 text-slate-600 dark:text-slate-400">{row.note}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -250,124 +272,142 @@ export default function DeveloperPage() {
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid lg:grid-cols-2 gap-12 items-start">
-              <ScrollReveal variant="left" className="landing-panel rounded-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b landing-border">
-                  <div className="flex items-center gap-2">
-                    <BadgeCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span className="text-sm font-semibold landing-heading">Success response</span>
+        <section data-track-section="response-security" className="landing-section relative py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid items-start gap-10 lg:grid-cols-2">
+              <ScrollReveal className="landing-showcase overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/76 dark:border-white/10 dark:bg-slate-950/62">
+                  <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                      <span className="text-sm font-black text-slate-950 dark:text-white">Success response</span>
+                    </div>
+                    <Copy className="h-4 w-4 text-slate-400" />
                   </div>
-                  <Copy className="w-4 h-4 landing-subtle" />
+                  <pre className="overflow-x-auto bg-slate-950 p-5 font-mono text-xs leading-6 text-slate-100 dark:bg-black/55">
+                    {RESPONSE_SNIPPET}
+                  </pre>
                 </div>
-                <pre className="text-xs font-mono landing-muted bg-slate-100 dark:bg-black/40 p-5 overflow-x-auto">
-                  {RESPONSE_SNIPPET}
-                </pre>
               </ScrollReveal>
 
               <ScrollReveal variant="right">
                 <span className="landing-label">Security model</span>
-                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
-                  Guardrails that map to the merchant dashboard
-                </h2>
-                <p className="landing-body mb-8">
+                <h2 className="landing-display mt-3">Guardrails that map to the merchant dashboard.</h2>
+                <p className="mt-5 text-base leading-7 text-slate-600 dark:text-slate-400">
                   Developer tooling is tied to the same merchant profile used by wallet setup,
                   webhook configuration, transaction history, and payment link operations.
                 </p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {SECURITY_CONTROLS.map((control) => (
-                    <div key={control.title} className="landing-panel rounded-xl p-5">
-                      <control.icon className="w-5 h-5 text-blue-600 dark:text-blue-400 mb-4" />
-                      <h3 className="text-sm font-semibold landing-heading mb-2">{control.title}</h3>
-                      <p className="text-xs landing-body">{control.desc}</p>
-                    </div>
-                  ))}
+                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                  {SECURITY_CONTROLS.map((control) => {
+                    const Icon = control.icon;
+                    return (
+                      <div key={control.title} className="landing-card rounded-[1.25rem] p-5">
+                        <Icon className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        <h3 className="text-sm font-black text-slate-950 dark:text-white">{control.title}</h3>
+                        <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">{control.desc}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </ScrollReveal>
             </div>
           </div>
         </section>
 
-        <section className="landing-section relative py-24 border-t landing-border bg-slate-100/50 dark:bg-white/[0.02]">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid lg:grid-cols-[1fr_0.9fr] gap-12 items-center">
-              <ScrollReveal variant="left">
+        <section data-track-section="webhooks" className="landing-section relative py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid items-center gap-10 lg:grid-cols-[1fr_0.9fr]">
+              <ScrollReveal>
                 <span className="landing-label">Webhooks</span>
-                <h2 className="mt-3 text-3xl md:text-4xl font-bold tracking-tight landing-heading mb-5">
-                  Keep your backend synchronized after checkout
-                </h2>
-                <p className="landing-body mb-8">
+                <h2 className="landing-display mt-3">Keep your backend synchronized after checkout.</h2>
+                <p className="mt-5 text-base leading-7 text-slate-600 dark:text-slate-400">
                   Configure webhook URLs from the merchant console, rotate webhook secrets,
                   and inspect delivery logs when a payment status update needs tracing.
                 </p>
-                <div className="space-y-3">
+                <div className="mt-8 space-y-3">
                   {[
                     "HMAC-signed payload verification",
                     "Delivery logs in the developer dashboard",
                     "Regeneratable webhook secret",
                     "Dashboard state shared with payment records",
                   ].map((item) => (
-                    <div key={item} className="flex items-center gap-3 text-sm landing-body">
-                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div key={item} className="flex items-center gap-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+                      <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
                       {item}
                     </div>
                   ))}
                 </div>
               </ScrollReveal>
 
-              <ScrollReveal variant="right" delay={100} className="landing-panel rounded-2xl p-8">
-                <div className="flex items-center justify-between pb-5 mb-5 border-b landing-border">
-                  <div>
-                    <p className="text-xs landing-subtle uppercase tracking-wider font-semibold">Webhook event</p>
-                    <h3 className="text-lg font-semibold landing-heading">payment.updated</h3>
-                  </div>
-                  <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { label: "Source", value: "Trezalink webhook worker" },
-                    { label: "Signature", value: "HMAC-SHA256" },
-                    { label: "Destination", value: "Merchant endpoint" },
-                    { label: "Visible in app", value: "Webhook logs tab" },
-                  ].map((row) => (
-                    <div key={row.label} className="flex items-center justify-between gap-4 border-b landing-border pb-4 last:border-0 last:pb-0">
-                      <span className="text-sm landing-muted">{row.label}</span>
-                      <span className="text-sm font-medium landing-heading text-right">{row.value}</span>
+              <ScrollReveal variant="right" delay={100} className="landing-showcase rounded-[2rem] p-5 sm:p-6">
+                <div className="rounded-[1.5rem] border border-white/70 bg-white/76 p-6 dark:border-white/10 dark:bg-slate-950/62">
+                  <div className="mb-6 flex items-center justify-between border-b border-slate-200/70 pb-5 dark:border-white/10">
+                    <div>
+                      <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Webhook event</p>
+                      <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">payment.updated</h3>
                     </div>
-                  ))}
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+                      <Zap className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { label: "Source", value: "Trezalink webhook worker" },
+                      { label: "Signature", value: "HMAC-SHA256" },
+                      { label: "Destination", value: "Merchant endpoint" },
+                      { label: "Visible in app", value: "Webhook logs tab" },
+                    ].map((row) => (
+                      <div key={row.label} className="flex items-center justify-between gap-4 border-b border-slate-200/70 pb-4 last:border-0 last:pb-0 dark:border-white/10">
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{row.label}</span>
+                        <span className="text-right text-sm font-black text-slate-950 dark:text-white">{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </ScrollReveal>
             </div>
           </div>
         </section>
 
-        <section className="landing-section relative py-24">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <ScrollReveal variant="scale" className="landing-panel rounded-3xl px-8 py-16 md:px-16">
-              <span className="landing-label">Start building</span>
-              <h2 className="mt-4 text-3xl md:text-5xl font-bold tracking-tight landing-heading mb-5">
-                From payment link to full API integration
+        <section data-track-section="final-cta" className="landing-section relative py-24 pb-32 md:pb-24">
+          <div className="mx-auto max-w-6xl px-6 text-center">
+            <ScrollReveal variant="scale" className="landing-final rounded-[2.4rem] px-6 py-16 sm:px-10 md:py-20">
+              <span className="landing-pill inline-flex items-center gap-2">
+                <Terminal className="h-3.5 w-3.5" />
+                Start building
+              </span>
+              <h2 className="mx-auto mt-5 max-w-4xl text-4xl font-black leading-[0.98] tracking-[-0.055em] text-slate-950 sm:text-5xl md:text-6xl dark:text-white">
+                From payment link to full API integration.
               </h2>
-              <p className="landing-body text-lg max-w-xl mx-auto mb-10">
+              <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300">
                 Use payment links for manual collection today, then connect the checkout API and webhooks
                 when your product needs automated payment operations.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register" className="landing-btn-primary px-10 py-4">
+              <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
+                <TrackingLink
+                  href="/register"
+                  eventName="cta_click"
+                  eventData={{ placement: "developer_final_primary" }}
+                  className="landing-btn-primary px-10 py-4"
+                >
                   Create merchant account
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link href="/architecture" className="landing-btn-secondary px-10 py-4">
+                  <ArrowRight className="h-4 w-4" />
+                </TrackingLink>
+                <TrackingLink
+                  href="/architecture"
+                  eventName="cta_click"
+                  eventData={{ placement: "developer_final_architecture" }}
+                  className="landing-btn-secondary px-10 py-4"
+                >
                   View architecture
-                </Link>
+                </TrackingLink>
               </div>
             </ScrollReveal>
           </div>
         </section>
       </main>
 
-      <footer className="relative z-10 border-t landing-border bg-slate-50 dark:bg-[#030712]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
         <Footer />
       </footer>
     </div>
