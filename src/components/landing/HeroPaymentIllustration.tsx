@@ -1,90 +1,79 @@
 export default function HeroPaymentIllustration() {
   return (
-    <div className="landing-panel rounded-2xl p-5 sm:p-6 md:p-8" role="img" aria-label="Payment flow from create link to settlement">
-      <div className="flex flex-wrap gap-2 mb-5">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
-          Solana Mainnet
-        </span>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-          Non-custodial
-        </span>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.18em] px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300">
-          0.3% fee
-        </span>
-      </div>
+    <div className="landing-hero-visual relative overflow-hidden rounded-[2.2rem] p-4 sm:p-5" role="img" aria-label="Trezalink payment infrastructure preview">
+      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-300/35 blur-3xl dark:bg-emerald-400/20" />
+      <div className="absolute -bottom-24 left-8 h-72 w-72 rounded-full bg-cyan-300/30 blur-3xl dark:bg-cyan-400/15" />
 
-      <svg viewBox="0 0 820 520" className="w-full h-auto" aria-hidden>
-        <defs>
-          <linearGradient id="cardA" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#eff6ff" />
-            <stop offset="100%" stopColor="#dbeafe" />
-          </linearGradient>
-          <linearGradient id="cardB" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#ecfeff" />
-            <stop offset="100%" stopColor="#cffafe" />
-          </linearGradient>
-          <linearGradient id="cardC" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#ecfdf5" />
-            <stop offset="100%" stopColor="#d1fae5" />
-          </linearGradient>
-          <linearGradient id="flow" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#60a5fa" />
-            <stop offset="100%" stopColor="#06b6d4" />
-          </linearGradient>
-          <filter id="blurGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="16" />
-          </filter>
-        </defs>
-
-        <rect x="14" y="14" width="792" height="492" rx="28" fill="rgba(15,23,42,0.04)" className="dark:fill-white/[0.04]" />
-
-        <circle cx="168" cy="78" r="64" fill="#38bdf8" fillOpacity="0.25" filter="url(#blurGlow)" />
-        <circle cx="674" cy="442" r="78" fill="#60a5fa" fillOpacity="0.2" filter="url(#blurGlow)" />
-
-        <rect x="48" y="150" width="220" height="222" rx="18" fill="url(#cardA)" />
-        <rect x="300" y="95" width="220" height="222" rx="18" fill="url(#cardB)" />
-        <rect x="552" y="150" width="220" height="222" rx="18" fill="url(#cardC)" />
-
-        <text x="68" y="185" fontSize="13" fill="#1d4ed8" fontWeight="700">STEP 1</text>
-        <text x="68" y="214" fontSize="24" fill="#0f172a" fontWeight="700">Create Link</text>
-        <rect x="68" y="236" width="180" height="10" rx="5" fill="#93c5fd" />
-        <rect x="68" y="255" width="145" height="10" rx="5" fill="#bfdbfe" />
-        <rect x="68" y="292" width="128" height="34" rx="10" fill="#2563eb" />
-        <text x="84" y="314" fontSize="14" fill="#ffffff" fontWeight="600">Generate URL</text>
-
-        <text x="320" y="130" fontSize="13" fill="#0e7490" fontWeight="700">STEP 2</text>
-        <text x="320" y="159" fontSize="24" fill="#0f172a" fontWeight="700">Customer Pays</text>
-        <rect x="320" y="182" width="180" height="10" rx="5" fill="#67e8f9" />
-        <rect x="320" y="201" width="142" height="10" rx="5" fill="#a5f3fc" />
-        <circle cx="412" cy="261" r="34" fill="#0891b2" />
-        <text x="391" y="267" fontSize="20" fill="#ffffff" fontWeight="700">SOL</text>
-
-        <text x="572" y="185" fontSize="13" fill="#047857" fontWeight="700">STEP 3</text>
-        <text x="572" y="214" fontSize="24" fill="#0f172a" fontWeight="700">Merchant Settles</text>
-        <rect x="572" y="236" width="180" height="10" rx="5" fill="#6ee7b7" />
-        <rect x="572" y="255" width="150" height="10" rx="5" fill="#a7f3d0" />
-        <rect x="572" y="288" width="168" height="58" rx="12" fill="#059669" />
-        <text x="596" y="313" fontSize="15" fill="#ffffff" fontWeight="700">+9.97 SOL</text>
-        <text x="596" y="332" fontSize="12" fill="#dcfce7">Wallet Received</text>
-
-        <path d="M268 261 H298" stroke="url(#flow)" strokeWidth="8" strokeLinecap="round" />
-        <path d="M520 261 H550" stroke="url(#flow)" strokeWidth="8" strokeLinecap="round" />
-        <path d="M292 251 l18 10 -18 10" fill="none" stroke="#0ea5e9" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M544 251 l18 10 -18 10" fill="none" stroke="#0ea5e9" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[12px]">
-        <div className="rounded-lg px-3 py-2 bg-white/80 border landing-border dark:bg-white/[0.04]">
-          <p className="landing-subtle uppercase tracking-[0.16em]">Custody</p>
-          <p className="landing-heading font-semibold">You keep funds</p>
+      <div className="relative rounded-[1.7rem] border border-white/70 bg-white/76 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/72 dark:shadow-black/30">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[0.65rem] font-black uppercase tracking-[0.24em] text-slate-400 dark:text-slate-500">Payment link</p>
+            <h2 className="mt-1 text-xl font-black tracking-tight text-slate-950 dark:text-white">Invoice checkout</h2>
+          </div>
+          <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+            Solana live
+          </span>
         </div>
-        <div className="rounded-lg px-3 py-2 bg-white/80 border landing-border dark:bg-white/[0.04]">
-          <p className="landing-subtle uppercase tracking-[0.16em]">Fee</p>
-          <p className="landing-heading font-semibold">Transparent 0.3%</p>
-        </div>
-        <div className="rounded-lg px-3 py-2 bg-white/80 border landing-border dark:bg-white/[0.04]">
-          <p className="landing-subtle uppercase tracking-[0.16em]">Settlement</p>
-          <p className="landing-heading font-semibold">Under 2 seconds</p>
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_0.76fr]">
+          <div className="rounded-[1.4rem] bg-slate-950 p-5 text-white">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+              <span>Customer payment</span>
+              <span>TL-2049</span>
+            </div>
+            <div className="mt-8">
+              <p className="text-sm text-slate-400">Amount due</p>
+              <p className="mt-2 text-5xl font-black tracking-[-0.06em]">10.00</p>
+              <p className="mt-1 text-sm font-bold text-emerald-300">SOL mainnet</p>
+            </div>
+            <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">Trezalink fee</span>
+                <span className="font-black">0.03 SOL</span>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-slate-400">Merchant receives</span>
+                <span className="font-black text-emerald-200">9.97 SOL</span>
+              </div>
+            </div>
+            <div className="mt-4 rounded-2xl bg-emerald-400 px-4 py-3 text-center text-sm font-black text-slate-950">
+              Pay with wallet
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {[
+              ["Link created", "Checkout URL ready"],
+              ["Wallet signed", "Customer approved"],
+              ["Webhook sent", "Backend fulfilled"],
+            ].map(([title, copy], idx) => (
+              <div key={title} className="rounded-[1.2rem] border border-slate-200/80 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <p className="font-black text-slate-950 dark:text-white">{title}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{copy}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <svg viewBox="0 0 260 150" className="h-auto w-full" aria-hidden>
+              <defs>
+                <linearGradient id="line" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#22d3ee" />
+                </linearGradient>
+              </defs>
+              <rect x="4" y="4" width="252" height="142" rx="24" fill="currentColor" className="text-white/70 dark:text-white/[0.04]" />
+              <path d="M34 106 C74 62 97 92 128 66 C157 41 181 55 226 32" fill="none" stroke="url(#line)" strokeWidth="8" strokeLinecap="round" />
+              <circle cx="34" cy="106" r="7" fill="#10b981" />
+              <circle cx="128" cy="66" r="7" fill="#14b8a6" />
+              <circle cx="226" cy="32" r="7" fill="#22d3ee" />
+            </svg>
+          </div>
         </div>
       </div>
     </div>
