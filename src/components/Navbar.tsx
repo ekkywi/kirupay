@@ -123,14 +123,14 @@ export default function Navbar() {
 
           <Link
             href="/login"
-            className="hidden items-center rounded-full border border-slate-300/80 bg-white/58 px-4 py-2.5 text-sm font-black text-slate-800 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.045] dark:text-white dark:hover:border-emerald-300/30 dark:hover:bg-white/10 sm:inline-flex"
+            className="hidden items-center rounded-full border border-slate-300/80 bg-white/58 px-4 py-2.5 text-sm font-black text-slate-800 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.045] dark:text-white dark:hover:border-emerald-300/30 dark:hover:bg-white/10 md:inline-flex"
           >
             Sign in
           </Link>
 
           <Link
             href="/register"
-            className="landing-btn-primary group hidden px-5 py-2.5 sm:inline-flex"
+            className="group hidden items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200 md:inline-flex"
           >
             Create Merchant Account
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
