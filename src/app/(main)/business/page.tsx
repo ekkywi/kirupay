@@ -110,13 +110,13 @@ export default function BusinessHubLandingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+      <div className="dashboard-card p-5">
         <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">Business Hub</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Create entity quickly, then open a dedicated manage page per business.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+      <div className="dashboard-card p-5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
           <CirclePlus className="h-4 w-4" />
           Quick create entity
         </div>
@@ -125,19 +125,19 @@ export default function BusinessHubLandingPage() {
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Business name"
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.03]"
+            className="flex-1 dashboard-muted-panel px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.03]"
           />
           <button
             onClick={() => void createBusiness()}
             disabled={isSaving || !name.trim()}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="dashboard-primary px-4 py-2 disabled:opacity-60"
           >
             {isSaving ? "Creating..." : "Create"}
           </button>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+      <div className="dashboard-card p-5">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
           <Building2 className="h-4 w-4" />
           Business list
@@ -145,7 +145,7 @@ export default function BusinessHubLandingPage() {
 
         <div className="mt-4 space-y-3">
           {items.map((item) => (
-            <div key={item.membershipId} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div key={item.membershipId} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.business.name}</p>
@@ -159,7 +159,7 @@ export default function BusinessHubLandingPage() {
                   )}
                   <Link
                     href={`/business/manage/${item.business.id}`}
-                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-900/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                     Manage
@@ -172,7 +172,7 @@ export default function BusinessHubLandingPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-200">
+      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-xs text-emerald-800 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
         <div className="flex items-start gap-2">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
           <p>Credentials are isolated per business and only loaded inside each business manage page.</p>

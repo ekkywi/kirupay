@@ -68,7 +68,7 @@ export default async function AdminMerchantsPage({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/admin/overview" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/admin/overview" className="dashboard-secondary">
             Admin overview
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -76,7 +76,7 @@ export default async function AdminMerchantsPage({
             Global ledger
             <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <Link href="/admin/businesses" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/admin/businesses" className="dashboard-secondary">
             Businesses
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -98,10 +98,10 @@ export default async function AdminMerchantsPage({
               name="search"
               defaultValue={search}
               placeholder="Search by display name or merchant email..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+              className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
-          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700">
             <Search className="h-4 w-4" />
             Search
           </button>
@@ -115,7 +115,7 @@ export default async function AdminMerchantsPage({
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[980px] text-left text-sm">
-            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+            <thead className="dashboard-table-head">
               <tr>
                 <th className="px-5 py-4">Merchant</th>
                 <th className="px-5 py-4">Registered</th>
@@ -185,7 +185,7 @@ export default async function AdminMerchantsPage({
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/admin/merchants/${merchant.id}`}
-                        className="inline-flex rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
+                        className="inline-flex rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
                         title="View merchant profile"
                       >
                         <ExternalLink className="h-4 w-4" />

@@ -47,7 +47,7 @@ export function SuspendButton({ merchantId, isActive }: { merchantId: string, is
 
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-black/20 dark:border-white/10 dark:bg-[#0B0F17] animate-in zoom-in-95 duration-200">
+          <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto dashboard-card shadow-2xl shadow-black/20 dark:border-white/10 dark:bg-white/[0.045] animate-in zoom-in-95 duration-200">
             <div className="relative p-6 pb-3 text-center">
               <button 
                 onClick={() => setShowModal(false)}
@@ -80,7 +80,7 @@ export function SuspendButton({ merchantId, isActive }: { merchantId: string, is
             <div className="flex flex-col gap-3 rounded-b-2xl border-t border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02] sm:flex-row">
               <button
                 onClick={() => setShowModal(false)}
-                className="order-2 w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:order-1"
+                className="order-2 w-full dashboard-secondary px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:order-1"
               >
                 Cancel, keep as is
               </button>

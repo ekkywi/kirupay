@@ -135,14 +135,14 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
         type="button"
         onClick={() => setIsModalOpen(true)}
         disabled={isExporting}
-        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+        className="dashboard-secondary disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Download className="h-4 w-4" />
         Export CSV
       </button>
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-white/10 dark:bg-[#0B0F17]">
+          <div className="dashboard-card w-full max-w-lg p-5 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-slate-950 dark:text-white">Export transactions</h3>
               <button
@@ -162,7 +162,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
                 />
               </label>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -171,7 +171,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
                 />
               </label>
               <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -179,7 +179,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value as ExportStatus)}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
                 >
                   {EXPORT_STATUS_OPTIONS.map((status) => (
                     <option key={status} value={status}>{status}</option>
@@ -191,7 +191,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                 <select
                   value={selectedSource}
                   onChange={(e) => setSelectedSource(e.target.value as ExportSource)}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
                 >
                   {EXPORT_SOURCE_OPTIONS.map((source) => (
                     <option key={source} value={source}>{source}</option>
@@ -203,7 +203,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                 <select
                   value={selectedCurrency}
                   onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="mt-1 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200"
+                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
                 >
                   {normalizedCurrencyOptions.map((currency) => (
                     <option key={currency} value={currency}>{currency}</option>
@@ -229,7 +229,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
                 type="button"
                 onClick={onExport}
                 disabled={isExporting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 dashboard-primary px-4 py-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Download className="h-4 w-4" />
                 {isExporting ? "Exporting..." : "Download CSV"}

@@ -59,7 +59,7 @@ export function TopCustomersTable({ customers, selectedCurrency }: { customers: 
                 <span className="text-xs font-medium text-slate-500">{customer.totalOrders} txs</span>
               </td>
               <td className="py-4 text-right">
-                <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   {renderTotalSpent(customer)}
                 </p>
               </td>

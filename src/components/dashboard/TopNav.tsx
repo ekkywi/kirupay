@@ -54,7 +54,7 @@ export function TopNav({ merchant }: TopNavProps) {
   const iconControlNeutralClass =
     `${iconControlBaseClass} border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:bg-white/[0.06]`;
   const iconControlProfileClass =
-    `${iconControlBaseClass} border-blue-100 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20`;
+    `${iconControlBaseClass} border-emerald-100 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20`;
   const readApiMessage = (body: unknown, fallback: string) => {
     if (!body || typeof body !== "object") return fallback;
     const payload = body as { message?: string; error?: { message?: string } };
@@ -257,9 +257,9 @@ export function TopNav({ merchant }: TopNavProps) {
   }, [isBusinessMenuOpen]);
 
   return (
-    <header className="h-16 bg-white/95 dark:bg-[#0B0F17]/95 border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="relative z-30 flex h-16 items-center justify-between border-b border-emerald-900/10 bg-white/82 px-4 backdrop-blur-xl sm:px-6 lg:px-8 dark:border-white/10 dark:bg-[#07110f]/90">
       <div className="flex items-center gap-4 min-w-0">
-        <div className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white">
+        <div className="lg:hidden inline-flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white">
           T
         </div>
         <div className="min-w-0">
@@ -289,7 +289,7 @@ export function TopNav({ merchant }: TopNavProps) {
                 setIsNotificationOpen(false);
                 setIsBusinessMenuOpen((value) => !value);
               }}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-900/10 bg-[#fbfaf5]/92 px-3 py-2 text-left shadow-sm shadow-emerald-950/5 backdrop-blur-2xl transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70 dark:border-white/10 dark:bg-[#07110f]/92 dark:shadow-black/20 dark:hover:bg-[#0b1815]/95"
             >
               <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-300" />
               <div className="max-w-[220px] leading-tight">
@@ -314,10 +314,10 @@ export function TopNav({ merchant }: TopNavProps) {
                   event.preventDefault();
                 }
               }}
-              className={`rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] font-semibold dark:border-white/10 dark:bg-white/[0.03] ${
+              className={`rounded-xl border border-emerald-900/10 bg-[#fbfaf5]/92 px-3 py-2 text-[11px] font-semibold shadow-sm shadow-emerald-950/5 backdrop-blur-2xl transition-colors dark:border-white/10 dark:bg-[#07110f]/92 dark:shadow-black/20 ${
                 manageDisabled
                   ? "cursor-not-allowed text-slate-400 opacity-70 dark:text-slate-500"
-                  : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                  : "text-slate-700 hover:bg-white dark:text-slate-200 dark:hover:bg-[#0b1815]/95"
               }`}
             >
               Manage
@@ -326,7 +326,7 @@ export function TopNav({ merchant }: TopNavProps) {
             {isBusinessMenuOpen && (
               <div
                 ref={businessMenuRef}
-                className="absolute left-0 top-[calc(100%+8px)] z-40 w-[300px] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-black/30"
+                className="absolute left-0 top-[calc(100%+8px)] z-[80] w-[300px] rounded-2xl border border-emerald-900/10 bg-white/96 p-2 shadow-2xl shadow-emerald-950/15 ring-1 ring-emerald-500/10 backdrop-blur-2xl dark:border-white/10 dark:bg-[#07110f]/98 dark:shadow-black/40 dark:ring-emerald-400/10"
               >
                 <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Switch business</p>
                 <div className="max-h-64 space-y-1 overflow-y-auto">
@@ -344,13 +344,13 @@ export function TopNav({ merchant }: TopNavProps) {
                         disabled={switchingBusiness}
                         className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-colors ${
                           isActive
-                            ? "bg-blue-50 text-blue-800 dark:bg-blue-500/10 dark:text-blue-200"
+                            ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200"
                             : "text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.06]"
                         }`}
                       >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold">{item.business.name}</p>
-                          <p className={`truncate text-[11px] ${isActive ? "text-blue-700 dark:text-blue-300" : "text-slate-500 dark:text-slate-400"}`}>
+                          <p className={`truncate text-[11px] ${isActive ? "text-emerald-700 dark:text-emerald-300" : "text-slate-500 dark:text-slate-400"}`}>
                             {item.role} · {isActive ? "Current" : item.business.code}
                           </p>
                         </div>
@@ -371,7 +371,7 @@ export function TopNav({ merchant }: TopNavProps) {
             value={transactionSearch}
             onChange={(event) => setTransactionSearch(event.target.value)}
             placeholder="Search transactions..."
-            className="w-64 rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+            className="w-64 dashboard-muted-panel py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
           />
         </form>
         
@@ -412,7 +412,7 @@ export function TopNav({ merchant }: TopNavProps) {
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-black/30 py-2 animate-in fade-in zoom-in duration-150">
+            <div className="absolute right-0 z-[80] mt-2 w-64 dashboard-card py-2 shadow-xl shadow-emerald-950/10 animate-in fade-in zoom-in duration-150 dark:bg-[#07110f]/95 dark:shadow-black/30">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
                 <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{isAdmin ? "Admin account" : "Business account"}</p>
                 <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white truncate">
@@ -447,7 +447,7 @@ export function TopNav({ merchant }: TopNavProps) {
             <div className="absolute inset-0 bg-transparent" />
             <div
               ref={notificationPanelRef}
-              className="absolute rounded-2xl border border-slate-200 bg-white py-2 shadow-xl shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-black/30"
+              className="absolute dashboard-card py-2 shadow-xl shadow-emerald-950/10 dark:border-white/10 dark:bg-[#07110f]/95 dark:shadow-black/30"
               style={{
                 top: notificationPosition.top,
                 left: notificationPosition.left,
@@ -490,7 +490,7 @@ export function TopNav({ merchant }: TopNavProps) {
                             <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" aria-label="Unread notification" />
                             <button
                               onClick={() => void markRead(item.id)}
-                              className="rounded-md px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10"
+                              className="rounded-md px-2 py-1 text-[11px] font-semibold text-emerald-600 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
                             >
                               Mark read
                             </button>

@@ -159,7 +159,7 @@ export default async function MerchantDetailPage({
             <p className="text-sm text-slate-500 dark:text-slate-400">No active business memberships.</p>
           ) : (
             merchant.memberships.map((membership) => (
-              <div key={membership.id} className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+              <div key={membership.id} className="flex flex-col gap-1 dashboard-muted-panel p-3 dark:border-white/10 dark:bg-white/[0.03]">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{membership.business.name}</p>
                 <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">{membership.business.contactEmail || membership.business.code}</p>
                 <p className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
@@ -183,7 +183,7 @@ export default async function MerchantDetailPage({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+            <thead className="dashboard-table-head">
               <tr>
                 <th className="px-5 py-4">Order ref</th>
                 <th className="px-5 py-4">Gross</th>
@@ -230,7 +230,7 @@ export default async function MerchantDetailPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`inline-flex rounded-lg p-2 transition-colors ${
-                        tx.txSignature ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-300" : "cursor-not-allowed text-slate-300 dark:text-slate-700"
+                        tx.txSignature ? "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300" : "cursor-not-allowed text-slate-300 dark:text-slate-700"
                       }`}
                     >
                       <ArrowUpRight className="h-4 w-4" />

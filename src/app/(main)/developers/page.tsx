@@ -8,7 +8,7 @@ export default async function DevelopersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+      <div className="dashboard-card p-5">
         <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">Developer Controls</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Manage API credentials, webhook logs, and integration references for your active business.

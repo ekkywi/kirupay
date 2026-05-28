@@ -73,7 +73,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
     if (source === "API") {
       return {
         label: "API",
-        className: "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
+        className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
       };
     }
 
@@ -103,7 +103,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       
       {/* FILTER & SEARCH BAR */}
-      {showControls && <div className="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white dark:bg-[#0B0F17] p-4 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+      {showControls && <div className="dashboard-panel flex flex-col items-center justify-between gap-3 p-4 sm:flex-row">
         <div className="relative w-full sm:w-72">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-4 w-4 text-gray-400" />
@@ -113,7 +113,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search order or customer ref..."
-            className="block w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm outline-none focus:border-blue-500 transition-all dark:text-white"
+            className="dashboard-field block w-full py-2 pl-10 pr-3 text-sm"
           />
         </div>
 
@@ -122,7 +122,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
           <select
             value={currentStatus}
             onChange={(e) => updateURL("status", e.target.value)}
-            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
           >
             <option value="ALL">All Status</option>
             <option value="PAID">Paid</option>
@@ -132,7 +132,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
           <select
             value={currentSource}
             onChange={(e) => updateURL("source", e.target.value)}
-            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
           >
             <option value="ALL">All Sources</option>
             <option value="API">API</option>
@@ -141,7 +141,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
           <select
             value={currentCurrency}
             onChange={(e) => updateURL("currency", e.target.value)}
-            className="block w-full sm:w-auto pl-3 pr-8 py-2 bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition-all cursor-pointer appearance-none"
+            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
           >
             <option value="ALL">All Currencies</option>
             {currencyOptions.map((currency) => (
@@ -152,18 +152,20 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
       </div>}
 
       {/* TRANSACTION TABLE */}
-      <div className={`${showControls ? "bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm shadow-slate-200/60 dark:shadow-none" : "bg-transparent"} overflow-hidden`}>
+      <div className={`${showControls ? "dashboard-card" : "bg-transparent"} overflow-hidden`}>
         {transactions.length === 0 ? (
-          <div className="p-12 flex flex-col items-center justify-center text-gray-400">
-            <Activity className="mb-3 opacity-20" size={48} />
-            <p className="text-sm font-bold text-gray-600 dark:text-gray-300">No transactions found</p>
-            <p className="text-xs mt-1">Try adjusting your search or filters.</p>
+          <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/15 bg-emerald-400/10">
+              <Activity className="text-emerald-600/70 dark:text-emerald-300/70" size={24} />
+            </div>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No transactions found</p>
+            <p className="mt-1 text-xs">Try adjusting your search or filters.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-100 dark:border-white/10">
+                <tr className="dashboard-table-head border-b border-emerald-900/10 dark:border-white/10">
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-xl">Order ID</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Source</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gross</th>
@@ -196,7 +198,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                       {tx.feeAmount != null ? `-${formatCurrencyNumber(tx.currency, tx.feeAmount)} ${tx.currency}` : '-'}
                     </td>
                     {/* Net */}
-                    <td className="p-4 text-xs font-mono font-bold text-green-600 dark:text-green-500">
+                    <td className="p-4 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                       {formatCurrencyDisplay(tx.currency, tx.netAmount)}
                     </td>
 
@@ -204,10 +206,10 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${
                         tx.status === "PAID"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
                           : tx.status === "FAILED"
                             ? "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
                       }`}>
                         {tx.status}
                       </span>
@@ -225,7 +227,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                           href={`/pay/${tx.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                          className="inline-flex items-center rounded-lg border border-emerald-900/10 bg-white/70 px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.07]"
                           title={tx.status === "PAID" ? "Open receipt page" : "Open checkout page"}
                         >
                           {tx.status === "PAID" ? "View Receipt" : "View Checkout"}
@@ -236,7 +238,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                           rel="noopener noreferrer"
                           className={`inline-flex p-2 rounded-lg transition-all ${
                             tx.txSignature
-                              ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:hover:text-blue-400 opacity-0 group-hover:opacity-100"
+                              ? "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 opacity-0 group-hover:opacity-100"
                               : "text-gray-300 dark:text-[#2A2A2A] cursor-not-allowed opacity-50"
                           }`}
                           title={tx.txSignature ? "Verify on Solana Explorer" : "No blockchain record yet"}
@@ -255,7 +257,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#2A2A2A] rounded-xl shadow-sm">
+        <div className="dashboard-panel flex items-center justify-between px-4 py-3">
           <p className="text-xs text-gray-500 font-medium">
             Page <span className="font-bold text-gray-900 dark:text-white">{currentPage}</span> of <span className="font-bold text-gray-900 dark:text-white">{totalPages}</span>
           </p>
@@ -263,14 +265,14 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             <button
               onClick={() => updateURL("page", (currentPage - 1).toString())}
               disabled={currentPage <= 1}
-              className="p-2 rounded-lg border border-gray-200 dark:border-[#2A2A2A] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2A2A2A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => updateURL("page", (currentPage + 1).toString())}
               disabled={currentPage >= totalPages}
-              className="p-2 rounded-lg border border-gray-200 dark:border-[#2A2A2A] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2A2A2A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronRight size={16} />
             </button>

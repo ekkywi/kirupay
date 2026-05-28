@@ -76,14 +76,14 @@ export function TabApiDocs() {
             tone: "amber",
           },
         ].map((item) => (
-          <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div key={item.label} className="dashboard-card p-5">
             <item.icon
               className={`mb-4 h-5 w-5 ${
                 item.tone === "emerald"
                   ? "text-emerald-600 dark:text-emerald-400"
                   : item.tone === "amber"
                     ? "text-amber-600 dark:text-amber-400"
-                    : "text-blue-600 dark:text-blue-400"
+                    : "text-emerald-600 dark:text-emerald-400"
               }`}
             />
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
@@ -94,11 +94,11 @@ export function TabApiDocs() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card">
           <div className="border-b border-slate-200 p-5 dark:border-white/10">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Request Schema</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Request Schema</p>
                 <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Hosted checkout session</h3>
               </div>
               <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -111,7 +111,7 @@ export function TabApiDocs() {
             {fields.map((field) => (
               <div key={field.name} className="grid gap-3 p-5 md:grid-cols-[180px_1fr]">
                 <div>
-                  <code className="text-sm font-semibold text-blue-600 dark:text-blue-400">{field.name}</code>
+                  <code className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">{field.name}</code>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
                       {field.type}
@@ -158,19 +158,19 @@ export function TabApiDocs() {
             </pre>
           </div>
 
-          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 dark:border-blue-500/20 dark:bg-blue-500/10">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 dark:border-emerald-500/20 dark:bg-emerald-500/10">
             <div className="flex items-start gap-3">
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <div>
-                <h4 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Server-side only</h4>
-                <p className="mt-1 text-xs leading-relaxed text-blue-700 dark:text-blue-200">
+                <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Server-side only</h4>
+                <p className="mt-1 text-xs leading-relaxed text-emerald-700 dark:text-emerald-200">
                   Keep API keys in backend environment variables. Webhook payloads should be verified with your signing secret before updating orders.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+          <div className="dashboard-card p-5">
             <div className="flex items-start gap-3">
               <Webhook className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
               <div>

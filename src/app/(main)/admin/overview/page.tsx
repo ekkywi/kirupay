@@ -155,7 +155,7 @@ export default async function AdminOverviewPage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/admin/transactions" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/admin/transactions" className="dashboard-secondary">
             Global ledger
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -212,7 +212,7 @@ export default async function AdminOverviewPage() {
         <AdminSurface padded={false}>
           <div className="flex flex-col gap-3 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
             <AdminSectionHeader eyebrow="Network ledger" title="Latest global transactions" />
-            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
               <Radio className="h-3.5 w-3.5" />
               10 latest events
             </span>
@@ -229,7 +229,7 @@ export default async function AdminOverviewPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[840px] text-left text-sm">
-                <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+                <thead className="dashboard-table-head">
                   <tr>
                     <th className="px-5 py-4">Merchant</th>
                     <th className="px-5 py-4">Order</th>
@@ -263,7 +263,7 @@ export default async function AdminOverviewPage() {
                           rel="noopener noreferrer"
                           className={`inline-flex rounded-lg p-2 transition-colors ${
                             transaction.txSignature
-                              ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-blue-300"
+                              ? "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
                               : "cursor-not-allowed text-slate-300 dark:text-slate-700"
                           }`}
                           title={transaction.txSignature ? "View on Solana Explorer" : "No signature yet"}
@@ -280,7 +280,7 @@ export default async function AdminOverviewPage() {
         </AdminSurface>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">Operating health</p>
@@ -310,7 +310,7 @@ export default async function AdminOverviewPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">7-day platform pulse</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               {[
@@ -319,8 +319,8 @@ export default async function AdminOverviewPage() {
                 { label: "Fee yield", value: `${formatSOL(weeklyStats._sum.feeAmount)} SOL`, icon: Landmark },
                 { label: "Total tx", value: totalTransactions.toString(), icon: DatabaseZap },
               ].map((item) => (
-                <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                  <item.icon className="mb-3 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <div key={item.label} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <item.icon className="mb-3 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
                   <p className="mt-1 font-mono text-sm font-semibold text-slate-950 dark:text-white">{item.value}</p>
                 </div>
@@ -331,7 +331,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card">
           <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-white/10">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Merchant growth</p>
@@ -360,7 +360,7 @@ export default async function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card">
           <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-white/10">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Revenue concentration</p>

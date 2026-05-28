@@ -100,8 +100,8 @@ export default function BusinessEntitiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+      <div className="dashboard-card p-5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
           <Building2 className="h-4 w-4" />
           Business entities
         </div>
@@ -109,19 +109,19 @@ export default function BusinessEntitiesPage() {
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Create new business entity or switch active operating context.</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+      <div className="dashboard-card p-5">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Create business</p>
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Business name"
-            className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.03]"
+            className="flex-1 dashboard-muted-panel px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.03]"
           />
           <button
             onClick={() => void createBusiness()}
             disabled={saving}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 dashboard-primary px-4 py-2 disabled:opacity-60"
           >
             <PlusCircle className="h-4 w-4" />
             {saving ? "Creating..." : "Create"}
@@ -129,14 +129,14 @@ export default function BusinessEntitiesPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+      <div className="dashboard-card p-5">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Your memberships</p>
         {loading ? (
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">Loading...</p>
         ) : (
           <div className="mt-4 space-y-3">
             {items.map((item) => (
-              <div key={item.membershipId} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div key={item.membershipId} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{item.business.name}</p>

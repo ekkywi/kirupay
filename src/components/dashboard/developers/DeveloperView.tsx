@@ -47,7 +47,7 @@ export function DeveloperView({ merchant, canManage = true }: { merchant: Develo
 
   return (
     <div className="relative space-y-6">
-      <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none md:grid-cols-3">
+      <div className="dashboard-panel grid grid-cols-1 gap-2 p-2 md:grid-cols-3">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -58,7 +58,7 @@ export function DeveloperView({ merchant, canManage = true }: { merchant: Develo
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
               }`}
             >
@@ -67,7 +67,7 @@ export function DeveloperView({ merchant, canManage = true }: { merchant: Develo
               </span>
               <span>
                 <span className="block text-sm font-semibold">{tab.label}</span>
-                <span className={`block text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{tab.description}</span>
+                <span className={`block text-xs ${isActive ? "text-emerald-100" : "text-slate-400"}`}>{tab.description}</span>
               </span>
             </button>
           );

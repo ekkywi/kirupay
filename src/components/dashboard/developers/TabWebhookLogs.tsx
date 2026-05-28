@@ -35,10 +35,10 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {selectedLog && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 dark:border-white/10 dark:bg-[#0B0F17]">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col dashboard-card shadow-2xl animate-in fade-in zoom-in-95 duration-200 dark:border-white/10 dark:bg-white/[0.045]">
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-6 dark:border-white/10">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Webhook delivery</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Webhook delivery</p>
                 <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{selectedLog.event}</h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatLocalDateTime(selectedLog.createdAt)}</p>
               </div>
@@ -54,17 +54,17 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
 
             <div className="space-y-5 overflow-y-auto p-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Status</p>
                   <p className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClasses(selectedLog.status)}`}>
                     {getStatusLabel(selectedLog)}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Endpoint</p>
                   <p className="mt-2 truncate font-mono text-xs text-slate-700 dark:text-slate-300">{selectedLog.url || "Merchant webhook URL"}</p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Event ID</p>
                   <p className="mt-2 truncate font-mono text-xs text-slate-700 dark:text-slate-300">{selectedLog.id}</p>
                 </div>
@@ -79,7 +79,7 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
 
               <div>
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Server response</p>
-                <pre className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] leading-relaxed text-slate-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300">
+                <pre className="overflow-x-auto dashboard-muted-panel p-4 text-[11px] leading-relaxed text-slate-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300">
                   <code>{selectedLog.response || "No response data"}</code>
                 </pre>
               </div>
@@ -94,14 +94,14 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
           { label: "Delivered", value: successfulDeliveries.toString(), detail: "2xx webhook responses", icon: CheckCircle2, tone: "emerald" },
           { label: "Needs review", value: failedDeliveries.toString(), detail: "Failed or missing responses", icon: XCircle, tone: "red" },
         ].map((item) => (
-          <div key={item.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div key={item.label} className="dashboard-card p-5">
             <item.icon
               className={`mb-4 h-5 w-5 ${
                 item.tone === "emerald"
                   ? "text-emerald-600 dark:text-emerald-400"
                   : item.tone === "red"
                     ? "text-red-600 dark:text-red-400"
-                    : "text-blue-600 dark:text-blue-400"
+                    : "text-emerald-600 dark:text-emerald-400"
               }`}
             />
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
@@ -111,10 +111,10 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
         ))}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+      <div className="dashboard-card">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Delivery History</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Delivery History</p>
             <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Webhook events</h3>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Latest 50 webhook attempts sent to your configured endpoint.</p>
             <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Displayed in local time.</p>
@@ -122,7 +122,7 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
           <button
             type="button"
             onClick={() => void fetchLogs()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+            className="inline-flex items-center justify-center gap-2 dashboard-secondary px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
           >
             <RefreshCw className={`h-4 w-4 ${isLoadingLogs ? "animate-spin" : ""}`} />
             Refresh
@@ -147,7 +147,7 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] text-left text-sm">
-              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+              <thead className="dashboard-table-head">
                 <tr>
                   <th className="px-5 py-4">Delivery time</th>
                   <th className="px-5 py-4">Event</th>
@@ -176,7 +176,7 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
                       <button
                         type="button"
                         onClick={() => setSelectedLog(log)}
-                        className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/15"
+                        className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
                       >
                         View JSON
                       </button>

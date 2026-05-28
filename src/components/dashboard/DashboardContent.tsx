@@ -83,7 +83,7 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: Dashb
                 <button 
                   onClick={handleSaveSettings}
                   disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
                 >
                   <Save size={16} /> {saving ? "..." : "Save"}
                 </button>

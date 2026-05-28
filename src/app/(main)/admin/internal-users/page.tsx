@@ -108,7 +108,7 @@ export default async function AdminInternalUsersPage({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/admin/overview" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/admin/overview" className="dashboard-secondary">
             Admin overview
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -137,7 +137,7 @@ export default async function AdminInternalUsersPage({
         <AdminSurface>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">Generated invite link</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <code className="block min-w-0 flex-1 overflow-x-auto rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/20 dark:bg-[#0B0F17] dark:text-emerald-200">
+            <code className="block min-w-0 flex-1 overflow-x-auto rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/20 dark:bg-white/[0.045] dark:text-emerald-200">
               {inviteLink}
             </code>
             <button
@@ -168,7 +168,7 @@ export default async function AdminInternalUsersPage({
                 required
                 placeholder="team@trezalink.com"
                 disabled={!isSuperadmin}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
               />
             </div>
 
@@ -176,7 +176,7 @@ export default async function AdminInternalUsersPage({
               name="role"
               defaultValue="SUPPORT"
               disabled={!isSuperadmin}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+              className="w-full dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             >
               <option value="SUPPORT">SUPPORT</option>
               <option value="DEVELOPER">DEVELOPER</option>
@@ -205,7 +205,7 @@ export default async function AdminInternalUsersPage({
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
-            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+            <thead className="dashboard-table-head">
               <tr>
                 <th className="px-5 py-4">Email</th>
                 <th className="px-5 py-4">Role</th>
@@ -226,7 +226,7 @@ export default async function AdminInternalUsersPage({
                     status === "ACTIVE"
                       ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                       : status === "USED"
-                        ? "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
                         : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
 
                   return (
@@ -254,7 +254,7 @@ export default async function AdminInternalUsersPage({
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[880px] text-left text-sm">
-            <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+            <thead className="dashboard-table-head">
               <tr>
                 <th className="px-5 py-4">User</th>
                 <th className="px-5 py-4">Role</th>

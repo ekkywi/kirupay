@@ -4,7 +4,7 @@ import type { LucideIcon } from "lucide-react";
 type Tone = "blue" | "emerald" | "amber" | "red" | "slate";
 
 const toneClasses: Record<Tone, string> = {
-  blue: "text-blue-600 dark:text-blue-400",
+  blue: "text-cyan-600 dark:text-cyan-300",
   emerald: "text-emerald-600 dark:text-emerald-400",
   amber: "text-amber-600 dark:text-amber-400",
   red: "text-red-600 dark:text-red-400",
@@ -27,7 +27,7 @@ export function AdminSurface({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none",
+        "rounded-2xl border border-emerald-900/10 bg-white/90 shadow-sm shadow-emerald-950/5 backdrop-blur dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none",
         padded && "p-5",
         className
       )}
@@ -71,7 +71,7 @@ export function AdminSectionHeader({
 }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">{eyebrow}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">{eyebrow}</p>
       <h2 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{title}</h2>
       {description && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p>}
     </div>

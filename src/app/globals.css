@@ -161,7 +161,7 @@
 
   .landing-panel,
   .landing-card {
-    @apply border border-white/75 bg-white/72 shadow-sm shadow-slate-900/5 backdrop-blur-xl;
+    @apply border border-white/75 bg-white/70 shadow-sm shadow-slate-900/5 backdrop-blur-xl;
   }
 
   .dark .landing-panel,
@@ -257,6 +257,50 @@
 
   .landing-subtle {
     @apply text-slate-400;
+  }
+
+  .dashboard-card {
+    @apply rounded-2xl border border-emerald-900/10 bg-white/80 shadow-sm shadow-emerald-950/5 backdrop-blur-xl;
+  }
+
+  .dark .dashboard-card {
+    @apply border-white/10 bg-white/[0.045] shadow-none;
+  }
+
+  .dashboard-panel {
+    @apply rounded-2xl border border-emerald-900/10 bg-white/70 shadow-sm shadow-emerald-950/5 backdrop-blur-xl;
+  }
+
+  .dark .dashboard-panel {
+    @apply border-white/10 bg-white/[0.035] shadow-none;
+  }
+
+  .dashboard-header {
+    @apply rounded-[1.65rem] border border-emerald-900/10 bg-white/80 shadow-sm shadow-emerald-950/5 backdrop-blur-xl;
+  }
+
+  .dark .dashboard-header {
+    @apply border-white/10 bg-white/[0.045] shadow-none;
+  }
+
+  .dashboard-field {
+    @apply rounded-xl border border-emerald-900/10 bg-white/70 text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-white dark:focus:bg-white/[0.06];
+  }
+
+  .dashboard-muted-panel {
+    @apply rounded-xl border border-emerald-900/10 bg-emerald-50/35 dark:border-white/10 dark:bg-white/[0.035];
+  }
+
+  .dashboard-table-head {
+    @apply bg-emerald-50/45 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.035] dark:text-slate-400;
+  }
+
+  .dashboard-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-900/20 transition-colors hover:from-emerald-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .dashboard-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-900/10 bg-white/70 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.07];
   }
 
   .dark .landing-subtle {

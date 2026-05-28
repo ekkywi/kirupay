@@ -90,8 +90,8 @@ export default function BusinessInvitesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600 dark:text-blue-400">
+      <div className="dashboard-card p-5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 dark:text-emerald-400">
           <LinkIcon className="h-4 w-4" />
           Business invites
         </div>
@@ -99,32 +99,32 @@ export default function BusinessInvitesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+        <div className="dashboard-card p-5">
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Create invite code</p>
           <div className="mt-3 flex items-center gap-2">
-            <select value={role} onChange={(event) => setRole(event.target.value as "ADMIN" | "MEMBER")} className="rounded-lg border border-slate-200 px-2 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]">
+            <select value={role} onChange={(event) => setRole(event.target.value as "ADMIN" | "MEMBER")} className="rounded-lg border border-slate-200 px-2 py-2 text-sm dark:border-white/10 dark:bg-white/[0.045]">
               <option value="MEMBER">MEMBER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
-            <button onClick={() => void createInvite()} disabled={isCreatingInvite} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
+            <button onClick={() => void createInvite()} disabled={isCreatingInvite} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
           </div>
           {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-700 dark:bg-white/[0.03] dark:text-slate-200">{lastCode}</p>}
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+        <div className="dashboard-card p-5">
           <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Join with invite code</p>
           <div className="mt-3 flex items-center gap-2">
-            <input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10 dark:bg-[#0B0F17]" />
+            <input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/[0.045]" />
             <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold disabled:opacity-50 dark:border-white/10">{isJoiningBusiness ? "Joining..." : "Join"}</button>
           </div>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-[#0B0F17]">
+      <div className="dashboard-card p-5">
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent invites</p>
         <div className="mt-4 space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
+            <div key={item.id} className="rounded-lg border border-emerald-900/10 bg-emerald-50/35 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
               <p className="font-semibold text-slate-800 dark:text-slate-100">Role {item.role} • code ending {item.codeHint}</p>
               <p className="text-slate-500 dark:text-slate-400">Expires: {new Date(item.expiresAt).toLocaleString()} • {item.usedAt ? "Used" : "Pending"}</p>
             </div>

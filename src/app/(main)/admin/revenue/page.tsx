@@ -122,7 +122,7 @@ export default async function AdminRevenuePage() {
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/admin/transactions" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/admin/transactions" className="dashboard-secondary">
             Audit ledger
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -192,8 +192,8 @@ export default async function AdminRevenuePage() {
                 { label: "Net settled", value: `${formatSOL(totalNetSettlement, 4)} SOL`, icon: WalletCards },
                 { label: "Avg fee", value: `${formatSOL(averageFee)} SOL`, icon: Receipt },
               ].map((item) => (
-                <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                  <item.icon className="mb-3 h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <div key={item.label} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                  <item.icon className="mb-3 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
                   <p className="mt-1 font-mono text-sm font-semibold text-slate-950 dark:text-white">{item.value}</p>
                 </div>
@@ -287,7 +287,7 @@ export default async function AdminRevenuePage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[780px] text-left text-sm">
-              <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500 dark:bg-white/[0.03] dark:text-slate-400">
+              <thead className="dashboard-table-head">
                 <tr>
                   <th className="px-5 py-4">Time</th>
                   <th className="px-5 py-4">Source business</th>

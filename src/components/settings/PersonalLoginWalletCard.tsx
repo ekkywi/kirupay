@@ -24,7 +24,7 @@ export function PersonalLoginWalletCard({ initialWallet }: { initialWallet: stri
         <h3 className="font-semibold text-slate-950 dark:text-white">Personal Login Wallet (Merchant)</h3>
       </div>
 
-      <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+      <div className="mb-4 dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
         <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Status</p>
         <p className={`mt-1 font-mono text-sm ${hasWallet ? "font-bold text-blue-600 dark:text-blue-400" : "text-slate-400"}`}>{compact}</p>
       </div>

@@ -98,7 +98,7 @@ export default async function AdminMaintenanceRpcHealthPage({
 
         <div className="space-y-5 p-5 lg:p-6">
           <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="dashboard-muted-panel rounded-2xl p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Current status</p>
@@ -144,7 +144,7 @@ export default async function AdminMaintenanceRpcHealthPage({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="dashboard-muted-panel rounded-2xl p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Window summary</p>
               <div className="mt-4 space-y-3">
                 <WindowCard
@@ -165,7 +165,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Active RPC (Live Traffic)</p>
@@ -186,7 +186,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Active disruptions</p>
               <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${rpcHealth.activeIncidents.length > 0 ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
@@ -194,7 +194,7 @@ export default async function AdminMaintenanceRpcHealthPage({
                 {rpcHealth.activeIncidents.length} active
               </span>
             </div>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="mt-3 overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {rpcHealth.activeIncidents.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No active disruptions.</div>
               ) : (
@@ -216,7 +216,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Incident timeline</p>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:bg-white/10 dark:text-slate-200">
@@ -224,7 +224,7 @@ export default async function AdminMaintenanceRpcHealthPage({
                 {rpcHealth.incidentTimeline.length} events
               </span>
             </div>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="mt-3 overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {rpcHealth.incidentTimeline.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No incident events yet.</div>
               ) : (
@@ -247,7 +247,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Resolved disruptions</p>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -255,7 +255,7 @@ export default async function AdminMaintenanceRpcHealthPage({
                 {rpcHealth.resolvedIncidents.length} resolved
               </span>
             </div>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="mt-3 overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {rpcHealth.resolvedIncidents.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No resolved disruptions yet.</div>
               ) : (
@@ -278,7 +278,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Recent failovers</p>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
@@ -286,7 +286,7 @@ export default async function AdminMaintenanceRpcHealthPage({
                 {rpcHealth.traffic.recentFailovers.length} events
               </span>
             </div>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="mt-3 overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {rpcHealth.traffic.recentFailovers.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No failovers recorded yet.</div>
               ) : (
@@ -308,7 +308,7 @@ export default async function AdminMaintenanceRpcHealthPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="dashboard-muted-panel rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Recent incidents</p>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
@@ -317,7 +317,7 @@ export default async function AdminMaintenanceRpcHealthPage({
               </span>
             </div>
 
-            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="mt-3 overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {rpcHealth.recentIncidents.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No incidents recorded yet.</div>
               ) : (
@@ -349,7 +349,7 @@ export default async function AdminMaintenanceRpcHealthPage({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#0B0F17]">
+    <div className="dashboard-secondary p-3 dark:border-white/10 dark:bg-white/[0.045]">
       <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">{label}</p>
       <p className="mt-1 text-sm font-semibold text-slate-950 dark:text-white">{value}</p>
     </div>
@@ -370,7 +370,7 @@ function WindowCard({
   rateLimited: number;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#0B0F17]">
+    <div className="dashboard-secondary p-3 dark:border-white/10 dark:bg-white/[0.045]">
       <p className="text-xs font-semibold text-slate-950 dark:text-white">{label}</p>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
         {checks} checks · {down} down · {degraded} degraded · {rateLimited} rate-limited

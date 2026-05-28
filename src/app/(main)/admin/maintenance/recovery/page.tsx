@@ -44,7 +44,7 @@ export default async function AdminMaintenanceRecoveryPage({
         </div>
 
         <div className="space-y-5 p-5 lg:p-6">
-          <form action={resyncTransactionAction} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
+          <form action={resyncTransactionAction} className="space-y-4 dashboard-muted-panel rounded-2xl p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
             <input type="hidden" name="returnTo" value="/admin/maintenance/recovery" />
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
               <DatabaseZap className="h-4 w-4 text-red-500" />
@@ -57,14 +57,14 @@ export default async function AdminMaintenanceRecoveryPage({
                 name="transactionId"
                 defaultValue={prefillTransactionId}
                 placeholder="Transaction ID"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-[#0B0F17] dark:text-white"
+                className="w-full dashboard-secondary px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-white/[0.045] dark:text-white"
               />
               <input
                 type="text"
                 name="signature"
                 defaultValue={prefillSignature}
                 placeholder="Blockchain signature (optional if already stored)"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-[#0B0F17] dark:text-white"
+                className="w-full dashboard-secondary px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-white/[0.045] dark:text-white"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Best practice: start with Transaction ID. Signature is optional if the transaction already has a saved on-chain signature.
@@ -74,13 +74,13 @@ export default async function AdminMaintenanceRecoveryPage({
                   type="text"
                   name="buyerWallet"
                   placeholder="Buyer wallet (optional)"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-[#0B0F17] dark:text-white"
+                  className="w-full dashboard-secondary px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-white/[0.045] dark:text-white"
                 />
                 <input
                   type="text"
                   name="walletProvider"
                   placeholder="Wallet provider (optional)"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-[#0B0F17] dark:text-white"
+                  className="w-full dashboard-secondary px-3 py-2.5 text-sm text-slate-950 outline-none focus:border-red-500 dark:border-white/10 dark:bg-white/[0.045] dark:text-white"
                 />
               </div>
             </div>
@@ -94,7 +94,7 @@ export default async function AdminMaintenanceRecoveryPage({
             </button>
           </form>
 
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
+          <div className="space-y-4 dashboard-muted-panel rounded-2xl p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Pending transaction queue</p>
@@ -106,7 +106,7 @@ export default async function AdminMaintenanceRecoveryPage({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {snapshot.recentPendingTransactions.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No pending transactions found.</div>
               ) : (
@@ -125,7 +125,7 @@ export default async function AdminMaintenanceRecoveryPage({
 
                       <Link
                         href={`/admin/maintenance/recovery?transactionId=${encodeURIComponent(tx.id)}${tx.txSignature ? `&signature=${encodeURIComponent(tx.txSignature)}` : ""}`}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:w-auto"
+                        className="inline-flex w-full items-center justify-center gap-2 dashboard-secondary px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:w-auto"
                       >
                         Prefill resync form
                         <ArrowUpRight className="h-4 w-4" />
@@ -137,19 +137,19 @@ export default async function AdminMaintenanceRecoveryPage({
             </div>
           </div>
 
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
+          <div className="space-y-4 dashboard-muted-panel rounded-2xl p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03] dark:shadow-none">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Failed webhook queue</p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{snapshot.failedWebhookLogs} delivery attempts need attention.</p>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+              <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                 <Server className="h-3.5 w-3.5" />
                 {snapshot.webhookTotal} total logs
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-[#0B0F17]">
+            <div className="overflow-hidden dashboard-card dark:border-white/10 dark:bg-white/[0.045]">
               {snapshot.recentFailedWebhookLogs.length === 0 ? (
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No failed webhook logs found.</div>
               ) : (
@@ -169,7 +169,7 @@ export default async function AdminMaintenanceRecoveryPage({
                         <input type="hidden" name="returnTo" value="/admin/maintenance/recovery" />
                         <button
                           type="submit"
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:w-auto"
+                          className="inline-flex w-full items-center justify-center gap-2 dashboard-secondary px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:w-auto"
                         >
                           <RefreshCcw className="h-4 w-4" />
                           Retry delivery

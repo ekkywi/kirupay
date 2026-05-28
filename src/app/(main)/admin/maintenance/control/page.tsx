@@ -46,7 +46,7 @@ export default async function AdminMaintenanceControlPage({
         <form action={saveMaintenanceSettingsAction} className="space-y-6 p-5 lg:p-6">
           <input type="hidden" name="returnTo" value="/admin/maintenance/control" />
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="flex min-h-[132px] cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <label className="flex min-h-[132px] cursor-pointer items-start gap-3 dashboard-muted-panel rounded-2xl p-4">
               <input
                 type="checkbox"
                 name="enabled"
@@ -62,7 +62,7 @@ export default async function AdminMaintenanceControlPage({
               </span>
             </label>
 
-            <div className="min-h-[132px] rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="min-h-[132px] dashboard-muted-panel rounded-2xl p-4">
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Current schedule</p>
               <p className="mt-2 text-sm font-semibold text-slate-950 dark:text-white">
                 {maintenance.maintenanceEndsAt ? formatDateTime(maintenance.maintenanceEndsAt) : "Not scheduled"}
@@ -81,7 +81,7 @@ export default async function AdminMaintenanceControlPage({
                 name="message"
                 defaultValue={maintenance.message}
                 rows={5}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-red-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
+                className="w-full dashboard-card px-4 py-3 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-red-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
                 placeholder="Describe the issue or estimated return time..."
               />
             </label>
@@ -92,7 +92,7 @@ export default async function AdminMaintenanceControlPage({
                 type="datetime-local"
                 name="maintenanceEndsAt"
                 defaultValue={toDateTimeLocalValue(maintenance.maintenanceEndsAt)}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-red-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
+                className="w-full dashboard-card px-4 py-3 text-sm text-slate-950 outline-none transition-colors focus:border-red-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
               />
               <p className="text-xs text-slate-500 dark:text-slate-400">Leave empty if you do not want to show an estimate.</p>
             </label>

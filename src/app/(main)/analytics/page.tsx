@@ -441,9 +441,9 @@ export default async function AnalyticsPage({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none lg:flex-row lg:items-center lg:justify-between">
+      <div className="dashboard-header flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
             <BarChart3 className="h-4 w-4" />
             Analytics center
           </div>
@@ -462,7 +462,7 @@ export default async function AnalyticsPage({
                   href={currency === "ALL" ? "/analytics" : `/analytics?currency=${encodeURIComponent(currency)}`}
                   className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
                     isActive
-                      ? "border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-300"
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-300"
                       : "border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/[0.05]"
                   }`}
                 >
@@ -473,11 +473,11 @@ export default async function AnalyticsPage({
           </div>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <Link href="/payments" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">
+          <Link href="/payments" className="dashboard-secondary">
             View ledger
             <ArrowUpRight className="h-4 w-4" />
           </Link>
-          <Link href="/payment-links" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700">
+          <Link href="/payment-links" className="dashboard-primary">
             Create payment link
             <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -485,7 +485,7 @@ export default async function AnalyticsPage({
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card p-5">
           <TrendingUp className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Total net revenue</p>
           <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">
@@ -495,19 +495,19 @@ export default async function AnalyticsPage({
           </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{activeCurrencyLabel} · after platform fee</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
-          <Target className="mb-4 h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <div className="dashboard-card p-5">
+          <Target className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Total orders</p>
           <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{totalStats._count.id}</p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{paidCount} paid transactions</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card p-5">
           <Activity className="mb-4 h-5 w-5 text-amber-600 dark:text-amber-400" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Success / Pending</p>
           <p className="mt-2 font-mono text-xl font-semibold text-slate-950 dark:text-white">{successRate.toFixed(1)}% / {abandonedRate.toFixed(1)}%</p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Paid ratio vs pending checkout</p>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+        <div className="dashboard-card p-5">
           <Clock3 className="mb-4 h-5 w-5 text-indigo-600 dark:text-indigo-400" />
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">View mode</p>
           <p className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">{activeCurrencyLabel}</p>
@@ -517,7 +517,7 @@ export default async function AnalyticsPage({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {trendCards.map((card) => (
-          <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div key={card.label} className="dashboard-card p-5">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
             <p className="mt-2 font-mono text-lg font-semibold text-slate-950 dark:text-white">{card.value}</p>
             <p className={`mt-1 text-xs font-semibold ${card.delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
@@ -528,17 +528,17 @@ export default async function AnalyticsPage({
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 <ReceiptText className="h-4 w-4" />
                 Settlement intelligence
               </div>
               <h3 className="mt-2 font-semibold text-slate-950 dark:text-white text-base">Finance-ready settlement math</h3>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Gross, fee, net, and average order value from paid transactions.</p>
             </div>
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">{activeCurrencyLabel}</span>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">{activeCurrencyLabel}</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -547,7 +547,7 @@ export default async function AnalyticsPage({
               { label: "Net settlement", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.net) },
               { label: "Avg order value", value: selectedCurrency === "ALL" ? "Mixed" : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.avgOrderValue) },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div key={item.label} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
                 <p className="mt-2 font-mono text-lg font-semibold text-slate-950 dark:text-white">{item.value}</p>
               </div>
@@ -565,10 +565,10 @@ export default async function AnalyticsPage({
           ) : null}
         </div>
 
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 <Target className="h-4 w-4" />
                 Conversion funnel
               </div>
@@ -580,7 +580,7 @@ export default async function AnalyticsPage({
           <div className="space-y-3">
             {funnelSteps.map((step) => {
               const width = totalStats._count.id > 0 ? Math.max((step.value / totalStats._count.id) * 100, step.value > 0 ? 6 : 0) : 0;
-              const colorClass = step.tone === "emerald" ? "bg-emerald-500" : step.tone === "amber" ? "bg-amber-500" : step.tone === "red" ? "bg-red-500" : "bg-blue-500";
+              const colorClass = step.tone === "emerald" ? "bg-emerald-500" : step.tone === "amber" ? "bg-amber-500" : step.tone === "red" ? "bg-red-500" : "bg-emerald-500";
               return (
                 <div key={step.label}>
                   <div className="flex items-center justify-between text-sm">
@@ -596,7 +596,7 @@ export default async function AnalyticsPage({
           </div>
           <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Object.entries(sourceSummary).map(([source, values]) => (
-              <div key={source} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div key={source} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{source}</p>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{values.total > 0 ? ((values.paid / values.total) * 100).toFixed(1) : "0.0"}% conversion</p>
               </div>
@@ -604,10 +604,10 @@ export default async function AnalyticsPage({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 <Radio className="h-4 w-4" />
                 Operational health
               </div>
@@ -624,8 +624,8 @@ export default async function AnalyticsPage({
               { icon: Clock3, label: "Stale pending", value: stalePendingCount.toString(), detail: "older than 24h" },
               { icon: Wallet, label: "Settlement wallet", value: walletConnected ? "Ready" : "Action needed", detail: walletConnected ? "can receive payments" : "connect wallet" },
             ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
-                <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div key={item.label} className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <item.icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{item.label}</p>
                 <p className="mt-1 text-lg font-semibold text-slate-950 dark:text-white">{item.value}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{item.detail}</p>
@@ -634,10 +634,10 @@ export default async function AnalyticsPage({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <div className="flex items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">
                 <Lightbulb className="h-4 w-4" />
                 Insight summary
               </div>
@@ -650,7 +650,7 @@ export default async function AnalyticsPage({
           </div>
           <div className="space-y-3">
             {insightSummary.map((insight) => (
-              <div key={insight} className="flex gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+              <div key={insight} className="flex gap-3 dashboard-muted-panel p-3 dark:border-white/10 dark:bg-white/[0.03]">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{insight}</p>
               </div>
@@ -660,19 +660,19 @@ export default async function AnalyticsPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <h3 className="font-semibold text-slate-950 dark:text-white text-base">Transaction success ratio</h3>
           <p className="mt-1 mb-6 text-sm text-slate-500 dark:text-slate-400">Distribution of paid, pending, and failed records.</p>
           <StatusDonutChart data={donutData} title={activeCurrencyLabel} />
         </div>
-        <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="dashboard-card p-6">
           <h3 className="font-semibold text-slate-950 dark:text-white text-base">Orders by source</h3>
           <p className="mt-1 mb-6 text-sm text-slate-500 dark:text-slate-400">Compare API checkout sessions against manual payment links.</p>
           <RevenueSourceChart data={sourceData} />
         </div>
       </div>
 
-      <div className="bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+      <div className="dashboard-card p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="font-semibold text-slate-950 dark:text-white text-base">Historical volume and drop-off</h3>
@@ -684,7 +684,7 @@ export default async function AnalyticsPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="lg:col-span-7 dashboard-card p-6">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h3 className="font-semibold text-slate-950 dark:text-white text-base">Peak buying hours</h3>
@@ -694,7 +694,7 @@ export default async function AnalyticsPage({
           </div>
           <PeakHoursChart data={peakHoursData} peakHour={peakHour.hour} />
         </div>
-        <div className="lg:col-span-5 bg-white dark:bg-[#0B0F17] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm shadow-slate-200/60 dark:shadow-none">
+        <div className="lg:col-span-5 dashboard-card p-6">
           <div className="mb-6">
             <h3 className="font-semibold text-slate-950 dark:text-white text-base">Top spending customers</h3>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Highest gross volume by email or wallet.</p>

@@ -16,7 +16,7 @@ export function ThemeToggle() {
   }, []);
 
   const baseClassName =
-    "relative h-9 w-9 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:bg-white/[0.06]";
+    "relative h-9 w-9 inline-flex items-center justify-center dashboard-muted-panel text-slate-700 transition-colors hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300 dark:hover:bg-white/[0.06]";
 
   if (!mounted) {
     return <div className={baseClassName} aria-hidden="true" />;

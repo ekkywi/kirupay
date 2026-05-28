@@ -30,9 +30,9 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
   };
 
   return (
-    <div className="relative bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm shadow-slate-200/60 dark:shadow-none">
+    <div className="relative dashboard-card p-5 shadow-sm shadow-emerald-950/5 dark:shadow-none">
       {toast && (
-        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border animate-in slide-in-from-top-5 fade-in duration-300 ${toast.type === "success" ? "bg-white dark:bg-[#0B0F17] border-green-200 dark:border-green-900/30" : "bg-white dark:bg-[#0B0F17] border-red-200 dark:border-red-900/30"}`}>
+        <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border animate-in slide-in-from-top-5 fade-in duration-300 ${toast.type === "success" ? "bg-white dark:bg-white/[0.045] border-green-200 dark:border-green-900/30" : "bg-white dark:bg-white/[0.045] border-red-200 dark:border-red-900/30"}`}>
           <div className={`shrink-0 rounded-full flex items-center justify-center w-8 h-8 ${toast.type === "success" ? "bg-green-100 text-green-600 dark:bg-green-900/20" : "bg-red-100 text-red-600 dark:bg-red-900/20"}`}>
             {toast.type === "success" ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
           </div>
@@ -42,7 +42,7 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
 
       {showConfirmModal && canManage && (
         <div className="fixed inset-0 z-[50] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white dark:bg-[#0B0F17] w-full max-w-md rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-white/[0.045] w-full max-w-md rounded-3xl p-6 border border-slate-200 dark:border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex gap-4 items-start">
               <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 flex items-center justify-center shrink-0">
                 <AlertTriangle size={24} />
@@ -64,16 +64,16 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
 
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Wallet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           <h3 className="font-semibold text-slate-950 dark:text-white">Business Settlement Wallet</h3>
         </div>
         {!isPending && <CheckCircle2 className="w-5 h-5 text-green-500" />}
       </div>
 
-      <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03] flex items-center justify-between gap-4">
+      <div className="mb-6 dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03] flex items-center justify-between gap-4">
         <div>
           <p className="text-xs text-slate-500 uppercase tracking-widest font-bold mb-1">Status</p>
-          <p className={`font-mono text-sm ${isPending ? "text-gray-400" : "text-blue-600 dark:text-blue-400 font-bold"}`}>
+          <p className={`font-mono text-sm ${isPending ? "text-gray-400" : "text-emerald-600 dark:text-emerald-400 font-bold"}`}>
             {formatWallet(wallet)}
           </p>
         </div>
@@ -106,7 +106,7 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
             void handleConnect();
           }}
           disabled={isLoading || !canManage}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LinkIcon className="w-4 h-4" /> Connect Settlement Wallet</>}
         </button>

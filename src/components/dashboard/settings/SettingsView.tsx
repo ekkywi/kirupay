@@ -71,7 +71,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none md:grid-cols-3">
+      <div className="dashboard-panel grid grid-cols-1 gap-2 p-2 md:grid-cols-3">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -83,7 +83,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
               }`}
             >
@@ -92,7 +92,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
               </span>
               <span>
                 <span className="block text-sm font-semibold">{tab.label}</span>
-                <span className={`block text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{tab.description}</span>
+                <span className={`block text-xs ${isActive ? "text-emerald-100" : "text-slate-400"}`}>{tab.description}</span>
               </span>
             </button>
           );
@@ -114,9 +114,9 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
 
       {activeTab === "profile" && (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 animate-in fade-in slide-in-from-bottom-2 duration-300 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="border-b border-slate-200 p-5 dark:border-white/10">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Checkout identity</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Checkout identity</p>
               <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Store profile</h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 This information appears across hosted checkout and merchant-facing operational views.
@@ -135,13 +135,13 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     value={businessName}
                     onChange={(event) => setBusinessName(event.target.value)}
                     placeholder="e.g. Acme Corporation"
-                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
                   />
                   <button
                     type="button"
                     onClick={saveBusinessName}
                     disabled={loading || !businessName.trim() || !profileChanged}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {loading ? "Saving..." : "Save changes"}
@@ -150,7 +150,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="mb-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <Mail className="h-4 w-4" />
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Account email</p>
@@ -159,7 +159,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{merchant.emailVerified ? "Verified for account notifications." : "Verification is still pending."}</p>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                   <div className="mb-3 flex items-center gap-2 text-slate-500 dark:text-slate-400">
                     <LockKeyhole className="h-4 w-4" />
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em]">Account status</p>
@@ -171,7 +171,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Profile summary</p>
             <div className="mt-5 space-y-4">
               {[
@@ -208,7 +208,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
             <WalletOverview initialWallet={merchant.walletAddress || "pending"} />
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Payout readiness</p>
             <div className="mt-5 space-y-4">
               {[
@@ -232,9 +232,9 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
 
       {activeTab === "webhooks" && (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/60 animate-in fade-in slide-in-from-bottom-2 duration-300 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="border-b border-slate-200 p-5 dark:border-white/10">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">Event delivery</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">Event delivery</p>
               <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Webhook configuration</h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 Receive payment confirmations from Trezalink and reconcile orders on your own backend.
@@ -253,13 +253,13 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     value={webhookUrl}
                     onChange={(event) => setWebhookUrl(event.target.value)}
                     placeholder="https://your-api.com/webhooks/trezalink"
-                    className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 font-mono text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 font-mono text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
                   />
                   <button
                     type="button"
                     onClick={saveWebhookUrl}
                     disabled={loading || !webhookUrl.trim() || !webhookChanged}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {loading ? "Saving..." : "Save endpoint"}
@@ -267,19 +267,19 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-500/20 dark:bg-emerald-500/10">
                 <div className="flex items-start gap-3">
-                  <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <h4 className="text-sm font-semibold text-blue-950 dark:text-blue-100">Signed delivery</h4>
-                    <p className="mt-1 text-xs leading-relaxed text-blue-700 dark:text-blue-200">
+                    <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Signed delivery</h4>
+                    <p className="mt-1 text-xs leading-relaxed text-emerald-700 dark:text-emerald-200">
                       If this is your first endpoint, Trezalink will automatically generate a webhook signing secret when you save.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="dashboard-muted-panel p-4 dark:border-white/10 dark:bg-white/[0.03]">
                 <div className="mb-3">
                   <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Notification preferences</h4>
                   <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Choose which payment and webhook events appear in your in-app notification center.</p>
@@ -295,7 +295,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                   ].map((item) => {
                     const key = item.key as keyof typeof preferences;
                     return (
-                      <label key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:border-white/10 dark:bg-[#0B0F17]">
+                      <label key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-emerald-900/10 bg-white/70 p-3 dark:border-white/10 dark:bg-white/[0.045]">
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-slate-900 dark:text-white">{item.label}</span>
                           <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{item.detail}</span>
@@ -309,7 +309,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                               [key]: event.target.checked,
                             }))
                           }
-                          className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                         />
                       </label>
                     );
@@ -321,7 +321,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     type="button"
                     onClick={() => void saveNotificationPreferences()}
                     disabled={preferencesLoading || !changed}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {preferencesLoading ? "Saving..." : "Save notification settings"}
@@ -331,7 +331,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 dark:border-white/10 dark:bg-[#0B0F17] dark:shadow-none">
+          <div className="dashboard-card p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Integration status</p>
             <div className="mt-5 space-y-4">
               {[

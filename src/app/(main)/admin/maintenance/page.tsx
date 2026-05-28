@@ -70,7 +70,7 @@ export default async function AdminMaintenanceOverviewPage({
         <Link href="/admin/maintenance/rpc-health">
           <AdminSurface className="h-full">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-white">
-              <Server className="h-4 w-4 text-blue-500" />
+              <Server className="h-4 w-4 text-emerald-500" />
               RPC health
             </div>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Run endpoint checks, view latency summaries, and inspect recent incidents.</p>

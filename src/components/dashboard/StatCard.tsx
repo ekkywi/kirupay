@@ -18,10 +18,10 @@ export const StatCard = ({ label, value, icon, trend, trendUp, description = "vs
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3 }}
-    className="p-5 bg-white dark:bg-[#0B0F17] border border-slate-200 dark:border-white/10 rounded-2xl transition-all shadow-sm shadow-slate-200/60 dark:shadow-none hover:border-blue-200 dark:hover:border-blue-500/25 group"
+    className="dashboard-card group p-5 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-500/25"
   >
     <div className="flex justify-between items-start mb-4">
-      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-300 transition-colors">
+      <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-300 transition-colors">
         {icon}
       </div>
       <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] mt-1 text-right">
