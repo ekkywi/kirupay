@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 import prisma from "@/lib/neon";
-import { setMerchantSessionToken } from "@/lib/merchant-session";
 import type { BusinessMembership, BusinessRole, InternalRole, InternalUser, Merchant } from "@prisma/client";
 
 export type ActorType = "merchant" | "internal";
@@ -46,7 +45,11 @@ export async function getCurrentActor(): Promise<CurrentActor | null> {
     if (actorType === "merchant" && actorId) {
       const merchant = await prisma.merchant.findUnique({ where: { id: actorId } });
       if (!merchant || !merchant.isActive) return null;
-      return { actorType: "merchant", merchant, activeBusinessId: tokenActiveBusinessId };
+      return {
+        actorType: "merchant",
+        merchant,
+        activeBusinessId: merchant.activeBusinessId ?? tokenActiveBusinessId,
+      };
     }
 
     if (actorType === "internal" && actorId) {
@@ -127,12 +130,6 @@ export async function getCurrentMerchantBusinessContext(): Promise<MerchantBusin
     await prisma.merchant.update({
       where: { id: actor.merchant.id },
       data: { activeBusinessId: fallbackMembership.businessId },
-    });
-
-    await setMerchantSessionToken({
-      actorId: actor.merchant.id,
-      email: actor.merchant.email,
-      activeBusinessId: fallbackMembership.businessId,
     });
 
     return {

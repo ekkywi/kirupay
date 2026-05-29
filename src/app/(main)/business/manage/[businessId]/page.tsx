@@ -41,6 +41,15 @@ type InviteRow = {
   usedAt: string | null;
 };
 
+type PendingMemberAction =
+  | { type: "toggle_active"; row: MemberRow; nextIsActive: boolean }
+  | { type: "remove"; row: MemberRow }
+  | { type: "change_role"; row: MemberRow; nextRole: "OWNER" | "ADMIN" | "MEMBER" };
+
+type PendingInviteDeleteAction = {
+  invite: InviteRow;
+};
+
 const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: "entity", label: "Entity", icon: Building2 },
   { id: "members", label: "Members", icon: Users },
@@ -68,13 +77,19 @@ export default function BusinessManagePage() {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [isSavingName, setIsSavingName] = useState(false);
-  const [isPatchingMember, setIsPatchingMember] = useState(false);
+  const [isMutatingMember, setIsMutatingMember] = useState(false);
+  const [pendingMemberAction, setPendingMemberAction] = useState<PendingMemberAction | null>(null);
+  const [showMemberActionModal, setShowMemberActionModal] = useState(false);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const [isSavingWebhook, setIsSavingWebhook] = useState(false);
+  const [isDeletingInvite, setIsDeletingInvite] = useState(false);
+  const [pendingInviteDeleteAction, setPendingInviteDeleteAction] = useState<PendingInviteDeleteAction | null>(null);
+  const [showInviteDeleteModal, setShowInviteDeleteModal] = useState(false);
 
   const role = ctx?.membership.role;
   const isOwner = role === "OWNER";
   const canManageBusiness = isOwner;
+  const canManageInvites = role === "OWNER" || role === "ADMIN";
   const trimmedEditingName = editingName.trim();
   const profileChanged = trimmedEditingName !== (ctx?.business.name ?? "");
   const readApiMessage = (body: unknown, fallback: string) => {
@@ -195,9 +210,7 @@ export default function BusinessManagePage() {
     }
   };
 
-  const patchMember = async (memberId: string, payload: { role?: "OWNER" | "ADMIN" | "MEMBER"; isActive?: boolean }) => {
-    if (isPatchingMember) return;
-    setIsPatchingMember(true);
+  const executePatchMember = async (memberId: string, payload: { role?: "OWNER" | "ADMIN" | "MEMBER"; isActive?: boolean }): Promise<boolean> => {
     try {
       const res = await fetch(`/api/merchant/businesses/${businessId}/members/${memberId}`, {
         method: "PATCH",
@@ -206,15 +219,104 @@ export default function BusinessManagePage() {
       });
       const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
       if (!res.ok) {
-        toast.error(readApiMessage(json, "Failed to update member."));  
-        return;
+        toast.error(readApiMessage(json, "Failed to update member."));
+        return false;
       }
       await loadMembers();
+      return true;
+    } catch {
+      toast.error("Failed to update member.");
+      return false;
+    }
+  };
+
+  const openMemberActionModal = (action: PendingMemberAction) => {
+    if (isMutatingMember || !isOwner) return;
+    setPendingMemberAction(action);
+    setShowMemberActionModal(true);
+  };
+
+  const closeMemberActionModal = () => {
+    if (isMutatingMember) return;
+    setShowMemberActionModal(false);
+    setPendingMemberAction(null);
+  };
+
+  const confirmMemberAction = async () => {
+    if (isMutatingMember || !pendingMemberAction) return;
+    setIsMutatingMember(true);
+
+    try {
+      if (pendingMemberAction.type === "remove") {
+        const res = await fetch(`/api/merchant/businesses/${businessId}/members/${pendingMemberAction.row.id}`, {
+          method: "DELETE",
+        });
+        const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+        if (!res.ok) {
+          toast.error(readApiMessage(json, "Failed to remove member."));
+          return;
+        }
+        toast.success("Member removed.");
+        await loadMembers();
+        return;
+      }
+
+      if (pendingMemberAction.type === "toggle_active") {
+        const ok = await executePatchMember(pendingMemberAction.row.id, { isActive: pendingMemberAction.nextIsActive });
+        if (ok) {
+          toast.success(pendingMemberAction.nextIsActive ? "Member activated." : "Member deactivated.");
+        }
+        return;
+      }
+
+      const ok = await executePatchMember(pendingMemberAction.row.id, { role: pendingMemberAction.nextRole });
+      if (ok) {
+        toast.success(`Member role updated to ${pendingMemberAction.nextRole}.`);
+      }
     } catch {
       toast.error("Failed to update member.");
     } finally {
-      setIsPatchingMember(false);
+      setShowMemberActionModal(false);
+      setPendingMemberAction(null);
+      setIsMutatingMember(false);
     }
+  };
+
+  const getMemberActionModalContent = () => {
+    if (!pendingMemberAction) {
+      return {
+        title: "Confirm action",
+        description: "",
+        confirmLabel: "Confirm",
+        confirmClassName: "bg-blue-600 hover:bg-blue-700",
+      };
+    }
+
+    if (pendingMemberAction.type === "remove") {
+      return {
+        title: "Remove member",
+        description: `Remove ${pendingMemberAction.row.merchant.email} from this business permanently?`,
+        confirmLabel: "Yes, Remove",
+        confirmClassName: "bg-red-600 hover:bg-red-700",
+      };
+    }
+
+    if (pendingMemberAction.type === "toggle_active") {
+      const nextLabel = pendingMemberAction.nextIsActive ? "activate" : "deactivate";
+      return {
+        title: pendingMemberAction.nextIsActive ? "Reactivate member" : "Deactivate member",
+        description: `Are you sure you want to ${nextLabel} ${pendingMemberAction.row.merchant.email}?`,
+        confirmLabel: pendingMemberAction.nextIsActive ? "Yes, Activate" : "Yes, Deactivate",
+        confirmClassName: pendingMemberAction.nextIsActive ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700",
+      };
+    }
+
+    return {
+      title: "Change member role",
+      description: `Change role for ${pendingMemberAction.row.merchant.email} from ${pendingMemberAction.row.role} to ${pendingMemberAction.nextRole}?`,
+      confirmLabel: "Yes, Change Role",
+      confirmClassName: "bg-blue-600 hover:bg-blue-700",
+    };
   };
 
   const createInvite = async () => {
@@ -239,6 +341,42 @@ export default function BusinessManagePage() {
       toast.error("Failed to create invite.", { id: toastId });
     } finally {
       setIsCreatingInvite(false);
+    }
+  };
+
+  const openInviteDeleteModal = (invite: InviteRow) => {
+    if (isDeletingInvite || !canManageInvites || invite.usedAt) return;
+    setPendingInviteDeleteAction({ invite });
+    setShowInviteDeleteModal(true);
+  };
+
+  const closeInviteDeleteModal = () => {
+    if (isDeletingInvite) return;
+    setShowInviteDeleteModal(false);
+    setPendingInviteDeleteAction(null);
+  };
+
+  const confirmInviteDelete = async () => {
+    if (!pendingInviteDeleteAction || isDeletingInvite) return;
+    setIsDeletingInvite(true);
+    try {
+      const res = await fetch(
+        `/api/merchant/businesses/invites/${pendingInviteDeleteAction.invite.id}?businessId=${encodeURIComponent(businessId)}`,
+        { method: "DELETE" },
+      );
+      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
+      if (!res.ok) {
+        toast.error(readApiMessage(json, "Failed to delete invitation code."));
+        return;
+      }
+      toast.success("Invitation code deleted.");
+      await loadInvites();
+    } catch {
+      toast.error("Failed to delete invitation code.");
+    } finally {
+      setIsDeletingInvite(false);
+      setShowInviteDeleteModal(false);
+      setPendingInviteDeleteAction(null);
     }
   };
 
@@ -363,8 +501,14 @@ export default function BusinessManagePage() {
                   <div className="flex items-center gap-2">
                     <DashboardSelect
                       value={row.role}
-                      onValueChange={(value) => void patchMember(row.id, { role: value as "OWNER" | "ADMIN" | "MEMBER" })}
-                      disabled={!isOwner || isPatchingMember}
+                      onValueChange={(value) =>
+                        openMemberActionModal({
+                          type: "change_role",
+                          row,
+                          nextRole: value as "OWNER" | "ADMIN" | "MEMBER",
+                        })
+                      }
+                      disabled={!isOwner || isMutatingMember}
                       options={[
                         { value: "OWNER", label: "OWNER" },
                         { value: "ADMIN", label: "ADMIN" },
@@ -372,7 +516,26 @@ export default function BusinessManagePage() {
                       ]}
                       className="px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
                     />
-                    <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{row.isActive ? "Deactivate" : "Activate"}</button>
+                    <button
+                      onClick={() =>
+                        openMemberActionModal({
+                          type: "toggle_active",
+                          row,
+                          nextIsActive: !row.isActive,
+                        })
+                      }
+                      disabled={!isOwner || isMutatingMember}
+                      className="dashboard-secondary px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                    >
+                      {row.isActive ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      onClick={() => openMemberActionModal({ type: "remove", row })}
+                      disabled={!isOwner || isMutatingMember}
+                      className="rounded-lg border border-rose-200 px-2 py-1 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/20"
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
               </div>
@@ -396,7 +559,7 @@ export default function BusinessManagePage() {
                 ]}
                 className="px-2 py-2"
               />
-              <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
+              <button onClick={() => void createInvite()} disabled={!canManageInvites || isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
             </div>
             {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-white/[0.03]">{lastCode}</p>}
             <div className="mt-4 rounded-xl border border-blue-900/10 bg-blue-50/45 p-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-300">
@@ -412,8 +575,21 @@ export default function BusinessManagePage() {
             <div className="mt-3 space-y-2">
               {invites.map((item) => (
                 <div key={item.id} className="dashboard-muted-panel px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
-                  <p className="font-semibold">Role {item.role} • code ending {item.codeHint}</p>
-                  <p className="text-slate-500">Expires: {new Date(item.expiresAt).toLocaleString()} • {item.usedAt ? "Used" : "Pending"}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">Role {item.role} • code ending {item.codeHint}</p>
+                      <p className="text-slate-500">Expires: {new Date(item.expiresAt).toLocaleString()} • {item.usedAt ? "Used" : "Pending"}</p>
+                    </div>
+                    {!item.usedAt ? (
+                      <button
+                        onClick={() => openInviteDeleteModal(item)}
+                        disabled={!canManageInvites || isDeletingInvite}
+                        className="rounded-lg border border-rose-200 px-2 py-1 text-[11px] font-semibold text-rose-600 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-900/40 dark:text-rose-400 dark:hover:bg-rose-900/20"
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
               {invites.length === 0 && <p className="text-sm text-slate-500">No invites yet.</p>}
@@ -439,8 +615,8 @@ export default function BusinessManagePage() {
       )}
 
       {showDeactivateModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="flex max-h-[90vh] w-full max-w-md flex-col overflow-y-auto dashboard-card shadow-2xl shadow-black/20 dark:border-white/10 dark:bg-white/[0.045] animate-in zoom-in-95 duration-200">
+        <div className="dashboard-modal-overlay">
+          <div className="dashboard-modal-surface">
             <div className="relative p-6 pb-3 text-center">
               <button
                 onClick={() => setShowDeactivateModal(false)}
@@ -461,7 +637,7 @@ export default function BusinessManagePage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 rounded-b-2xl border-t border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02] sm:flex-row">
+            <div className="dashboard-modal-footer">
               <button
                 onClick={() => setShowDeactivateModal(false)}
                 disabled={isDeactivating}
@@ -481,6 +657,94 @@ export default function BusinessManagePage() {
           </div>
         </div>
       )}
+
+      {showMemberActionModal && pendingMemberAction ? (
+        <div className="dashboard-modal-overlay">
+          <div className="dashboard-modal-surface">
+            <div className="relative p-6 pb-3 text-center">
+              <button
+                onClick={closeMemberActionModal}
+                disabled={isMutatingMember}
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:hover:bg-white/[0.06] dark:hover:text-white"
+              >
+                <X size={18} />
+              </button>
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300">
+                <AlertTriangle size={32} strokeWidth={2.5} />
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white">{getMemberActionModalContent().title}</h3>
+            </div>
+
+            <div className="px-6 pb-6 text-center">
+              <p className="break-words whitespace-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                {getMemberActionModalContent().description}
+              </p>
+            </div>
+
+            <div className="dashboard-modal-footer">
+              <button
+                onClick={closeMemberActionModal}
+                disabled={isMutatingMember}
+                className="order-2 w-full dashboard-secondary px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:order-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void confirmMemberAction()}
+                disabled={isMutatingMember}
+                className={`order-1 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-colors disabled:opacity-60 sm:order-2 ${getMemberActionModalContent().confirmClassName}`}
+              >
+                {isMutatingMember ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {getMemberActionModalContent().confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showInviteDeleteModal && pendingInviteDeleteAction ? (
+        <div className="dashboard-modal-overlay">
+          <div className="dashboard-modal-surface">
+            <div className="relative p-6 pb-3 text-center">
+              <button
+                onClick={closeInviteDeleteModal}
+                disabled={isDeletingInvite}
+                className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 dark:hover:bg-white/[0.06] dark:hover:text-white"
+              >
+                <X size={18} />
+              </button>
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300">
+                <AlertTriangle size={32} strokeWidth={2.5} />
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight text-slate-950 dark:text-white">Delete invitation code</h3>
+            </div>
+
+            <div className="px-6 pb-6 text-center">
+              <p className="break-words whitespace-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                Delete invitation code ending <strong>{pendingInviteDeleteAction.invite.codeHint}</strong>? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="dashboard-modal-footer">
+              <button
+                onClick={closeInviteDeleteModal}
+                disabled={isDeletingInvite}
+                className="order-2 w-full dashboard-secondary px-5 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06] sm:order-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void confirmInviteDelete()}
+                disabled={isDeletingInvite}
+                className="order-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60 sm:order-2"
+              >
+                {isDeletingInvite ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
