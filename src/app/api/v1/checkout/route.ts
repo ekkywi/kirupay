@@ -6,13 +6,14 @@ import { apiError, createRequestId } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
 import { getMissingUsdcConfigKeys, resolveAssetConfig, UsdcConfigError } from "@/lib/asset-config";
 import { resolveSolanaRpcConfig } from "@/lib/solana-rpc";
+import { SUPPORTED_PAYMENT_CURRENCIES } from "@/lib/payment-currencies";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
     orderId: z.string().min(1, "Order ID is required").max(100),
     amount: z.number().positive("Amount must be a positive number"),
-    currency: z.enum(["SOL", "USDC"], {
-        errorMap: () => ({ message: "Supported currencies: SOL, USDC" })
+    currency: z.enum(SUPPORTED_PAYMENT_CURRENCIES, {
+        errorMap: () => ({ message: `Supported currencies: ${SUPPORTED_PAYMENT_CURRENCIES.join(", ")}` })
     }),
     customerEmail: z.string().email("Invalid email address format").optional().nullable(),
     customerReference: z.string().min(1, "Customer reference cannot be empty").max(80, "Customer reference cannot exceed 80 characters").optional().nullable(),

@@ -99,6 +99,28 @@ describe("error contract consistency for internal/merchant routes", () => {
     expect(logRpcUsageEventMock).not.toHaveBeenCalled();
   });
 
+  it("internal rpc telemetry returns 200 on valid payload", async () => {
+    logRpcUsageEventMock.mockResolvedValue(undefined);
+    const { POST } = await import("@/app/api/internal/rpc-telemetry/route");
+
+    const req = new Request("http://localhost/api/internal/rpc-telemetry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation: "wallet.getBalance",
+        endpoint: "https://rpc.devnet.solana.com",
+        primaryEndpoint: "https://rpc.devnet.solana.com",
+      }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { ok: boolean };
+
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(logRpcUsageEventMock).toHaveBeenCalledTimes(1);
+  });
+
   it("internal confirm maps rejection into INTERNAL_CONFIRMATION_REJECTED", async () => {
     confirmTransactionPaymentMock.mockResolvedValue({
       success: false,

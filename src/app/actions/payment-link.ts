@@ -6,6 +6,9 @@ import { getPaymentMaintenanceBlock } from "@/lib/maintenance-policy";
 import { revalidatePath } from "next/cache";
 import { createRequestId, errorDocsUrl, type ApiErrorCode } from "@/lib/api-errors";
 import { recordObservation, startObservation } from "@/lib/observability";
+import { DEFAULT_PAYMENT_CURRENCY, isSupportedPaymentCurrency, type PaymentCurrency } from "@/lib/payment-currencies";
+import { getMissingUsdcConfigKeys, resolveAssetConfig, UsdcConfigError } from "@/lib/asset-config";
+import { resolveSolanaRpcConfig } from "@/lib/solana-rpc";
 
 type ManualLinkActionResult =
   | { success: true; transactionId: string }
@@ -24,6 +27,7 @@ type ManualLinkActionResult =
 export async function createManualPaymentLink(formData: {
   businessId: string;
   amount: number;
+  currency?: string;
   orderId?: string;
   customerEmail?: string;
   customerReference?: string;
@@ -71,6 +75,61 @@ export async function createManualPaymentLink(formData: {
       );
     }
 
+    const rawCurrency = formData.currency?.trim();
+    if (rawCurrency && !isSupportedPaymentCurrency(rawCurrency)) {
+      return fail(
+        400,
+        "CHECKOUT_VALIDATION_FAILED",
+        "Supported currencies: SOL, USDC.",
+        false,
+      );
+    }
+
+    const currency: PaymentCurrency = rawCurrency && isSupportedPaymentCurrency(rawCurrency)
+      ? rawCurrency
+      : DEFAULT_PAYMENT_CURRENCY;
+
+    if (!Number.isFinite(formData.amount) || formData.amount <= 0) {
+      return fail(
+        400,
+        "CHECKOUT_VALIDATION_FAILED",
+        "Amount must be a positive number.",
+        false,
+      );
+    }
+
+    if (currency === "USDC") {
+      const clientCluster = resolveSolanaRpcConfig("client").cluster;
+      const missingClientKeys = getMissingUsdcConfigKeys(clientCluster, "client");
+      if (missingClientKeys.length > 0) {
+        return fail(
+          400,
+          "USDC_CLIENT_CONFIG_MISSING",
+          "USDC checkout client configuration is missing. Please set required NEXT_PUBLIC USDC variables.",
+          false,
+        );
+      }
+
+      try {
+        resolveAssetConfig("USDC", "server");
+      } catch (error: unknown) {
+        if (error instanceof UsdcConfigError) {
+          return fail(
+            500,
+            "USDC_ASSET_CONFIG_MISSING",
+            "USDC checkout server configuration is missing for the active network.",
+            false,
+          );
+        }
+        return fail(
+          500,
+          "INTERNAL_SERVER_ERROR",
+          "USDC checkout is not configured for the active network.",
+          false,
+        );
+      }
+    }
+
     let finalOrderId = formData.orderId;
 
     if (finalOrderId) {
@@ -100,7 +159,7 @@ export async function createManualPaymentLink(formData: {
         businessId: formData.businessId,
         orderId: finalOrderId,
         amount: formData.amount,
-        currency: "SOL",
+        currency,
         customerEmail: formData.customerEmail || null,
         customerReference: formData.customerReference?.trim() || null,
         customerName: formData.customerName?.trim() || null,

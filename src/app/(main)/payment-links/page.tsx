@@ -8,6 +8,7 @@ import { LinkTable } from "@/components/dashboard/LinkTable";
 import { ArrowUpRight, CheckCircle2, Clock3, LinkIcon, ReceiptText, Send } from "lucide-react";
 import type { Prisma } from "@prisma/client";
 import Link from "next/link";
+import { formatCurrencyDisplay } from "@/lib/currency-format";
 
 export const metadata: Metadata = {
   title: "Payment Links",
@@ -55,12 +56,13 @@ export default async function PaymentLinksPage({
   };
 
   // 3. Hitung total data untuk Paginasi
-  const [totalItems, paidStats, pendingCount, failedCount] = await Promise.all([
+  const [totalItems, paidStatsByCurrency, pendingCount, failedCount] = await Promise.all([
     prisma.transaction.count({ where: whereCondition }),
-    prisma.transaction.aggregate({
+    prisma.transaction.groupBy({
+      by: ["currency"],
       where: { ...baseWhere, status: "PAID" },
       _count: { id: true },
-      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _sum: { amount: true, netAmount: true },
     }),
     prisma.transaction.count({ where: { ...baseWhere, status: "PENDING" } }),
     prisma.transaction.count({ where: { ...baseWhere, status: "FAILED" } }),
@@ -76,9 +78,13 @@ export default async function PaymentLinksPage({
     take: ITEMS_PER_PAGE,
   });
 
-  const grossVolume = paidStats._sum.amount || 0;
-  const netVolume = paidStats._sum.netAmount || 0;
-  const paidCount = paidStats._count.id;
+  const paidCount = paidStatsByCurrency.reduce((sum, row) => sum + row._count.id, 0);
+  const netByCurrency = paidStatsByCurrency
+    .map((row) => formatCurrencyDisplay(row.currency, row._sum.netAmount ?? 0))
+    .join(" + ");
+  const grossByCurrency = paidStatsByCurrency
+    .map((row) => formatCurrencyDisplay(row.currency, row._sum.amount ?? 0))
+    .join(" + ");
   const conversionRate = totalItems > 0 ? (paidCount / totalItems) * 100 : 0;
 
   return (
@@ -93,7 +99,7 @@ export default async function PaymentLinksPage({
             Payment links
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Create hosted SOL checkout links for invoices, retainers, and one-off client payments.
+            Create hosted checkout links for invoices, retainers, and one-off client payments.
           </p>
         </div>
 
@@ -110,7 +116,13 @@ export default async function PaymentLinksPage({
         {[
           { icon: Send, label: "Total links", value: totalItems.toString(), detail: "matching current filters", tone: "blue" },
           { icon: CheckCircle2, label: "Paid links", value: paidCount.toString(), detail: `${conversionRate.toFixed(1)}% conversion`, tone: "emerald" },
-          { icon: ReceiptText, label: "Net from links", value: `${netVolume.toFixed(4)} SOL`, detail: `${grossVolume.toFixed(4)} SOL gross`, tone: "emerald" },
+          {
+            icon: ReceiptText,
+            label: "Net from links",
+            value: netByCurrency || "No paid links yet",
+            detail: grossByCurrency ? `${grossByCurrency} gross` : "no gross volume yet",
+            tone: "emerald",
+          },
           { icon: Clock3, label: "Pending / failed", value: `${pendingCount} / ${failedCount}`, detail: "open payment states", tone: "amber" },
         ].map((metric) => (
           <div key={metric.label} className="dashboard-card p-5">

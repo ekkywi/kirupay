@@ -15,6 +15,7 @@ export function useCreatePaymentLink(businessId: string) {
       const result = await createManualPaymentLink({
         businessId,
         amount: parseFloat(formData.get("amount") as string),
+        currency: (formData.get("currency") as string) || undefined,
         orderId: formData.get("orderId") as string,
         customerReference: formData.get("customerReference") as string,
         customerName: formData.get("customerName") as string,

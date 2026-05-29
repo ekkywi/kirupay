@@ -16,17 +16,11 @@ export type MerchantNotification = {
 const POLL_INTERVAL_MS = 10_000;
 const AUTH_BACKOFF_MS = 60_000;
 
-function severityRank(severity: MerchantNotification["severity"]) {
-  if (severity === "ERROR") return 3;
-  if (severity === "WARNING") return 2;
-  return 1;
-}
-
-function sortNotifications(items: MerchantNotification[]) {
+export function sortNotificationsByRecency(items: MerchantNotification[]) {
   return [...items].sort((a, b) => {
-    const rankDiff = severityRank(b.severity) - severityRank(a.severity);
-    if (rankDiff !== 0) return rankDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    const createdAtDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (createdAtDiff !== 0) return createdAtDiff;
+    return b.id.localeCompare(a.id);
   });
 }
 
@@ -117,7 +111,7 @@ export function useNotifications(options?: { isPanelOpen?: boolean }) {
 
       setItems((prev) => {
         const merged = nextCursor ? [...prev, ...incoming] : incoming;
-        return sortNotifications(merged);
+        return sortNotificationsByRecency(merged);
       });
       for (const item of incoming) {
         seenNotificationIdsRef.current.add(item.id);

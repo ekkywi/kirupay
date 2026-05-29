@@ -67,6 +67,9 @@ describe("smoke: checkout create flow", () => {
     process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
     process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
     process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.NEXT_PUBLIC_USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER = "devnet";
     process.env.SOLANA_CLUSTER = "devnet";
     maintenanceMock.mockResolvedValue(null);
     prismaMock.businessCredential.findUnique.mockResolvedValue({

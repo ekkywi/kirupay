@@ -1,5 +1,6 @@
 type Severity = "info" | "warn" | "error";
 type Outcome = "success" | "error";
+type LogLevel = Severity;
 
 type MetricBucket = {
   requests: number;
@@ -32,6 +33,16 @@ const METRIC_STATE = {
   errorsByCode: new Map<ErrorCounterKey, number>(),
 };
 
+const LOG_LEVEL_PRIORITY: Record<Severity, number> = {
+  info: 1,
+  warn: 2,
+  error: 3,
+};
+
+const TARGET_INFO_SAMPLE_RATE: Partial<Record<string, number>> = {
+  "POST /api/internal/rpc-telemetry": 0.01,
+};
+
 function ensureBucket(target: string) {
   const existing = METRIC_STATE.byTarget.get(target);
   if (existing) return existing;
@@ -51,6 +62,47 @@ function toLatencyBucket(durationMs: number) {
   if (durationMs < 200) return "50to199ms";
   if (durationMs < 1000) return "200to999ms";
   return "gte1000ms";
+}
+
+function toBoolean(value: string | undefined, fallback: boolean) {
+  if (!value) return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") return true;
+  if (normalized === "false" || normalized === "0" || normalized === "no") return false;
+  return fallback;
+}
+
+function toNumberInRange(value: string | undefined, fallback: number, min: number, max: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(max, Math.max(min, parsed));
+}
+
+function resolveLogLevel(isProduction: boolean): LogLevel {
+  const raw = process.env.OBS_LOG_LEVEL?.trim().toLowerCase();
+  if (raw === "error" || raw === "warn" || raw === "info") return raw;
+  return isProduction ? "warn" : "info";
+}
+
+function shouldLogByLevel(level: Severity, minLevel: LogLevel) {
+  return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[minLevel];
+}
+
+function sanitizeDetails(details: Record<string, unknown> | undefined, isProduction: boolean) {
+  if (!details) return undefined;
+  const includeDetailsInProd = toBoolean(process.env.OBS_DETAILS_IN_PROD, false);
+  if (!isProduction || includeDetailsInProd) return details;
+  return undefined;
+}
+
+function shouldSampleInfo(target: string, isProduction: boolean) {
+  if (!isProduction) return true;
+  const globalSampleRate = toNumberInRange(process.env.OBS_INFO_SAMPLE_RATE, 0.05, 0, 1);
+  const targetRate = TARGET_INFO_SAMPLE_RATE[target];
+  const sampleRate = typeof targetRate === "number" ? targetRate : globalSampleRate;
+  if (sampleRate >= 1) return true;
+  if (sampleRate <= 0) return false;
+  return Math.random() < sampleRate;
 }
 
 export function startObservation(requestId: string, target: string): TimerContext {
@@ -74,7 +126,14 @@ export function recordObservation(
 ) {
   const durationMs = Date.now() - ctx.startedAt;
   const event = input.event ?? "api.request";
-  const severity: Severity = input.severity ?? (input.outcome === "error" ? "error" : "info");
+  const isProduction = process.env.NODE_ENV === "production";
+  const slowWarnLatencyMs = toNumberInRange(process.env.OBS_WARN_LATENCY_MS, 1000, 1, 60_000);
+
+  const baseSeverity: Severity = input.severity ?? (input.outcome === "error" ? "error" : "info");
+  const severity: Severity =
+    input.outcome === "success" && baseSeverity === "info" && durationMs >= slowWarnLatencyMs
+      ? "warn"
+      : baseSeverity;
 
   const bucket = ensureBucket(ctx.target);
   bucket.requests += 1;
@@ -94,8 +153,14 @@ export function recordObservation(
     status: input.status,
     durationMs,
     errorCode: input.errorCode,
-    details: input.details,
+    details: sanitizeDetails(input.details, isProduction),
   };
+
+  const minLevel = resolveLogLevel(isProduction);
+  const infoEnabledInProd = toBoolean(process.env.OBS_INFO_ENABLED_IN_PROD, false);
+  if (!shouldLogByLevel(severity, minLevel)) return;
+  if (isProduction && severity === "info" && !infoEnabledInProd) return;
+  if (severity === "info" && !shouldSampleInfo(ctx.target, isProduction)) return;
 
   const logMethod = severity === "error" ? console.error : severity === "warn" ? console.warn : console.info;
   logMethod("[obs]", {
@@ -117,4 +182,9 @@ export function getObservabilityMetricsSnapshot() {
       return { target, code, count: value };
     }),
   };
+}
+
+export function resetObservabilityMetricsForTest() {
+  METRIC_STATE.byTarget.clear();
+  METRIC_STATE.errorsByCode.clear();
 }

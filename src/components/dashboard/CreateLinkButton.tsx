@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Copy, Check, AlertCircle } from "lucide-react";
 import { useCreatePaymentLink } from "@/hooks/api/transactions/useCreatePaymentLink";
+import { DEFAULT_PAYMENT_CURRENCY, SUPPORTED_PAYMENT_CURRENCIES } from "@/lib/payment-currencies";
 
 export function CreateLinkButton({ businessId }: { businessId: string }) {
   const { loading, generatedLink, errorMsg, generateLink, resetState } = useCreatePaymentLink(businessId);
@@ -34,7 +35,7 @@ export function CreateLinkButton({ businessId }: { businessId: string }) {
         <div className="mb-5">
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">No-code checkout</p>
           <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Create payment link</h3>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Generate a hosted SOL checkout URL for invoices or direct collection.</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Generate a hosted checkout URL for invoices or direct collection.</p>
         </div>
 
         {/* TAMPILKAN BANNER ERROR */}
@@ -48,7 +49,22 @@ export function CreateLinkButton({ businessId }: { businessId: string }) {
         {!generatedLink ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-gray-500 block mb-1">Amount (SOL)*</label>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Currency*</label>
+              <select
+                name="currency"
+                defaultValue={DEFAULT_PAYMENT_CURRENCY}
+                className="w-full dashboard-field p-3 text-sm"
+                required
+              >
+                {SUPPORTED_PAYMENT_CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Amount*</label>
               <input name="amount" type="number" step="0.000000001" min="0" required className="w-full dashboard-field p-3 text-sm" placeholder="0.1" />
             </div>
             <div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDateTime } from "@/lib/local-time";
+import { formatCurrencyNumber } from "@/lib/currency-format";
 
 interface LinkTableProps {
   links: PaymentLinkRow[];
@@ -16,6 +17,7 @@ interface PaymentLinkRow {
   id: string;
   orderId: string;
   amount: number;
+  currency: string;
   feeAmount?: number | null;
   netAmount?: number | null;
   status: string;
@@ -153,13 +155,13 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
                       {link.orderId}
                     </td>
                     <td className="p-4 text-xs font-mono font-medium text-gray-500 dark:text-gray-400">
-                      {link.amount} SOL
+                      {formatCurrencyNumber(link.currency, link.amount)} {link.currency}
                     </td>
                     <td className="p-4 text-xs font-mono font-medium text-red-500 dark:text-red-400">
-                      {link.feeAmount ? `-${link.feeAmount} SOL` : '-'}
+                      {link.feeAmount != null ? `-${formatCurrencyNumber(link.currency, link.feeAmount)} ${link.currency}` : '-'}
                     </td>
                     <td className="p-4 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      {link.netAmount ? `${link.netAmount} SOL` : '-'}
+                      {link.netAmount != null ? `${formatCurrencyNumber(link.currency, link.netAmount)} ${link.currency}` : '-'}
                     </td>
                     <td className="p-4">
                       <span className={`px-2.5 py-1 text-[9px] font-black rounded-full uppercase tracking-wider ${
