@@ -87,7 +87,7 @@ export default function BusinessMembersPage() {
                     value={row.role}
                     onChange={(event) => void patchMember(row.id, { role: event.target.value as "OWNER" | "ADMIN" | "MEMBER" })}
                     disabled={isPatchingMember}
-                    className="rounded-lg border border-emerald-900/10 bg-white/70 px-2 py-1 text-xs dark:border-white/10 dark:bg-white/[0.045]"
+                    className="rounded-lg border border-blue-900/10 bg-white/70 px-2 py-1 text-xs dark:border-white/10 dark:bg-white/[0.045]"
                   >
                     <option value="OWNER">OWNER</option>
                     <option value="ADMIN">ADMIN</option>

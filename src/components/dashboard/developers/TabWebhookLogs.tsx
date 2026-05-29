@@ -176,7 +176,7 @@ export function TabWebhookLogs({ activeTab, businessId }: { activeTab: string; b
                       <button
                         type="button"
                         onClick={() => setSelectedLog(log)}
-                        className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
+                        className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-blue-500/15"
                       >
                         View JSON
                       </button>

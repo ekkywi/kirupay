@@ -30,7 +30,7 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
   };
 
   return (
-    <div className="relative dashboard-card p-5 shadow-sm shadow-emerald-950/5 dark:shadow-none">
+    <div className="relative dashboard-card p-5 shadow-sm shadow-blue-950/5 dark:shadow-none">
       {toast && (
         <div className={`fixed top-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border animate-in slide-in-from-top-5 fade-in duration-300 ${toast.type === "success" ? "bg-white dark:bg-white/[0.045] border-green-200 dark:border-green-900/30" : "bg-white dark:bg-white/[0.045] border-red-200 dark:border-red-900/30"}`}>
           <div className={`shrink-0 rounded-full flex items-center justify-center w-8 h-8 ${toast.type === "success" ? "bg-green-100 text-green-600 dark:bg-green-900/20" : "bg-red-100 text-red-600 dark:bg-red-900/20"}`}>
@@ -106,7 +106,7 @@ export function WalletOverview({ initialWallet, businessId, canManage = true }: 
             void handleConnect();
           }}
           disabled={isLoading || !canManage}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 text-white text-sm font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><LinkIcon className="w-4 h-4" /> Connect Settlement Wallet</>}
         </button>

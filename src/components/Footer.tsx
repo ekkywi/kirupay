@@ -53,7 +53,7 @@ export default function Footer() {
           <div className="max-w-2xl">
             <div className="mb-4 flex items-center gap-2.5 text-base font-black tracking-tight text-slate-950 dark:text-white">
               <span className="relative grid h-9 w-9 place-items-center rounded-full bg-slate-950 text-white dark:bg-white dark:text-slate-950">
-                <span className="absolute inset-1 rounded-full bg-[radial-gradient(circle_at_32%_28%,#67e8f9,transparent_34%),linear-gradient(135deg,#34d399,#059669)]" />
+                <span className="absolute inset-1 rounded-full bg-[radial-gradient(circle_at_32%_28%,#67e8f9,transparent_34%),linear-gradient(135deg,#2563eb,#7c3aed)]" />
                 <span className="relative h-2.5 w-2.5 rounded-full bg-white dark:bg-slate-950" />
               </span>
               Trezalink
@@ -86,7 +86,7 @@ export default function Footer() {
                   key={item.label}
                   className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/72 px-3 py-1.5 text-xs font-black text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-300"
                 >
-                  <Icon className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-300" />
+                  <Icon className="h-3.5 w-3.5 text-emerald-600 dark:text-cyan-300" />
                   {item.label}
                 </span>
               );
@@ -100,7 +100,7 @@ export default function Footer() {
             <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-400">
               Non-custodial checkout links, signed webhooks, and operational visibility for teams building on Solana.
             </p>
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1.5 text-xs font-black text-emerald-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-emerald-200">
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/80 px-3 py-1.5 text-xs font-black text-blue-800 dark:border-emerald-300/15 dark:bg-emerald-300/10 dark:text-cyan-200">
               <Globe2 className="h-3.5 w-3.5" />
               Borderless by default
             </div>
@@ -115,7 +115,7 @@ export default function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="font-semibold transition-colors hover:text-emerald-700 dark:hover:text-emerald-300"
+                        className="font-semibold transition-colors hover:text-blue-700 dark:hover:text-cyan-300"
                       >
                         {link.label}
                       </Link>

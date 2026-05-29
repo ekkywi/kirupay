@@ -143,7 +143,7 @@ export default async function AdminInternalUsersPage({
             <button
               type="button"
               onClick={undefined}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-white opacity-60"
               disabled
               title="Copy manually from the field"
             >
@@ -168,7 +168,7 @@ export default async function AdminInternalUsersPage({
                 required
                 placeholder="team@trezalink.com"
                 disabled={!isSuperadmin}
-                className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
               />
             </div>
 
@@ -176,7 +176,7 @@ export default async function AdminInternalUsersPage({
               name="role"
               defaultValue="SUPPORT"
               disabled={!isSuperadmin}
-              className="w-full dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+              className="w-full dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             >
               <option value="SUPPORT">SUPPORT</option>
               <option value="DEVELOPER">DEVELOPER</option>

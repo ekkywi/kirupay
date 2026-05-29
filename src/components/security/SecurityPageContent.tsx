@@ -145,7 +145,7 @@ const FAQS = [
 
 export default function SecurityPageContent() {
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <SecurityAnalytics />
 
@@ -201,10 +201,10 @@ export default function SecurityPageContent() {
               <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/76 shadow-2xl shadow-slate-900/8 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:shadow-black/30">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
                   <div>
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">Security control console</p>
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-blue-700 dark:text-cyan-300">Security control console</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Current controls only</p>
                   </div>
-                  <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">
+                  <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-blue-800 dark:bg-emerald-300/10 dark:text-cyan-200">
                     Verified flow
                   </span>
                 </div>
@@ -219,7 +219,7 @@ export default function SecurityPageContent() {
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-[1.25rem] border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
                         <div className="flex items-start gap-3">
-                          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+                          <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-100 text-blue-700 dark:bg-emerald-300/10 dark:text-cyan-200">
                             <Check className="h-4 w-4" />
                           </span>
                           <div>
@@ -232,11 +232,11 @@ export default function SecurityPageContent() {
                   </div>
 
                   <div className="relative min-h-[350px] overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white dark:bg-white dark:text-slate-950">
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/25 blur-3xl dark:bg-emerald-400/18" />
+                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-400/22 blur-3xl dark:bg-violet-400/16" />
                     <div className="absolute -bottom-20 left-8 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl dark:bg-cyan-400/14" />
                     <div className="relative flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
                       <span>Boundary map</span>
-                      <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-emerald-200 dark:bg-emerald-100 dark:text-emerald-800">No custody</span>
+                      <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-emerald-200 dark:bg-emerald-100 dark:text-blue-800">No custody</span>
                     </div>
                     <div className="relative mt-8 space-y-3">
                       {[
@@ -282,7 +282,7 @@ export default function SecurityPageContent() {
                 const Icon = item.icon;
                 return (
                   <ScrollReveal key={item.label} delay={index * 70} className="landing-card group h-full rounded-[1.7rem] p-6">
-                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:-translate-y-1 dark:bg-emerald-400/10 dark:text-emerald-300">
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:-translate-y-1 dark:bg-blue-400/10 dark:text-cyan-300">
                       <Icon className="h-5 w-5" />
                     </div>
                     <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
@@ -307,7 +307,7 @@ export default function SecurityPageContent() {
               <div className="mt-8 space-y-3">
                 {TRUST_POINTS.map((point) => (
                   <div key={point} className="flex items-start gap-3 rounded-[1.25rem] border border-slate-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.035]">
-                    <Shield className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                    <Shield className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-cyan-300" />
                     <p className="text-sm leading-6 text-slate-700 dark:text-slate-300">{point}</p>
                   </div>
                 ))}
@@ -316,7 +316,7 @@ export default function SecurityPageContent() {
                 href="/register"
                 eventName="cta_click"
                 eventData={{ placement: "security_middle_primary" }}
-                className="mt-8 inline-flex items-center gap-2 text-sm font-black text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:text-blue-800 dark:text-cyan-300 dark:hover:text-cyan-200"
               >
                 Start secure onboarding
                 <ArrowUpRight className="h-4 w-4" />
@@ -364,7 +364,7 @@ export default function SecurityPageContent() {
                     href="/docs/security"
                     eventName="cta_click"
                     eventData={{ placement: "security_readiness_docs" }}
-                    className="mt-8 inline-flex items-center gap-2 text-sm font-black text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                    className="mt-8 inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:text-blue-800 dark:text-cyan-300 dark:hover:text-cyan-200"
                   >
                     Read security docs
                     <ArrowUpRight className="h-4 w-4" />
@@ -375,7 +375,7 @@ export default function SecurityPageContent() {
                     const Icon = item.icon;
                     return (
                       <ScrollReveal key={item.title} delay={index * 45} className="rounded-[1.4rem] border border-slate-200/80 bg-white/75 p-5 dark:border-white/10 dark:bg-slate-950/45">
-                        <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        <Icon className="h-5 w-5 text-emerald-600 dark:text-cyan-300" />
                         <h3 className="mt-5 text-lg font-black tracking-tight text-slate-950 dark:text-white">{item.title}</h3>
                         <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">{item.copy}</p>
                       </ScrollReveal>
@@ -452,14 +452,14 @@ export default function SecurityPageContent() {
           href="/register"
           eventName="cta_click"
           eventData={{ placement: "security_mobile_sticky" }}
-          className="landing-btn-primary w-full shadow-lg shadow-emerald-950/20"
+          className="landing-btn-primary w-full shadow-lg shadow-blue-950/20"
         >
           <BadgeCheck className="h-4 w-4" />
           Create Merchant Account
         </TrackingLink>
       </div>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

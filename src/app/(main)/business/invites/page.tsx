@@ -106,7 +106,7 @@ export default function BusinessInvitesPage() {
               <option value="MEMBER">MEMBER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
-            <button onClick={() => void createInvite()} disabled={isCreatingInvite} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
+            <button onClick={() => void createInvite()} disabled={isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
           </div>
           {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs text-slate-700 dark:bg-white/[0.03] dark:text-slate-200">{lastCode}</p>}
         </div>
@@ -124,7 +124,7 @@ export default function BusinessInvitesPage() {
         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent invites</p>
         <div className="mt-4 space-y-2">
           {items.map((item) => (
-            <div key={item.id} className="rounded-lg border border-emerald-900/10 bg-emerald-50/35 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
+            <div key={item.id} className="rounded-lg border border-blue-900/10 bg-emerald-50/35 px-3 py-2 text-xs dark:border-white/10 dark:bg-white/[0.03]">
               <p className="font-semibold text-slate-800 dark:text-slate-100">Role {item.role} • code ending {item.codeHint}</p>
               <p className="text-slate-500 dark:text-slate-400">Expires: {new Date(item.expiresAt).toLocaleString()} • {item.usedAt ? "Used" : "Pending"}</p>
             </div>

@@ -118,7 +118,7 @@ const DATA_TRAIL = [
 
 export default function ArchitecturePageContent() {
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <ArchitectureAnalytics />
 
@@ -151,7 +151,7 @@ export default function ArchitecturePageContent() {
                   {["Non-custodial", "0.3% routing fee", "Signed webhooks", "API checkout"].map((chip) => (
                     <span
                       key={chip}
-                      className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200"
+                      className="rounded-full border border-blue-400/20 bg-blue-400/10 px-3 py-1.5 text-xs font-semibold text-blue-800 dark:text-cyan-200"
                     >
                       {chip}
                     </span>
@@ -182,7 +182,7 @@ export default function ArchitecturePageContent() {
                   href="/developer"
                   eventName="cta_click"
                   eventData={{ placement: "architecture_hero_supporting_api" }}
-                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 transition hover:text-cyan-700 dark:text-emerald-300 dark:hover:text-cyan-200"
+                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 transition hover:text-cyan-700 dark:text-cyan-300 dark:hover:text-cyan-200"
                 >
                   Explore API
                   <ArrowUpRight className="h-4 w-4" />
@@ -192,14 +192,14 @@ export default function ArchitecturePageContent() {
               <ScrollReveal immediate delay={120} variant="right">
                 <div className="landing-showcase relative overflow-hidden rounded-[2rem] p-6 md:p-8">
                   <div className="absolute right-6 top-6 h-28 w-28 rounded-full bg-cyan-300/20 blur-3xl" />
-                  <div className="absolute bottom-8 left-8 h-32 w-32 rounded-full bg-emerald-300/20 blur-3xl" />
+                  <div className="absolute bottom-8 left-8 h-32 w-32 rounded-full bg-blue-300/20 blur-3xl" />
 
-                  <div className="relative flex items-center justify-between border-b border-emerald-400/15 pb-5">
+                  <div className="relative flex items-center justify-between border-b border-blue-400/15 pb-5">
                     <div>
                       <p className="landing-label">System route map</p>
                       <h2 className="mt-2 text-xl font-semibold landing-heading">Checkout to settlement</h2>
                     </div>
-                    <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-emerald-700 dark:text-emerald-300">
+                    <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-3 text-blue-700 dark:text-cyan-300">
                       <Server className="h-5 w-5" />
                     </div>
                   </div>
@@ -208,14 +208,14 @@ export default function ArchitecturePageContent() {
                     {SYSTEM_LAYERS.map((layer, index) => (
                       <div key={layer.label} className="group relative grid grid-cols-[2.5rem_1fr] gap-4">
                         <div className="flex flex-col items-center">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-400/20 bg-white/70 text-xs font-bold text-emerald-800 shadow-sm dark:bg-white/[0.06] dark:text-emerald-200">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-400/20 bg-white/70 text-xs font-bold text-blue-800 shadow-sm dark:bg-white/[0.06] dark:text-cyan-200">
                             {index + 1}
                           </div>
                           {index < SYSTEM_LAYERS.length - 1 ? (
-                            <div className="my-1 h-full min-h-8 w-px bg-gradient-to-b from-emerald-400/40 to-cyan-400/20" />
+                            <div className="my-1 h-full min-h-8 w-px bg-gradient-to-b from-blue-400/40 to-cyan-400/20" />
                           ) : null}
                         </div>
-                        <div className="rounded-2xl border border-emerald-400/10 bg-white/55 p-4 transition group-hover:border-emerald-400/30 dark:bg-white/[0.045]">
+                        <div className="rounded-2xl border border-blue-400/10 bg-white/55 p-4 transition group-hover:border-blue-400/30 dark:bg-white/[0.045]">
                           <p className="text-sm font-semibold landing-heading">{layer.label}</p>
                           <p className="mt-1 text-sm landing-body">{layer.value}</p>
                         </div>
@@ -270,7 +270,7 @@ export default function ArchitecturePageContent() {
 
               <ScrollReveal delay={80} className="landing-card rounded-[1.75rem] p-7">
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-emerald-700 dark:text-emerald-300">
+                  <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-3 text-blue-700 dark:text-cyan-300">
                     <BadgeCheck className="h-5 w-5" />
                   </div>
                   <p className="text-sm font-semibold landing-heading">How Trezalink responds</p>
@@ -307,7 +307,7 @@ export default function ArchitecturePageContent() {
                   <ScrollReveal key={step.title} delay={index * 90} className="relative">
                     <div className="landing-card h-full rounded-2xl p-5">
                       <div className="mb-5 flex items-center justify-between">
-                        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-emerald-700 dark:text-emerald-300">
+                        <div className="rounded-2xl border border-blue-400/20 bg-blue-400/10 p-3 text-blue-700 dark:text-cyan-300">
                           <step.icon className="h-5 w-5" />
                         </div>
                         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
@@ -360,7 +360,7 @@ export default function ArchitecturePageContent() {
                 </div>
                 <div className="space-y-4">
                   {PRODUCT_SURFACES.map((surface) => (
-                    <div key={surface} className="flex items-center gap-3 border-b border-emerald-400/10 pb-4 last:border-0 last:pb-0">
+                    <div key={surface} className="flex items-center gap-3 border-b border-blue-400/10 pb-4 last:border-0 last:pb-0">
                       <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                       <span className="text-sm landing-body">{surface}</span>
                     </div>
@@ -384,7 +384,7 @@ export default function ArchitecturePageContent() {
                     <h3 className="text-lg font-semibold landing-heading">API and webhook loop</h3>
                   </div>
                 </div>
-                <pre className="overflow-x-auto rounded-2xl border border-emerald-400/15 bg-[#07110f] p-4 font-mono text-xs leading-relaxed text-emerald-100 shadow-inner">
+                <pre className="overflow-x-auto rounded-2xl border border-blue-400/15 bg-[#080b1f] p-4 font-mono text-xs leading-relaxed text-emerald-100 shadow-inner">
 {`POST /api/v1/checkout
 Authorization: Bearer <API_KEY>
 
@@ -459,14 +459,14 @@ Authorization: Bearer <API_KEY>
           href="/register"
           eventName="cta_click"
           eventData={{ placement: "architecture_mobile_sticky" }}
-          className="landing-btn-primary w-full shadow-lg shadow-emerald-900/20"
+          className="landing-btn-primary w-full shadow-lg shadow-blue-900/20"
         >
           <BadgeCheck className="h-4 w-4" />
           Create Merchant Account
         </TrackingLink>
       </div>
 
-      <footer className="relative z-10 border-t landing-border bg-[#f6f4ee] dark:bg-[#040807]">
+      <footer className="relative z-10 border-t landing-border bg-[#f4f7ff] dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

@@ -316,14 +316,14 @@ export default function BusinessManagePage() {
           <div className="flex items-center gap-2">
             <Link
               href="/business"
-              className="dashboard-secondary px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              className="dashboard-secondary px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
             >
               Back to Hub
             </Link>
             {activeBusinessId && activeBusinessId !== businessId ? (
               <Link
                 href={`/business/manage/${activeBusinessId}`}
-                className="dashboard-secondary px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                className="dashboard-secondary px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-emerald-300 dark:hover:bg-emerald-500/10"
               >
                 Open Active Business
               </Link>
@@ -332,7 +332,7 @@ export default function BusinessManagePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 dashboard-card p-2 shadow-sm shadow-emerald-950/5 dark:border-white/10 dark:bg-white/[0.045] md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 dashboard-card p-2 shadow-sm shadow-blue-950/5 dark:border-white/10 dark:bg-white/[0.045] md:grid-cols-5">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const selected = activeTab === tab.id;
@@ -340,7 +340,7 @@ export default function BusinessManagePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${selected ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/[0.05]"}`}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${selected ? "bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 text-white" : "text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-white/[0.05]"}`}
             >
               <Icon className="h-4 w-4" /> {tab.label}
             </button>
@@ -355,12 +355,12 @@ export default function BusinessManagePage() {
             <input
               value={editingName}
               onChange={(e) => setEditingName(e.target.value)}
-              className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
+              className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white"
             />
             <button
               onClick={() => void updateBusiness()}
               disabled={!canManageBusiness || !trimmedEditingName || !profileChanged || isSavingName}
-              className="dashboard-secondary px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+              className="dashboard-secondary px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
             >
               {isSavingName ? "Saving..." : "Save"}
             </button>
@@ -386,12 +386,12 @@ export default function BusinessManagePage() {
                     <p className="text-xs text-slate-500">{row.merchant.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select value={row.role} onChange={(e) => void patchMember(row.id, { role: e.target.value as "OWNER" | "ADMIN" | "MEMBER" })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs text-slate-700 outline-none transition-colors focus:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
+                    <select value={row.role} onChange={(e) => void patchMember(row.id, { role: e.target.value as "OWNER" | "ADMIN" | "MEMBER" })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
                       <option value="OWNER">OWNER</option>
                       <option value="ADMIN">ADMIN</option>
                       <option value="MEMBER">MEMBER</option>
                     </select>
-                    <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{row.isActive ? "Deactivate" : "Activate"}</button>
+                    <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{row.isActive ? "Deactivate" : "Activate"}</button>
                   </div>
                 </div>
               </div>
@@ -407,11 +407,11 @@ export default function BusinessManagePage() {
             <div className="dashboard-card p-5">
               <p className="text-sm font-semibold">Create invite code</p>
               <div className="mt-3 flex items-center gap-2">
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")} className="dashboard-secondary px-2 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
+                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")} className="dashboard-secondary px-2 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
                   <option value="MEMBER">MEMBER</option>
                   <option value="ADMIN">ADMIN</option>
                 </select>
-                <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
+                <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
               </div>
               {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-white/[0.03]">{lastCode}</p>}
             </div>
@@ -419,8 +419,8 @@ export default function BusinessManagePage() {
             <div className="dashboard-card p-5">
               <p className="text-sm font-semibold">Join with invite code</p>
               <div className="mt-3 flex items-center gap-2">
-                <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
-                <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="dashboard-secondary px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{isJoiningBusiness ? "Joining..." : "Join"}</button>
+                <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
+                <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="dashboard-secondary px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{isJoiningBusiness ? "Joining..." : "Join"}</button>
               </div>
             </div>
           </div>
@@ -447,7 +447,7 @@ export default function BusinessManagePage() {
           <div className="dashboard-card p-5">
             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Webhook endpoint</p>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-              <input value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} placeholder="https://your-api.com/webhooks/trezalink" className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
+              <input value={webhookUrl} onChange={(event) => setWebhookUrl(event.target.value)} placeholder="https://your-api.com/webhooks/trezalink" className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
               <button onClick={() => void saveWebhook()} disabled={!canManageBusiness || isSavingWebhook} className="dashboard-primary px-4 py-2 disabled:opacity-50">{isSavingWebhook ? "Saving..." : "Save URL"}</button>
             </div>
           </div>

@@ -155,7 +155,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
       <div className={`${showControls ? "dashboard-card" : "bg-transparent"} overflow-hidden`}>
         {transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
-            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/15 bg-emerald-400/10">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-400/15 bg-blue-400/10">
               <Activity className="text-emerald-600/70 dark:text-emerald-300/70" size={24} />
             </div>
             <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No transactions found</p>
@@ -165,7 +165,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="dashboard-table-head border-b border-emerald-900/10 dark:border-white/10">
+                <tr className="dashboard-table-head border-b border-blue-900/10 dark:border-white/10">
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest rounded-tl-xl">Order ID</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Source</th>
                   <th className="p-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Gross</th>
@@ -227,7 +227,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                           href={`/pay/${tx.id}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center rounded-lg border border-emerald-900/10 bg-white/70 px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.07]"
+                          className="inline-flex items-center rounded-lg border border-blue-900/10 bg-white/70 px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.07]"
                           title={tx.status === "PAID" ? "Open receipt page" : "Open checkout page"}
                         >
                           {tx.status === "PAID" ? "View Receipt" : "View Checkout"}
@@ -238,7 +238,7 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
                           rel="noopener noreferrer"
                           className={`inline-flex p-2 rounded-lg transition-all ${
                             tx.txSignature
-                              ? "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400 opacity-0 group-hover:opacity-100"
+                              ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 dark:hover:text-cyan-400 opacity-0 group-hover:opacity-100"
                               : "text-gray-300 dark:text-[#2A2A2A] cursor-not-allowed opacity-50"
                           }`}
                           title={tx.txSignature ? "Verify on Solana Explorer" : "No blockchain record yet"}
@@ -265,14 +265,14 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
             <button
               onClick={() => updateURL("page", (currentPage - 1).toString())}
               disabled={currentPage <= 1}
-              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
+              className="rounded-lg border border-blue-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => updateURL("page", (currentPage + 1).toString())}
               disabled={currentPage >= totalPages}
-              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
+              className="rounded-lg border border-blue-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronRight size={16} />
             </button>

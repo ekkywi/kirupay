@@ -83,7 +83,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
                 isActive
-                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+                  ? "bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 text-white shadow-lg shadow-blue-600/20"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
               }`}
             >
@@ -92,7 +92,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
               </span>
               <span>
                 <span className="block text-sm font-semibold">{tab.label}</span>
-                <span className={`block text-xs ${isActive ? "text-emerald-100" : "text-slate-400"}`}>{tab.description}</span>
+                <span className={`block text-xs ${isActive ? "text-blue-100" : "text-slate-400"}`}>{tab.description}</span>
               </span>
             </button>
           );
@@ -135,13 +135,13 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     value={businessName}
                     onChange={(event) => setBusinessName(event.target.value)}
                     placeholder="e.g. Acme Corporation"
-                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
                   />
                   <button
                     type="button"
                     onClick={saveBusinessName}
                     disabled={loading || !businessName.trim() || !profileChanged}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {loading ? "Saving..." : "Save changes"}
@@ -253,13 +253,13 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     value={webhookUrl}
                     onChange={(event) => setWebhookUrl(event.target.value)}
                     placeholder="https://your-api.com/webhooks/trezalink"
-                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 font-mono text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+                    className="min-w-0 flex-1 dashboard-muted-panel px-3 py-3 font-mono text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
                   />
                   <button
                     type="button"
                     onClick={saveWebhookUrl}
                     disabled={loading || !webhookUrl.trim() || !webhookChanged}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {loading ? "Saving..." : "Save endpoint"}
@@ -271,7 +271,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                 <div className="flex items-start gap-3">
                   <BellRing className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <div>
-                    <h4 className="text-sm font-semibold text-emerald-950 dark:text-emerald-100">Signed delivery</h4>
+                    <h4 className="text-sm font-semibold text-emerald-950 dark:text-blue-100">Signed delivery</h4>
                     <p className="mt-1 text-xs leading-relaxed text-emerald-700 dark:text-emerald-200">
                       If this is your first endpoint, Trezalink will automatically generate a webhook signing secret when you save.
                     </p>
@@ -295,7 +295,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                   ].map((item) => {
                     const key = item.key as keyof typeof preferences;
                     return (
-                      <label key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-emerald-900/10 bg-white/70 p-3 dark:border-white/10 dark:bg-white/[0.045]">
+                      <label key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-blue-900/10 bg-white/70 p-3 dark:border-white/10 dark:bg-white/[0.045]">
                         <span className="min-w-0">
                           <span className="block text-sm font-semibold text-slate-900 dark:text-white">{item.label}</span>
                           <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">{item.detail}</span>
@@ -321,7 +321,7 @@ export function SettingsView({ merchant }: { merchant: SettingsMerchant }) {
                     type="button"
                     onClick={() => void saveNotificationPreferences()}
                     disabled={preferencesLoading || !changed}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Save className="h-4 w-4" />
                     {preferencesLoading ? "Saving..." : "Save notification settings"}

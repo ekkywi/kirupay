@@ -18,7 +18,7 @@ export const StatCard = ({ label, value, icon, trend, trendUp, description = "vs
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.3 }}
-    className="dashboard-card group p-5 transition-all hover:border-emerald-300/50 dark:hover:border-emerald-500/25"
+    className="dashboard-card group p-5 transition-all hover:border-blue-300/50 dark:hover:border-cyan-500/25"
   >
     <div className="flex justify-between items-start mb-4">
       <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-300 transition-colors">

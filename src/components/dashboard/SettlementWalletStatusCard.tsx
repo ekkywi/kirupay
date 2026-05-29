@@ -8,7 +8,7 @@ export function SettlementWalletStatusCard({ walletAddress }: { walletAddress: s
   const compactAddress = hasWallet ? `${walletAddress!.slice(0, 6)}...${walletAddress!.slice(-4)}` : "Not linked";
 
   return (
-    <div className="relative dashboard-card p-5 shadow-sm shadow-emerald-950/5 dark:shadow-none">
+    <div className="relative dashboard-card p-5 shadow-sm shadow-blue-950/5 dark:shadow-none">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -28,7 +28,7 @@ export function SettlementWalletStatusCard({ walletAddress }: { walletAddress: s
 
       <Link
         href="/business"
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-4 py-3 text-sm font-semibold text-white hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700"
       >
         Manage in Business Hub
         <ArrowUpRight className="h-4 w-4" />

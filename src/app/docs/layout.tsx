@@ -16,7 +16,7 @@ const HEADER_LINKS = DOCS_NAV.slice(0, 4);
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="landing-root docs-shell relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root docs-shell relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <div className="fixed inset-x-0 top-0 z-50 px-4 pt-4">
         <Navbar />
@@ -73,7 +73,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         </div>
       </main>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

@@ -27,7 +27,7 @@ export function AdminSurface({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-emerald-900/10 bg-white/90 shadow-sm shadow-emerald-950/5 backdrop-blur dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none",
+        "rounded-2xl border border-blue-900/10 bg-white/90 shadow-sm shadow-blue-950/5 backdrop-blur dark:border-white/10 dark:bg-white/[0.035] dark:shadow-none",
         padded && "p-5",
         className
       )}

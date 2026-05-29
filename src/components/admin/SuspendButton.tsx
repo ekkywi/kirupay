@@ -38,7 +38,7 @@ export function SuspendButton({ merchantId, isActive }: { merchantId: string, is
         className={`rounded-lg p-2 transition-colors ${
           isActive
             ? "text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-            : "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+            : "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-cyan-300"
         } ${isPending ? "cursor-not-allowed opacity-50" : ""}`}
         title={isActive ? "Suspend Merchant" : "Re-activate Merchant"}
       >
@@ -89,7 +89,7 @@ export function SuspendButton({ merchantId, isActive }: { merchantId: string, is
                 className={`order-1 w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition-colors sm:order-2 ${
                   isActive 
                     ? "bg-red-600 hover:bg-red-700" 
-                    : "bg-emerald-600 hover:bg-emerald-700"
+                    : "bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700"
                 }`}
               >
                 {isActive ? "Yes, Suspend Access" : "Yes, Reactivate Access"}

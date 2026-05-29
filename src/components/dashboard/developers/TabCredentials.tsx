@@ -66,7 +66,7 @@ function SecretField({
           <button
             type="button"
             onClick={onToggleVisibility}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white hover:text-emerald-600 dark:hover:bg-white/[0.08] dark:hover:text-emerald-300"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-white hover:text-blue-600 dark:hover:bg-white/[0.08] dark:hover:text-cyan-300"
             aria-label={isVisible ? "Hide secret" : "Show secret"}
           >
             {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -77,7 +77,7 @@ function SecretField({
           <button
             type="button"
             onClick={onCopy}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/15"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-blue-500/15"
           >
             <Copy className="h-4 w-4" />
             Copy

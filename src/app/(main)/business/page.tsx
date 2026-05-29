@@ -159,7 +159,7 @@ export default function BusinessHubLandingPage() {
                   )}
                   <Link
                     href={`/business/manage/${item.business.id}`}
-                    className="inline-flex items-center gap-1 rounded-lg border border-emerald-900/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
+                    className="inline-flex items-center gap-1 rounded-lg border border-blue-900/10 bg-white/70 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]"
                   >
                     <Settings2 className="h-3.5 w-3.5" />
                     Manage

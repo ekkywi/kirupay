@@ -223,7 +223,7 @@ export default async function AdminTransactionsPage({
               name="search"
               defaultValue={search}
               placeholder="Search order, reference, business, email, wallet, tx signature..."
-              className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+              className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
 
@@ -232,7 +232,7 @@ export default async function AdminTransactionsPage({
             <select
               name="status"
               defaultValue={status}
-              className="w-full appearance-none dashboard-muted-panel py-3 pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-emerald-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
+              className="w-full appearance-none dashboard-muted-panel py-3 pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
             >
               <option value="ALL">All status</option>
               <option value="PAID">Paid</option>
@@ -244,14 +244,14 @@ export default async function AdminTransactionsPage({
           <select
             name="source"
             defaultValue={source}
-            className="w-full appearance-none dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-emerald-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
+            className="w-full appearance-none dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
           >
             <option value="ALL">All sources</option>
             <option value="CHECKOUT_API">Checkout API</option>
             <option value="PAYMENT_LINK">Payment link</option>
           </select>
 
-          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700">
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700">
             <Search className="h-4 w-4" />
             Search
           </button>
@@ -338,7 +338,7 @@ export default async function AdminTransactionsPage({
                         rel="noopener noreferrer"
                         className={`inline-flex rounded-lg p-2 transition-colors ${
                           transaction.txSignature
-                            ? "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+                            ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-cyan-300"
                             : "cursor-not-allowed text-slate-300 dark:text-slate-700"
                         }`}
                         title={transaction.txSignature ? "View on Solana Explorer" : "No signature yet"}
@@ -355,7 +355,7 @@ export default async function AdminTransactionsPage({
       </AdminSurface>
 
       {totalPages > 1 && (
-        <div className="flex flex-col gap-3 dashboard-card p-4 shadow-sm shadow-emerald-950/5 dark:border-white/10 dark:bg-white/[0.045] dark:shadow-none sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 dashboard-card p-4 shadow-sm shadow-blue-950/5 dark:border-white/10 dark:bg-white/[0.045] dark:shadow-none sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Page <span className="font-semibold text-slate-950 dark:text-white">{currentPage}</span> of{" "}
             <span className="font-semibold text-slate-950 dark:text-white">{totalPages}</span>

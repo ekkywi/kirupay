@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
 
@@ -129,6 +130,105 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
     }
   };
 
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-black/60 px-4 py-6 backdrop-blur-sm">
+      <div className="relative z-[121] max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-blue-900/10 bg-white/98 p-5 shadow-2xl shadow-blue-950/20 ring-1 ring-blue-500/10 backdrop-blur-2xl dark:border-white/10 dark:bg-[#080b1f]/98 dark:shadow-black/45 dark:ring-cyan-400/10">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-slate-950 dark:text-white">Export transactions</h3>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(false)}
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+            aria-label="Close export modal"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            From
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            To
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            Status
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as ExportStatus)}
+              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+            >
+              {EXPORT_STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            Source
+            <select
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value as ExportSource)}
+              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+            >
+              {EXPORT_SOURCE_OPTIONS.map((source) => (
+                <option key={source} value={source}>{source}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 sm:col-span-2">
+            Currency
+            <select
+              value={selectedCurrency}
+              onChange={(e) => setSelectedCurrency(e.target.value)}
+              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+            >
+              {normalizedCurrencyOptions.map((currency) => (
+                <option key={currency} value={currency}>{currency}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {dateError ? <p className="mt-3 text-xs text-red-600 dark:text-red-400">{dateError}</p> : null}
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+          Maximum export range is 1 year.
+        </p>
+
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(false)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={isExporting}
+            className="inline-flex items-center justify-center gap-2 dashboard-primary px-4 py-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Download className="h-4 w-4" />
+            {isExporting ? "Exporting..." : "Download CSV"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <button
@@ -140,104 +240,7 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
         <Download className="h-4 w-4" />
         Export CSV
       </button>
-      {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="dashboard-card w-full max-w-lg p-5 shadow-xl">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-semibold text-slate-950 dark:text-white">Export transactions</h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-                aria-label="Close export modal"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                From
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                To
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-                />
-              </label>
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Status
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value as ExportStatus)}
-                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-                >
-                  {EXPORT_STATUS_OPTIONS.map((status) => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Source
-                <select
-                  value={selectedSource}
-                  onChange={(e) => setSelectedSource(e.target.value as ExportSource)}
-                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-                >
-                  {EXPORT_SOURCE_OPTIONS.map((source) => (
-                    <option key={source} value={source}>{source}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 sm:col-span-2">
-                Currency
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-                >
-                  {normalizedCurrencyOptions.map((currency) => (
-                    <option key={currency} value={currency}>{currency}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {dateError ? <p className="mt-3 text-xs text-red-600 dark:text-red-400">{dateError}</p> : null}
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              Maximum export range is 1 year.
-            </p>
-
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/[0.06]"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={onExport}
-                disabled={isExporting}
-                className="inline-flex items-center justify-center gap-2 dashboard-primary px-4 py-2 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Download className="h-4 w-4" />
-                {isExporting ? "Exporting..." : "Download CSV"}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      {isModalOpen && typeof document !== "undefined" ? createPortal(modalContent, document.body) : null}
     </>
   );
 }

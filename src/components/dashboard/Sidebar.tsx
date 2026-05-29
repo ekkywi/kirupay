@@ -124,15 +124,15 @@ export function Sidebar({ actorType }: SidebarProps) {
 
   return (
     <>
-      <aside className="z-20 hidden w-72 shrink-0 flex-col border-r border-emerald-900/10 bg-[#f8f6ef]/95 shadow-sm shadow-emerald-950/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#07110f]/95 lg:flex">
-        <div className="flex h-16 items-center border-b border-emerald-900/10 px-5 dark:border-white/10">
+      <aside className="z-20 hidden w-72 shrink-0 flex-col border-r border-blue-900/10 bg-[#f8faff]/95 shadow-sm shadow-blue-950/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#080b1f]/95 lg:flex">
+        <div className="flex h-16 items-center border-b border-blue-900/10 px-5 dark:border-white/10">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-emerald-900/20">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-blue-900/20">
               T
             </div>
             <div className="min-w-0">
               <span className="block text-sm font-bold tracking-tight text-slate-950 dark:text-white">Trezalink</span>
-              <span className="block text-[10px] uppercase tracking-[0.2em] text-emerald-700/70 dark:text-emerald-300/70">
+              <span className="block text-[10px] uppercase tracking-[0.2em] text-blue-700/70 dark:text-cyan-300/70">
                 {isAdmin ? "Admin Console" : "Merchant OS"}
               </span>
             </div>
@@ -157,11 +157,11 @@ export function Sidebar({ actorType }: SidebarProps) {
                         href={item.href}
                         className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                           isActive
-                            ? "border border-emerald-400/20 bg-gradient-to-r from-emerald-400/15 to-cyan-400/10 text-emerald-800 shadow-sm shadow-emerald-950/5 dark:text-emerald-200"
+                            ? "border border-blue-400/20 bg-gradient-to-r from-blue-500/15 via-violet-500/10 to-cyan-400/10 text-blue-800 shadow-sm shadow-blue-950/5 dark:text-cyan-100"
                             : "text-slate-500 hover:bg-white/70 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
                         }`}
                       >
-                        <span className={isActive ? "text-emerald-700 dark:text-emerald-300" : "text-slate-400 group-hover:text-current"}>
+                        <span className={isActive ? "text-blue-700 dark:text-cyan-300" : "text-slate-400 group-hover:text-current"}>
                           {item.icon}
                         </span>
                         <span className="flex-1">{item.label}</span>
@@ -169,7 +169,7 @@ export function Sidebar({ actorType }: SidebarProps) {
                       </Link>
 
                       {item.children && isMaintenanceParent ? (
-                        <div className="ml-6 space-y-0.5 border-l border-emerald-400/20 pl-3">
+                        <div className="ml-6 space-y-0.5 border-l border-blue-400/20 pl-3">
                           {item.children.map((child) => {
                             const childIsActive =
                               pathname === child.href ||
@@ -181,7 +181,7 @@ export function Sidebar({ actorType }: SidebarProps) {
                                 href={child.href}
                                 className={`block rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
                                   childIsActive
-                                    ? "bg-emerald-400/10 text-emerald-800 dark:text-emerald-200"
+                                    ? "bg-blue-400/10 text-blue-800 dark:text-cyan-200"
                                     : "text-slate-500 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-slate-100"
                                 }`}
                               >
@@ -199,7 +199,7 @@ export function Sidebar({ actorType }: SidebarProps) {
           ))}
         </nav>
 
-        <div className="m-3 rounded-2xl border border-emerald-400/20 bg-white/65 p-4 shadow-sm shadow-emerald-950/5 dark:bg-white/[0.04]">
+        <div className="m-3 rounded-2xl border border-blue-400/20 bg-white/65 p-4 shadow-sm shadow-blue-950/5 dark:bg-white/[0.04]">
           <p className="text-xs font-semibold text-slate-950 dark:text-white">Production mode</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
             SOL settlement, live API keys, and signed webhook delivery are active.
@@ -207,7 +207,7 @@ export function Sidebar({ actorType }: SidebarProps) {
         </div>
       </aside>
 
-      <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-emerald-400/20 bg-white/95 p-1.5 shadow-xl shadow-emerald-950/10 backdrop-blur dark:border-white/10 dark:bg-[#07110f]/95 dark:shadow-black/30 lg:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-blue-400/20 bg-white/95 p-1.5 shadow-xl shadow-blue-950/10 backdrop-blur dark:border-white/10 dark:bg-[#080b1f]/95 dark:shadow-black/30 lg:hidden">
         <div className="grid grid-cols-5 gap-1">
           {mobileItems.map((item) => {
             const isActive = isItemActive(pathname, item);
@@ -218,7 +218,7 @@ export function Sidebar({ actorType }: SidebarProps) {
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold transition-colors ${
                   isActive
-                    ? "bg-emerald-400/15 text-emerald-800 dark:text-emerald-200"
+                    ? "bg-blue-400/15 text-blue-800 dark:text-cyan-200"
                     : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.05]"
                 }`}
               >

@@ -230,7 +230,7 @@ export default async function MerchantDetailPage({
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`inline-flex rounded-lg p-2 transition-colors ${
-                        tx.txSignature ? "text-slate-400 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300" : "cursor-not-allowed text-slate-300 dark:text-slate-700"
+                        tx.txSignature ? "text-slate-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-cyan-300" : "cursor-not-allowed text-slate-300 dark:text-slate-700"
                       }`}
                     >
                       <ArrowUpRight className="h-4 w-4" />

@@ -149,7 +149,7 @@ const OPERATIONS = [
 
 export default function LandingPage() {
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <LandingAnalytics />
 
@@ -236,7 +236,7 @@ export default function LandingPage() {
                 const Icon = item.icon;
                 return (
                   <ScrollReveal key={item.title} delay={idx * 55} className="landing-card group h-full rounded-[1.6rem] p-5">
-                    <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:-translate-y-1 dark:bg-emerald-400/10 dark:text-emerald-300">
+                    <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:-translate-y-1 dark:bg-blue-400/10 dark:text-cyan-300">
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-lg font-black tracking-tight text-slate-950 dark:text-white">{item.title}</h3>
@@ -260,7 +260,7 @@ export default function LandingPage() {
                 href="/docs/payment-links"
                 eventName="cta_click"
                 eventData={{ placement: "flow_docs" }}
-                className="mt-8 inline-flex items-center gap-2 text-sm font-black text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                className="mt-8 inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:text-blue-800 dark:text-cyan-300 dark:hover:text-cyan-200"
               >
                 Explore payment links <ArrowUpRight className="h-4 w-4" />
               </TrackingLink>
@@ -275,7 +275,7 @@ export default function LandingPage() {
                       <h3 className="mt-2 text-base font-black text-slate-950 dark:text-white">{option.title}</h3>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {option.choices.map((choice) => (
-                          <span key={choice} className={`rounded-full px-2.5 py-1 text-[0.72rem] font-bold ${idx === 1 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"}`}>
+                          <span key={choice} className={`rounded-full px-2.5 py-1 text-[0.72rem] font-bold ${idx === 1 ? "bg-blue-100 text-blue-700 dark:bg-blue-400/10 dark:text-cyan-300" : "bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300"}`}>
                             {choice}
                           </span>
                         ))}
@@ -285,11 +285,11 @@ export default function LandingPage() {
                 </div>
 
                 <div className="relative min-h-[370px] overflow-hidden rounded-[1.5rem] bg-slate-950 p-5 text-white">
-                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/25 blur-3xl" />
+                  <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-400/22 blur-3xl" />
                   <div className="absolute -bottom-20 left-8 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
                   <div className="relative flex items-center justify-between text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
                     <span>Trezalink checkout</span>
-                    <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-emerald-200">Live</span>
+                    <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-emerald-200">Live</span>
                   </div>
                   <div className="relative mt-10 rounded-[1.4rem] border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-black/20">
                     <p className="text-sm text-slate-400">Invoice #TL-2049</p>
@@ -302,7 +302,7 @@ export default function LandingPage() {
                         <CreditCard className="h-8 w-8" />
                       </div>
                     </div>
-                    <div className="mt-6 rounded-2xl bg-emerald-400 px-4 py-3 text-center text-sm font-black text-slate-950">
+                    <div className="mt-6 rounded-2xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-4 py-3 text-center text-sm font-black text-slate-950">
                       Pay securely
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export default function LandingPage() {
                     const Icon = item.icon;
                     return (
                       <ScrollReveal key={item.value} delay={idx * 60} className="rounded-[1.4rem] border border-slate-200/80 bg-white/75 p-5 dark:border-white/10 dark:bg-slate-950/45">
-                        <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        <Icon className="h-5 w-5 text-emerald-600 dark:text-cyan-300" />
                         <p className="mt-5 text-2xl font-black tracking-tight text-slate-950 dark:text-white">{item.value}</p>
                         <p className="mt-2 text-sm leading-5 text-slate-500 dark:text-slate-400">{item.label}</p>
                       </ScrollReveal>
@@ -423,7 +423,7 @@ export default function LandingPage() {
               <ul className="mt-8 space-y-4">
                 {OPERATIONS.map((item) => (
                   <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                    <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-cyan-300" />
                     {item}
                   </li>
                 ))}
@@ -472,14 +472,14 @@ export default function LandingPage() {
           href="/register"
           eventName="cta_click"
           eventData={{ placement: "mobile_sticky" }}
-          className="landing-btn-primary w-full shadow-lg shadow-emerald-950/20"
+          className="landing-btn-primary w-full shadow-lg shadow-blue-950/20"
         >
           <CreditCard className="h-4 w-4" />
           Create Merchant Account
         </TrackingLink>
       </div>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

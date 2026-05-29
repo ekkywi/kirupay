@@ -55,21 +55,21 @@ export default function SetupGatekeeper({ businessId, currentEmail, isWalletUser
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="relative">
                   <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="text" placeholder="Business Name" required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-colors" />
+                  <input type="text" placeholder="Business Name" required value={businessName} onChange={(e) => setBusinessName(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="email" placeholder="Real Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-colors" />
+                  <input type="email" placeholder="Real Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="password" placeholder="Create Password" required minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-colors" />
+                  <input type="password" placeholder="Create Password" required minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input type="password" placeholder="Confirm Password" required minLength={12} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-emerald-500 transition-colors" />
+                  <input type="password" placeholder="Confirm Password" required minLength={12} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Save & Verify <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </form>

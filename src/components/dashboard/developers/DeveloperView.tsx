@@ -58,7 +58,7 @@ export function DeveloperView({ merchant, canManage = true }: { merchant: Develo
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all ${
                 isActive
-                  ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+                  ? "bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 text-white shadow-lg shadow-blue-600/20"
                   : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
               }`}
             >

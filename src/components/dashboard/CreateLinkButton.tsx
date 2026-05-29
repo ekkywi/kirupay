@@ -69,7 +69,7 @@ export function CreateLinkButton({ businessId }: { businessId: string }) {
             </div>
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={closeAndReset} className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors">Cancel</button>
-              <button type="submit" disabled={loading} className="flex-1 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-600/20">
+              <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:opacity-50 transition-colors shadow-lg shadow-blue-600/20">
                 {loading ? "Generating..." : "Generate Link"}
               </button>
             </div>
@@ -83,7 +83,7 @@ export function CreateLinkButton({ businessId }: { businessId: string }) {
 
             <div className="flex items-center gap-2 bg-slate-50 dark:bg-white/[0.03] p-3 rounded-xl border border-slate-200 dark:border-white/10">
               <input readOnly value={generatedLink} className="bg-transparent flex-1 outline-none text-xs font-mono dark:text-gray-300" />
-              <button onClick={copyToClipboard} className="text-emerald-600 hover:text-emerald-700 transition-colors p-1">
+              <button onClick={copyToClipboard} className="text-blue-600 hover:text-blue-700 transition-colors p-1">
                 {copied ? <Check size={18} /> : <Copy size={18} />}
               </button>
             </div>

@@ -104,7 +104,7 @@ const RESPONSE_SNIPPET = `{
 
 export default function DeveloperPage() {
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <LandingAnalytics />
 
@@ -162,7 +162,7 @@ export default function DeveloperPage() {
                         <p className="text-xs text-slate-500 dark:text-slate-400">POST /api/v1/checkout</p>
                       </div>
                     </div>
-                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">curl</span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-blue-800 dark:bg-emerald-300/10 dark:text-cyan-200">curl</span>
                   </div>
                   <pre className="overflow-x-auto bg-slate-950 p-5 font-mono text-xs leading-6 text-slate-100 dark:bg-black/55">
                     {CHECKOUT_SNIPPET}
@@ -199,7 +199,7 @@ export default function DeveloperPage() {
                 return (
                   <ScrollReveal key={step.title} delay={index * 90} className="landing-card group relative h-full rounded-[1.7rem] p-6">
                     <span className="absolute right-5 top-5 text-xs font-black text-slate-300 dark:text-slate-600">0{index + 1}</span>
-                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:-translate-y-1 dark:bg-emerald-400/10 dark:text-emerald-300">
+                    <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:-translate-y-1 dark:bg-blue-400/10 dark:text-cyan-300">
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="text-lg font-black tracking-tight text-slate-950 dark:text-white">{step.title}</h3>
@@ -258,7 +258,7 @@ export default function DeveloperPage() {
                     <tbody>
                       {REQUEST_BODY.map((row) => (
                         <tr key={row.field} className="border-b border-slate-200/70 last:border-0 dark:border-white/10">
-                          <td className="py-3 pr-4 font-mono text-xs font-black text-emerald-700 dark:text-emerald-300">{row.field}</td>
+                          <td className="py-3 pr-4 font-mono text-xs font-black text-blue-700 dark:text-cyan-300">{row.field}</td>
                           <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">{row.type}</td>
                           <td className="py-3 pr-4 text-slate-500 dark:text-slate-400">{row.required ? "Yes" : "No"}</td>
                           <td className="py-3 leading-6 text-slate-600 dark:text-slate-400">{row.note}</td>
@@ -279,7 +279,7 @@ export default function DeveloperPage() {
                 <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/76 dark:border-white/10 dark:bg-slate-950/62">
                   <div className="flex items-center justify-between border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
                     <div className="flex items-center gap-2">
-                      <BadgeCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                      <BadgeCheck className="h-4 w-4 text-emerald-600 dark:text-cyan-300" />
                       <span className="text-sm font-black text-slate-950 dark:text-white">Success response</span>
                     </div>
                     <Copy className="h-4 w-4 text-slate-400" />
@@ -302,7 +302,7 @@ export default function DeveloperPage() {
                     const Icon = control.icon;
                     return (
                       <div key={control.title} className="landing-card rounded-[1.25rem] p-5">
-                        <Icon className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                        <Icon className="mb-4 h-5 w-5 text-emerald-600 dark:text-cyan-300" />
                         <h3 className="text-sm font-black text-slate-950 dark:text-white">{control.title}</h3>
                         <p className="mt-2 text-xs leading-5 text-slate-600 dark:text-slate-400">{control.desc}</p>
                       </div>
@@ -332,7 +332,7 @@ export default function DeveloperPage() {
                     "Dashboard state shared with payment records",
                   ].map((item) => (
                     <div key={item} className="flex items-center gap-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
-                      <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                      <Check className="h-4 w-4 shrink-0 text-emerald-600 dark:text-cyan-300" />
                       {item}
                     </div>
                   ))}
@@ -343,10 +343,10 @@ export default function DeveloperPage() {
                 <div className="rounded-[1.5rem] border border-white/70 bg-white/76 p-6 dark:border-white/10 dark:bg-slate-950/62">
                   <div className="mb-6 flex items-center justify-between border-b border-slate-200/70 pb-5 dark:border-white/10">
                     <div>
-                      <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">Webhook event</p>
+                      <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-blue-700 dark:text-cyan-300">Webhook event</p>
                       <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">payment.updated</h3>
                     </div>
-                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200">
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-100 text-blue-700 dark:bg-emerald-300/10 dark:text-cyan-200">
                       <Zap className="h-5 w-5" />
                     </span>
                   </div>
@@ -407,7 +407,7 @@ export default function DeveloperPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

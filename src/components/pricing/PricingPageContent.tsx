@@ -154,7 +154,7 @@ export default function PricingPageContent() {
   };
 
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <PageBackground />
       <PricingAnalytics />
 
@@ -210,10 +210,10 @@ export default function PricingPageContent() {
                 <div className="rounded-[1.5rem] border border-white/70 bg-white/76 p-6 shadow-2xl shadow-slate-900/8 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:shadow-black/30">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">Single plan</p>
+                      <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-blue-700 dark:text-cyan-300">Single plan</p>
                       <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Per successful payment</p>
                     </div>
-                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">
+                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-blue-800 dark:bg-emerald-300/10 dark:text-cyan-200">
                       No hidden tiers
                     </span>
                   </div>
@@ -226,7 +226,7 @@ export default function PricingPageContent() {
                   <div className="mt-8 grid gap-3 sm:grid-cols-3">
                     {HIDDEN_COSTS.map((item) => (
                       <div key={item} className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
-                        <Check className="mb-3 h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                        <Check className="mb-3 h-4 w-4 text-emerald-600 dark:text-cyan-300" />
                         <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item}</p>
                       </div>
                     ))}
@@ -238,7 +238,7 @@ export default function PricingPageContent() {
                       <span className="font-black">9.97 SOL settled</span>
                     </div>
                     <div className="mt-4 h-2 rounded-full bg-white/10 dark:bg-slate-950/10">
-                      <div className="h-full w-[99.7%] rounded-full bg-gradient-to-r from-emerald-300 to-cyan-300" />
+                      <div className="h-full w-[99.7%] rounded-full bg-gradient-to-r from-blue-400 to-cyan-300" />
                     </div>
                   </div>
                 </div>
@@ -261,7 +261,7 @@ export default function PricingPageContent() {
               <div className="grid gap-5 lg:grid-cols-[0.86fr_1.14fr]">
                 <ScrollReveal className="rounded-[1.5rem] border border-white/70 bg-white/76 p-6 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/62">
                   <label htmlFor="sol-amount" className="text-sm font-black text-slate-950 dark:text-white">Transaction amount</label>
-                  <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] border border-slate-200/80 bg-white/88 px-4 py-3 shadow-sm shadow-slate-900/5 focus-within:border-emerald-400 dark:border-white/10 dark:bg-white/[0.04]">
+                  <div className="mt-3 flex items-center gap-3 rounded-[1.25rem] border border-slate-200/80 bg-white/88 px-4 py-3 shadow-sm shadow-slate-900/5 focus-within:border-blue-400 dark:border-white/10 dark:bg-white/[0.04]">
                     <input
                       id="sol-amount"
                       type="number"
@@ -272,7 +272,7 @@ export default function PricingPageContent() {
                       className="w-full bg-transparent text-3xl font-black tracking-[-0.04em] text-slate-950 outline-none placeholder:text-slate-300 dark:text-white dark:placeholder:text-slate-700"
                       placeholder="10"
                     />
-                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">SOL</span>
+                    <span className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-black text-blue-800 dark:bg-emerald-300/10 dark:text-cyan-200">SOL</span>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -281,7 +281,7 @@ export default function PricingPageContent() {
                         key={example}
                         type="button"
                         onClick={() => onPresetClick(example)}
-                        className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-xs font-black text-slate-600 transition-colors hover:border-emerald-300 hover:text-emerald-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:text-emerald-200"
+                        className="rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-xs font-black text-slate-600 transition-colors hover:border-blue-300 hover:text-blue-700 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300 dark:hover:text-cyan-200"
                       >
                         {example} SOL
                       </button>
@@ -295,7 +295,7 @@ export default function PricingPageContent() {
                       ["Merchant receives", formatSol(net)],
                     ].map(([label, value], index) => (
                       <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/10 dark:bg-white/[0.035]">
-                        <span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-black ${index === 2 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-300/10 dark:text-emerald-200" : "bg-white text-slate-500 dark:bg-white/[0.05] dark:text-slate-300"}`}>
+                        <span className={`grid h-9 w-9 place-items-center rounded-full text-xs font-black ${index === 2 ? "bg-emerald-100 text-blue-700 dark:bg-emerald-300/10 dark:text-cyan-200" : "bg-white text-slate-500 dark:bg-white/[0.05] dark:text-slate-300"}`}>
                           {index + 1}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -314,7 +314,7 @@ export default function PricingPageContent() {
                 <ScrollReveal delay={90} variant="right" className="rounded-[1.5rem] bg-slate-950 p-5 text-white dark:bg-white dark:text-slate-950">
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-5 dark:border-slate-950/10">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300 dark:text-emerald-700">Settlement preview</p>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-300 dark:text-blue-700">Settlement preview</p>
                       <h3 className="mt-2 text-2xl font-black tracking-tight">Payment economics</h3>
                     </div>
                     <span className="rounded-full bg-white/[0.08] px-3 py-1.5 text-xs font-bold text-slate-300 dark:bg-slate-950/8 dark:text-slate-600">Wallet-direct</span>
@@ -326,12 +326,12 @@ export default function PricingPageContent() {
                         <p className="text-sm text-slate-400 dark:text-slate-500">Gross</p>
                         <p className="mt-2 text-xl font-black">{formatSol(amount)}</p>
                       </div>
-                      <ArrowRight className="mx-auto h-5 w-5 text-emerald-300 dark:text-emerald-700" />
+                      <ArrowRight className="mx-auto h-5 w-5 text-emerald-300 dark:text-blue-700" />
                       <div className="rounded-2xl bg-white/[0.06] p-4 dark:bg-slate-950/[0.04]">
                         <p className="text-sm text-slate-400 dark:text-slate-500">Fee</p>
                         <p className="mt-2 text-xl font-black">{formatSol(fee)}</p>
                       </div>
-                      <ArrowRight className="mx-auto h-5 w-5 text-emerald-300 dark:text-emerald-700" />
+                      <ArrowRight className="mx-auto h-5 w-5 text-emerald-300 dark:text-blue-700" />
                       <div className="rounded-2xl bg-emerald-300 p-4 text-slate-950">
                         <p className="text-sm text-emerald-900/70">Net</p>
                         <p className="mt-2 text-xl font-black">{formatSol(net)}</p>
@@ -348,7 +348,7 @@ export default function PricingPageContent() {
                         <div key={value} className="rounded-2xl border border-white/10 bg-white/[0.045] p-4 dark:border-slate-950/10 dark:bg-slate-950/[0.035]">
                           <p className="text-xs text-slate-400 dark:text-slate-500">{value.toFixed(2)} SOL</p>
                           <p className="mt-1 text-sm">Fee {sampleFee.toFixed(3)} SOL</p>
-                          <p className="text-sm font-black text-emerald-200 dark:text-emerald-700">Net {sampleNet.toFixed(3)} SOL</p>
+                          <p className="text-sm font-black text-emerald-200 dark:text-blue-700">Net {sampleNet.toFixed(3)} SOL</p>
                         </div>
                       );
                     })}
@@ -390,7 +390,7 @@ export default function PricingPageContent() {
                     const Icon = point.icon;
                     return (
                       <div key={point.title} className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/64 p-4 dark:border-white/10 dark:bg-white/[0.035]">
-                        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+                        <Icon className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-cyan-300" />
                         <div>
                           <p className="font-black text-slate-950 dark:text-white">{point.title}</p>
                           <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{point.copy}</p>
@@ -403,13 +403,13 @@ export default function PricingPageContent() {
 
               <ScrollReveal delay={100} variant="right" className="landing-card rounded-[1.7rem] p-6">
                 <div className="flex items-center gap-3">
-                  <BadgeCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-300" />
+                  <BadgeCheck className="h-5 w-5 text-emerald-600 dark:text-cyan-300" />
                   <h3 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">No hidden cost policy</h3>
                 </div>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   {HIDDEN_COSTS.map((item) => (
                     <div key={item} className="rounded-2xl border border-slate-200/80 bg-white/64 p-4 text-sm font-black text-slate-800 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-200">
-                      <Check className="mb-3 h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                      <Check className="mb-3 h-4 w-4 text-emerald-600 dark:text-cyan-300" />
                       {item}
                     </div>
                   ))}
@@ -493,14 +493,14 @@ export default function PricingPageContent() {
           href="/register"
           eventName="cta_click"
           eventData={{ placement: "pricing_mobile_sticky" }}
-          className="landing-btn-primary w-full shadow-lg shadow-emerald-950/20"
+          className="landing-btn-primary w-full shadow-lg shadow-blue-950/20"
         >
           <Wallet className="h-4 w-4" />
           Create Merchant Account
         </TrackingLink>
       </div>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

@@ -30,7 +30,7 @@ function formatDuration(from: Date, to: Date) {
 }
 
 function statusTone(status: PublicSystemStatus) {
-  if (status === "OPERATIONAL") return "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300";
+  if (status === "OPERATIONAL") return "bg-emerald-50 text-blue-700 dark:bg-emerald-500/10 dark:text-cyan-300";
   if (status === "DEGRADED") return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
   if (status === "PARTIAL_OUTAGE") return "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300";
   return "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300";
@@ -81,7 +81,7 @@ export default async function StatusPage() {
   ];
 
   return (
-    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-emerald-400/25">
+    <div className="landing-root relative min-h-screen overflow-x-hidden selection:bg-blue-400/25">
       <AutoRefresh intervalMs={45000} />
       <PageBackground />
       <StatusAnalytics />
@@ -120,7 +120,7 @@ export default async function StatusPage() {
               <div className="overflow-hidden rounded-[1.5rem] border border-white/70 bg-white/76 shadow-2xl shadow-slate-900/8 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/70 dark:shadow-black/30">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-200/70 px-5 py-4 dark:border-white/10">
                   <div>
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">Status command center</p>
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-blue-700 dark:text-cyan-300">Status command center</p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Auto-refreshes every 45s</p>
                   </div>
                   <span className={`rounded-full px-3 py-1.5 text-xs font-black ${statusTone(summary.systemStatus)}`}>
@@ -169,7 +169,7 @@ export default async function StatusPage() {
                 return (
                   <ScrollReveal key={component.name} delay={index * 70} className="landing-card group h-full rounded-[1.7rem] p-6">
                     <div className="mb-6 flex items-center justify-between gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 transition-transform group-hover:-translate-y-1 dark:bg-emerald-400/10 dark:text-emerald-300">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-700 transition-transform group-hover:-translate-y-1 dark:bg-blue-400/10 dark:text-cyan-300">
                         <Icon className="h-5 w-5" />
                       </div>
                       <span className={`rounded-full px-2.5 py-1 text-xs font-black ${statusTone(component.status)}`}>
@@ -195,7 +195,7 @@ export default async function StatusPage() {
                       <p className="landing-label">Live incidents</p>
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 dark:text-white">Active incidents</h2>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-black ${summary.activeIncidents.length > 0 ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-black ${summary.activeIncidents.length > 0 ? "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "bg-emerald-50 text-blue-700 dark:bg-emerald-500/10 dark:text-cyan-300"}`}>
                       {summary.activeIncidents.length} active
                     </span>
                   </div>
@@ -242,7 +242,7 @@ export default async function StatusPage() {
                       {summary.resolvedIncidents.map((incident) => (
                         <div key={incident.id} className="rounded-[1.25rem] border border-slate-200/80 bg-white/70 p-4 dark:border-white/10 dark:bg-white/[0.035]">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">Resolved</span>
+                            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-black text-blue-700 dark:bg-emerald-500/10 dark:text-cyan-300">Resolved</span>
                             <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-700 dark:bg-white/10 dark:text-slate-300">{incident.phase}</span>
                           </div>
                           <p className="mt-3 text-sm font-black text-slate-950 dark:text-white">{incident.title}</p>
@@ -320,7 +320,7 @@ export default async function StatusPage() {
                   href="/register"
                   eventName="cta_click"
                   eventData={{ placement: "status_final_signup_nudge" }}
-                  className="mt-7 inline-flex items-center gap-2 text-sm font-black text-emerald-700 hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+                  className="mt-7 inline-flex items-center gap-2 text-sm font-black text-blue-700 hover:text-blue-800 dark:text-cyan-300 dark:hover:text-cyan-200"
                 >
                   System is operational. Create merchant account
                   <ArrowRight className="h-4 w-4" />
@@ -331,7 +331,7 @@ export default async function StatusPage() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f6f4ee] dark:border-white/10 dark:bg-[#040807]">
+      <footer className="relative z-10 border-t border-slate-200/70 bg-[#f4f7ff] dark:border-white/10 dark:bg-[#060818]">
         <Footer />
       </footer>
     </div>

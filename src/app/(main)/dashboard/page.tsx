@@ -266,7 +266,7 @@ export default async function DashboardPage() {
             <h3 className="font-semibold text-slate-950 dark:text-white text-base">Recent transactions</h3>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Latest payment attempts and settlements.</p>
           </div>
-          <Link href="/payments" className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 hover:text-emerald-700 transition-colors dark:text-emerald-400">
+          <Link href="/payments" className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600 hover:text-blue-700 transition-colors dark:text-emerald-400">
             View All
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>

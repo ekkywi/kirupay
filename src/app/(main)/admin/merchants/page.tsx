@@ -98,10 +98,10 @@ export default async function AdminMerchantsPage({
               name="search"
               defaultValue={search}
               placeholder="Search by display name or merchant email..."
-              className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-emerald-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
+              className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
-          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700">
+          <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700">
             <Search className="h-4 w-4" />
             Search
           </button>
@@ -185,7 +185,7 @@ export default async function AdminMerchantsPage({
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/admin/merchants/${merchant.id}`}
-                        className="inline-flex rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+                        className="inline-flex rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-500/10 dark:hover:text-cyan-300"
                         title="View merchant profile"
                       >
                         <ExternalLink className="h-4 w-4" />

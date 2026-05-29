@@ -76,7 +76,7 @@ export default function Navbar() {
           className="group flex items-center gap-2.5 rounded-full px-2 py-1.5 text-base font-black tracking-tight text-slate-950 transition-opacity hover:opacity-85 dark:text-white"
         >
           <span className="relative grid h-8 w-8 place-items-center rounded-full bg-slate-950 text-white shadow-sm shadow-slate-950/20 dark:bg-white dark:text-slate-950">
-            <span className="absolute inset-1 rounded-full bg-[radial-gradient(circle_at_32%_28%,#67e8f9,transparent_34%),linear-gradient(135deg,#34d399,#059669)] opacity-95" />
+            <span className="absolute inset-1 rounded-full bg-[radial-gradient(circle_at_32%_28%,#67e8f9,transparent_34%),linear-gradient(135deg,#2563eb,#7c3aed_58%,#06b6d4)] opacity-95" />
             <span className="relative h-2.5 w-2.5 rounded-full bg-white dark:bg-slate-950" />
           </span>
           Trezalink
@@ -87,7 +87,7 @@ export default function Navbar() {
             <div key={group.label} className="group relative">
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white/70 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
+                className="inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-white/70 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
               >
                 {group.label}
                 <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
@@ -98,7 +98,7 @@ export default function Navbar() {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className="block rounded-2xl px-3.5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-300 dark:hover:bg-emerald-300/10 dark:hover:text-emerald-200"
+                      className="block rounded-2xl px-3.5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-800 dark:text-slate-300 dark:hover:bg-blue-300/10 dark:hover:text-cyan-200"
                     >
                       {link.label}
                     </Link>
@@ -114,7 +114,7 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setTheme(isDark ? "light" : "dark")}
-              className="grid h-10 w-10 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
+              className="grid h-10 w-10 place-items-center rounded-full text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-slate-300 dark:hover:bg-white/[0.07] dark:hover:text-white"
               aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             >
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -123,14 +123,14 @@ export default function Navbar() {
 
           <Link
             href="/login"
-            className="hidden items-center rounded-full border border-slate-300/80 bg-white/58 px-4 py-2.5 text-sm font-black text-slate-800 transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.045] dark:text-white dark:hover:border-emerald-300/30 dark:hover:bg-white/10 md:inline-flex"
+            className="hidden items-center rounded-full border border-slate-300/80 bg-white/58 px-4 py-2.5 text-sm font-black text-slate-800 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-white dark:border-white/15 dark:bg-white/[0.045] dark:text-white dark:hover:border-cyan-300/30 dark:hover:bg-white/10 md:inline-flex"
           >
             Sign in
           </Link>
 
           <Link
             href="/register"
-            className="group hidden items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-2.5 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:bg-emerald-300 dark:text-slate-950 dark:hover:bg-emerald-200 md:inline-flex"
+            className="group hidden items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-2.5 text-sm font-black text-white shadow-sm shadow-blue-950/20 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent dark:from-blue-400 dark:via-violet-400 dark:to-cyan-300 dark:text-slate-950 md:inline-flex"
           >
             Create Merchant Account
             <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -153,7 +153,7 @@ export default function Navbar() {
           <div className="max-h-[70vh] overflow-y-auto pr-1">
             {NAV_GROUPS.map((group) => (
               <div key={group.label} className="mb-4 border-b border-slate-200/70 pb-4 last:mb-0 last:border-b-0 last:pb-0 dark:border-white/10">
-                <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-300">
+                <p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-blue-700 dark:text-cyan-300">
                   {group.label}
                 </p>
                 <div className="space-y-1">
@@ -162,7 +162,7 @@ export default function Navbar() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileOpen(false)}
-                      className="block rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800 dark:text-slate-200 dark:hover:bg-emerald-300/10 dark:hover:text-emerald-200"
+                      className="block rounded-2xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-800 dark:text-slate-200 dark:hover:bg-blue-300/10 dark:hover:text-cyan-200"
                     >
                       {link.label}
                     </Link>
@@ -175,7 +175,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block rounded-full border border-slate-200/80 px-4 py-3 text-center text-sm font-black text-slate-800 transition-colors hover:border-emerald-300 hover:bg-white dark:border-white/10 dark:text-white dark:hover:bg-white/[0.07]"
+                className="block rounded-full border border-slate-200/80 px-4 py-3 text-center text-sm font-black text-slate-800 transition-colors hover:border-blue-300 hover:bg-white dark:border-white/10 dark:text-white dark:hover:bg-white/[0.07]"
               >
                 Sign in
               </Link>

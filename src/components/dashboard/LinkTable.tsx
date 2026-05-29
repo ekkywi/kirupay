@@ -124,7 +124,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
       <div className="dashboard-card overflow-hidden">
         {links.length === 0 ? (
            <div className="p-12 flex flex-col items-center justify-center text-center">
-             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/15 bg-emerald-400/10">
+             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-400/15 bg-blue-400/10">
                <LinkIcon className="text-emerald-600/70 dark:text-emerald-300/70" size={24} />
              </div>
              <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No links found</h3>
@@ -135,7 +135,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap border-collapse">
-              <thead className="dashboard-table-head border-b border-emerald-900/10 dark:border-white/10">
+              <thead className="dashboard-table-head border-b border-blue-900/10 dark:border-white/10">
                 <tr>
                   <th className="p-4 font-black text-[10px] uppercase tracking-widest rounded-tl-xl">Reference ID</th>
                   <th className="p-4 font-black text-[10px] uppercase tracking-widest">Gross</th>
@@ -178,7 +178,7 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
                     <td className="p-4 flex justify-end gap-1">
                       <button
                         onClick={() => handleCopy(link.id)}
-                        className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
                         title="Copy Link"
                       >
                         {copiedId === link.id ? <Check size={16} className="text-emerald-500"/> : <Copy size={16}/>}
@@ -209,14 +209,14 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
             <button
               onClick={() => updateURL("page", (currentPage - 1).toString())}
               disabled={currentPage <= 1}
-              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
+              className="rounded-lg border border-blue-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => updateURL("page", (currentPage + 1).toString())}
               disabled={currentPage >= totalPages}
-              className="rounded-lg border border-emerald-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
+              className="rounded-lg border border-blue-900/10 bg-white/60 p-2 text-gray-600 transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.04] dark:text-gray-300 dark:hover:bg-white/[0.07]"
             >
               <ChevronRight size={16} />
             </button>
