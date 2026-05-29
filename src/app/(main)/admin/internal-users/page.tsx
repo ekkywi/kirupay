@@ -6,6 +6,7 @@ import { formatLocalDateTime } from "@/lib/local-time";
 import { requireInternalUser } from "@/lib/auth-service";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import { createInternalInviteAction } from "./actions";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 type InternalUsersSearchParams = {
   success?: string;
@@ -172,16 +173,18 @@ export default async function AdminInternalUsersPage({
               />
             </div>
 
-            <select
+            <DashboardSelect
               name="role"
               defaultValue="SUPPORT"
               disabled={!isSuperadmin}
-              className="w-full dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
-            >
-              <option value="SUPPORT">SUPPORT</option>
-              <option value="DEVELOPER">DEVELOPER</option>
-              <option value="SUPERADMIN">SUPERADMIN</option>
-            </select>
+              variant="muted"
+              options={[
+                { value: "SUPPORT", label: "SUPPORT" },
+                { value: "DEVELOPER", label: "DEVELOPER" },
+                { value: "SUPERADMIN", label: "SUPERADMIN" },
+              ]}
+              className="w-full px-3 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+            />
 
             <button
               type="submit"

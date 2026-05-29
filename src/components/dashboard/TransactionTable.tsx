@@ -8,6 +8,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDateTime } from "@/lib/local-time";
 import { formatCurrencyDisplay, formatCurrencyNumber } from "@/lib/currency-format";
 import Link from "next/link";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 interface TransactionRow {
   id: string;
@@ -119,35 +120,36 @@ export function TransactionTable({ transactions, totalPages = 1, showControls = 
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4 text-gray-400 shrink-0" />
-          <select
+          <DashboardSelect
             value={currentStatus}
-            onChange={(e) => updateURL("status", e.target.value)}
-            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
-          >
-            <option value="ALL">All Status</option>
-            <option value="PAID">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-          </select>
-          <select
+            onValueChange={(next) => updateURL("status", next)}
+            options={[
+              { value: "ALL", label: "All Status" },
+              { value: "PAID", label: "Paid" },
+              { value: "PENDING", label: "Pending" },
+              { value: "FAILED", label: "Failed" },
+            ]}
+            className="block w-full py-2 pl-3 sm:w-auto"
+          />
+          <DashboardSelect
             value={currentSource}
-            onChange={(e) => updateURL("source", e.target.value)}
-            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
-          >
-            <option value="ALL">All Sources</option>
-            <option value="API">API</option>
-            <option value="PAYMENT_LINK">Payment Link</option>
-          </select>
-          <select
+            onValueChange={(next) => updateURL("source", next)}
+            options={[
+              { value: "ALL", label: "All Sources" },
+              { value: "API", label: "API" },
+              { value: "PAYMENT_LINK", label: "Payment Link" },
+            ]}
+            className="block w-full py-2 pl-3 sm:w-auto"
+          />
+          <DashboardSelect
             value={currentCurrency}
-            onChange={(e) => updateURL("currency", e.target.value)}
-            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
-          >
-            <option value="ALL">All Currencies</option>
-            {currencyOptions.map((currency) => (
-              <option key={currency} value={currency}>{currency}</option>
-            ))}
-          </select>
+            onValueChange={(next) => updateURL("currency", next)}
+            options={[
+              { value: "ALL", label: "All Currencies" },
+              ...currencyOptions.map((currency) => ({ value: currency, label: currency })),
+            ]}
+            className="block w-full py-2 pl-3 sm:w-auto"
+          />
         </div>
       </div>}
 

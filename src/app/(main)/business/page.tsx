@@ -113,6 +113,14 @@ export default function BusinessHubLandingPage() {
       <div className="dashboard-card p-5">
         <h1 className="text-2xl font-semibold text-slate-950 dark:text-white">Business Hub</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Create entity quickly, then open a dedicated manage page per business.</p>
+        <div className="mt-3">
+          <Link
+            href="/business/invites"
+            className="inline-flex items-center gap-2 rounded-xl border border-blue-900/10 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.07]"
+          >
+            Redeem invite code
+          </Link>
+        </div>
       </div>
 
       <div className="dashboard-card p-5">

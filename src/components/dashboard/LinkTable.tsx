@@ -7,6 +7,7 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebounce } from "@/hooks/useDebounce";
 import { formatLocalDateTime } from "@/lib/local-time";
 import { formatCurrencyNumber } from "@/lib/currency-format";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 interface LinkTableProps {
   links: PaymentLinkRow[];
@@ -110,16 +111,17 @@ export function LinkTable({ links, totalPages }: LinkTableProps) {
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Filter className="h-4 w-4 text-gray-400" />
-          <select
+          <DashboardSelect
             value={currentStatus}
-            onChange={(e) => updateURL("status", e.target.value)}
-            className="dashboard-field block w-full cursor-pointer appearance-none py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 dark:text-slate-300 sm:w-auto"
-          >
-            <option value="ALL">All Status</option>
-            <option value="PAID">Paid</option>
-            <option value="PENDING">Pending</option>
-            <option value="FAILED">Failed</option>
-          </select>
+            onValueChange={(next) => updateURL("status", next)}
+            options={[
+              { value: "ALL", label: "All Status" },
+              { value: "PAID", label: "Paid" },
+              { value: "PENDING", label: "Pending" },
+              { value: "FAILED", label: "Failed" },
+            ]}
+            className="block w-full py-2 pl-3 sm:w-auto"
+          />
         </div>
       </div>
 

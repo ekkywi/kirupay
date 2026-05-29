@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Plus, Copy, Check, AlertCircle } from "lucide-react";
 import { useCreatePaymentLink } from "@/hooks/api/transactions/useCreatePaymentLink";
 import { DEFAULT_PAYMENT_CURRENCY, SUPPORTED_PAYMENT_CURRENCIES } from "@/lib/payment-currencies";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 export function CreateLinkButton({ businessId }: { businessId: string }) {
   const { loading, generatedLink, errorMsg, generateLink, resetState } = useCreatePaymentLink(businessId);
@@ -50,18 +51,12 @@ export function CreateLinkButton({ businessId }: { businessId: string }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Currency*</label>
-              <select
+              <DashboardSelect
                 name="currency"
                 defaultValue={DEFAULT_PAYMENT_CURRENCY}
-                className="w-full dashboard-field p-3 text-sm"
-                required
-              >
-                {SUPPORTED_PAYMENT_CURRENCIES.map((currency) => (
-                  <option key={currency} value={currency}>
-                    {currency}
-                  </option>
-                ))}
-              </select>
+                options={SUPPORTED_PAYMENT_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
+                className="w-full p-3"
+              />
             </div>
             <div>
               <label className="text-xs font-bold text-gray-500 block mb-1">Amount*</label>

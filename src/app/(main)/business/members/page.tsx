@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 type MemberRow = {
   id: string;
@@ -83,16 +84,17 @@ export default function BusinessMembersPage() {
                   <p className="text-xs text-slate-500 dark:text-slate-400">{row.merchant.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
+                  <DashboardSelect
                     value={row.role}
-                    onChange={(event) => void patchMember(row.id, { role: event.target.value as "OWNER" | "ADMIN" | "MEMBER" })}
+                    onValueChange={(value) => void patchMember(row.id, { role: value as "OWNER" | "ADMIN" | "MEMBER" })}
                     disabled={isPatchingMember}
-                    className="rounded-lg border border-blue-900/10 bg-white/70 px-2 py-1 text-xs dark:border-white/10 dark:bg-white/[0.045]"
-                  >
-                    <option value="OWNER">OWNER</option>
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="MEMBER">MEMBER</option>
-                  </select>
+                    options={[
+                      { value: "OWNER", label: "OWNER" },
+                      { value: "ADMIN", label: "ADMIN" },
+                      { value: "MEMBER", label: "MEMBER" },
+                    ]}
+                    className="px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-60"
+                  />
                   <button
                     onClick={() => void patchMember(row.id, { isActive: !row.isActive })}
                     disabled={isPatchingMember}

@@ -6,6 +6,7 @@ import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { AlertTriangle, Building2, KeyRound, LinkIcon, Loader2, Users, Wallet, X } from "lucide-react";
 import { WalletOverview } from "@/components/dashboard/WalletOverview";
 import { DeveloperView } from "@/components/dashboard/developers/DeveloperView";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 import { toast } from "sonner";
 
 type TabId = "entity" | "members" | "invites" | "wallet" | "integrations";
@@ -62,7 +63,6 @@ export default function BusinessManagePage() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER">("MEMBER");
-  const [joinCode, setJoinCode] = useState("");
   const [lastCode, setLastCode] = useState("");
   const [activeBusinessId, setActiveBusinessId] = useState<string | null>(null);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
@@ -70,7 +70,6 @@ export default function BusinessManagePage() {
   const [isSavingName, setIsSavingName] = useState(false);
   const [isPatchingMember, setIsPatchingMember] = useState(false);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
-  const [isJoiningBusiness, setIsJoiningBusiness] = useState(false);
   const [isSavingWebhook, setIsSavingWebhook] = useState(false);
 
   const role = ctx?.membership.role;
@@ -243,30 +242,6 @@ export default function BusinessManagePage() {
     }
   };
 
-  const joinBusiness = async () => {
-    if (!joinCode.trim() || isJoiningBusiness) return;
-    setIsJoiningBusiness(true);
-    const toastId = toast.loading("Joining business...");
-    try {
-      const res = await fetch("/api/merchant/businesses/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: joinCode.trim(), setActive: false }),
-      });
-      const json = (await res.json().catch(() => ({}))) as { message?: string; error?: { message?: string } };
-      if (!res.ok) {
-        toast.error(readApiMessage(json, "Failed to join business."), { id: toastId });
-        return;
-      }
-      setJoinCode("");
-      toast.success("Join request completed.", { id: toastId });
-    } catch {
-      toast.error("Failed to join business.", { id: toastId });
-    } finally {
-      setIsJoiningBusiness(false);
-    }
-  };
-
   const saveWebhook = async () => {
     if (isSavingWebhook) return;
     setIsSavingWebhook(true);
@@ -386,11 +361,17 @@ export default function BusinessManagePage() {
                     <p className="text-xs text-slate-500">{row.merchant.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select value={row.role} onChange={(e) => void patchMember(row.id, { role: e.target.value as "OWNER" | "ADMIN" | "MEMBER" })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
-                      <option value="OWNER">OWNER</option>
-                      <option value="ADMIN">ADMIN</option>
-                      <option value="MEMBER">MEMBER</option>
-                    </select>
+                    <DashboardSelect
+                      value={row.role}
+                      onValueChange={(value) => void patchMember(row.id, { role: value as "OWNER" | "ADMIN" | "MEMBER" })}
+                      disabled={!isOwner || isPatchingMember}
+                      options={[
+                        { value: "OWNER", label: "OWNER" },
+                        { value: "ADMIN", label: "ADMIN" },
+                        { value: "MEMBER", label: "MEMBER" },
+                      ]}
+                      className="px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    />
                     <button onClick={() => void patchMember(row.id, { isActive: !row.isActive })} disabled={!isOwner || isPatchingMember} className="dashboard-secondary px-2 py-1 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{row.isActive ? "Deactivate" : "Activate"}</button>
                   </div>
                 </div>
@@ -403,25 +384,26 @@ export default function BusinessManagePage() {
 
       {activeTab === "invites" && (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="dashboard-card p-5">
-              <p className="text-sm font-semibold">Create invite code</p>
-              <div className="mt-3 flex items-center gap-2">
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as "ADMIN" | "MEMBER")} className="dashboard-secondary px-2 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200">
-                  <option value="MEMBER">MEMBER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-                <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
-              </div>
-              {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-white/[0.03]">{lastCode}</p>}
+          <div className="dashboard-card p-5">
+            <p className="text-sm font-semibold">Create invite code</p>
+            <div className="mt-3 flex items-center gap-2">
+              <DashboardSelect
+                value={inviteRole}
+                onValueChange={(value) => setInviteRole(value as "ADMIN" | "MEMBER")}
+                options={[
+                  { value: "MEMBER", label: "MEMBER" },
+                  { value: "ADMIN", label: "ADMIN" },
+                ]}
+                className="px-2 py-2"
+              />
+              <button onClick={() => void createInvite()} disabled={!canManageBusiness || isCreatingInvite} className="rounded-lg bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">{isCreatingInvite ? "Generating..." : "Generate"}</button>
             </div>
-
-            <div className="dashboard-card p-5">
-              <p className="text-sm font-semibold">Join with invite code</p>
-              <div className="mt-3 flex items-center gap-2">
-                <input value={joinCode} onChange={(e) => setJoinCode(e.target.value)} placeholder="BIZ-XXXXXX-XXXXXX-XXXXXX" className="flex-1 dashboard-muted-panel px-3 py-2 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/60 dark:border-white/10 dark:bg-white/[0.03] dark:text-white" />
-                <button onClick={() => void joinBusiness()} disabled={isJoiningBusiness || !joinCode.trim()} className="dashboard-secondary px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-200 dark:hover:bg-white/[0.06]">{isJoiningBusiness ? "Joining..." : "Join"}</button>
-              </div>
+            {lastCode && <p className="mt-3 rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-white/[0.03]">{lastCode}</p>}
+            <div className="mt-4 rounded-xl border border-blue-900/10 bg-blue-50/45 p-3 text-xs text-slate-600 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-300">
+              Need to join another business?{" "}
+              <Link href="/business/invites" className="font-semibold text-blue-700 hover:underline dark:text-cyan-300">
+                Redeem invite in Business Invites.
+              </Link>
             </div>
           </div>
 

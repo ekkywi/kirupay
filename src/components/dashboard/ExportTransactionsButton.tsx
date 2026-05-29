@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 import { parseApiErrorResponse, toDiagnosticMessage } from "@/lib/api-error-client";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 const EXPORT_STATUS_OPTIONS = ["ALL", "PAID", "PENDING", "FAILED"] as const;
 type ExportStatus = (typeof EXPORT_STATUS_OPTIONS)[number];
@@ -166,39 +167,30 @@ export function ExportTransactionsButton({ currencyOptions }: { currencyOptions:
           </label>
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             Status
-            <select
+            <DashboardSelect
               value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value as ExportStatus)}
-              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-            >
-              {EXPORT_STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
+              onValueChange={(value) => setSelectedStatus(value as ExportStatus)}
+              options={EXPORT_STATUS_OPTIONS.map((status) => ({ value: status, label: status }))}
+              className="mt-1 block w-full px-3 py-2"
+            />
           </label>
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             Source
-            <select
+            <DashboardSelect
               value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value as ExportSource)}
-              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-            >
-              {EXPORT_SOURCE_OPTIONS.map((source) => (
-                <option key={source} value={source}>{source}</option>
-              ))}
-            </select>
+              onValueChange={(value) => setSelectedSource(value as ExportSource)}
+              options={EXPORT_SOURCE_OPTIONS.map((source) => ({ value: source, label: source }))}
+              className="mt-1 block w-full px-3 py-2"
+            />
           </label>
           <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 sm:col-span-2">
             Currency
-            <select
+            <DashboardSelect
               value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-              className="mt-1 block w-full dashboard-field px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
-            >
-              {normalizedCurrencyOptions.map((currency) => (
-                <option key={currency} value={currency}>{currency}</option>
-              ))}
-            </select>
+              onValueChange={setSelectedCurrency}
+              options={normalizedCurrencyOptions.map((currency) => ({ value: currency, label: currency }))}
+              className="mt-1 block w-full px-3 py-2"
+            />
           </label>
         </div>
 

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
 export const metadata: Metadata = {
   title: "Admin Transactions",
@@ -229,27 +230,32 @@ export default async function AdminTransactionsPage({
 
           <div className="relative">
             <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <select
+            <DashboardSelect
               name="status"
               defaultValue={status}
-              className="w-full appearance-none dashboard-muted-panel py-3 pl-10 pr-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
-            >
-              <option value="ALL">All status</option>
-              <option value="PAID">Paid</option>
-              <option value="PENDING">Pending</option>
-              <option value="FAILED">Failed</option>
-            </select>
+              variant="muted"
+              withLeftIcon
+              options={[
+                { value: "ALL", label: "All status" },
+                { value: "PAID", label: "Paid" },
+                { value: "PENDING", label: "Pending" },
+                { value: "FAILED", label: "Failed" },
+              ]}
+              className="w-full py-3"
+            />
           </div>
 
-          <select
+          <DashboardSelect
             name="source"
             defaultValue={source}
-            className="w-full appearance-none dashboard-muted-panel px-3 py-3 text-sm font-semibold text-slate-700 outline-none transition-colors focus:border-blue-500 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-300"
-          >
-            <option value="ALL">All sources</option>
-            <option value="CHECKOUT_API">Checkout API</option>
-            <option value="PAYMENT_LINK">Payment link</option>
-          </select>
+            variant="muted"
+            options={[
+              { value: "ALL", label: "All sources" },
+              { value: "CHECKOUT_API", label: "Checkout API" },
+              { value: "PAYMENT_LINK", label: "Payment link" },
+            ]}
+            className="w-full px-3 py-3"
+          />
 
           <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700">
             <Search className="h-4 w-4" />
