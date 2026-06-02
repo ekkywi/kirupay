@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/internal/rpc-health/cron",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/internal/payment-lifecycle/cron",
-      "schedule": "*/5 * * * *"
+      "schedule": "30 0 * * *"
     }
   ]
 }
