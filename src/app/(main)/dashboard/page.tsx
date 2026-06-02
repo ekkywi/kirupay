@@ -137,8 +137,13 @@ export default async function DashboardPage() {
   const chartCurrencies = Array.from(new Set(last7DaysTx.map((tx) => tx.currency)))
     .sort((a, b) => a.localeCompare(b));
 
-  const chartData: Array<{ date: string } & Record<string, number>> = chartBaseData.map((day) => {
-    const row: { date: string } & Record<string, number> = { date: day.date };
+  type RevenueChartRow = {
+    date: string;
+    [currency: string]: string | number;
+  };
+
+  const chartData: RevenueChartRow[] = chartBaseData.map((day) => {
+    const row: RevenueChartRow = { date: day.date };
     for (const currency of chartCurrencies) {
       row[currency] = 0;
     }
@@ -151,7 +156,7 @@ export default async function DashboardPage() {
     const dayIndex = chartDateMap.findIndex((d) => d === txDateStr);
     if (dayIndex !== -1) {
       const currency = tx.currency;
-      const currentValue = chartData[dayIndex][currency] ?? 0;
+      const currentValue = Number(chartData[dayIndex][currency] ?? 0);
       chartData[dayIndex][currency] = currentValue + (tx.netAmount ?? tx.amount ?? 0);
     }
   });

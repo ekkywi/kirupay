@@ -1,9 +1,44 @@
+import type { Prisma } from "@prisma/client";
 import prisma from "@/lib/neon";
 
 export const PLATFORM_MAINTENANCE_ID = "global";
 
 export const DEFAULT_MAINTENANCE_MESSAGE =
   "The system is currently under maintenance. Please try again later.";
+
+type PlatformOperationsPendingTransaction = Prisma.TransactionGetPayload<{
+  include: {
+    business: {
+      select: {
+        name: true;
+        contactEmail: true;
+      };
+    };
+  };
+}>;
+
+type PlatformOperationsFailedWebhookLog = Prisma.WebhookLogGetPayload<{
+  include: {
+    business: {
+      select: {
+        name: true;
+        contactEmail: true;
+      };
+    };
+  };
+}>;
+
+export type PlatformOperationsSnapshot = {
+  totalTransactions: number;
+  pendingTransactions: number;
+  failedTransactions: number;
+  paidTransactions: number;
+  activeMerchants: number;
+  webhookTotal: number;
+  failedWebhookLogs: number;
+  recentFailedWebhookLogs: PlatformOperationsFailedWebhookLog[];
+  recentPendingTransactions: PlatformOperationsPendingTransaction[];
+};
 
 export type PlatformMaintenanceInput = {
   enabled: boolean;
@@ -225,8 +260,8 @@ export async function upsertPlatformMaintenanceState(input: PlatformMaintenanceI
   return getPlatformMaintenanceState();
 }
 
-export async function getPlatformOperationsSnapshot() {
-  const unresolvedFailedWebhookWhere = {
+export async function getPlatformOperationsSnapshot(): Promise<PlatformOperationsSnapshot> {
+  const unresolvedFailedWebhookWhere: Prisma.WebhookLogWhereInput = {
     retriedFromLogId: null,
     OR: [{ status: null }, { status: { lt: 200 } }, { status: { gte: 300 } }],
     retryChildren: {
@@ -237,7 +272,35 @@ export async function getPlatformOperationsSnapshot() {
         },
       },
     },
-  } as const;
+  };
+
+  const recentFailedWebhookLogsQuery: Promise<PlatformOperationsFailedWebhookLog[]> = prisma.webhookLog.findMany({
+    where: unresolvedFailedWebhookWhere,
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    include: {
+      business: {
+        select: {
+          name: true,
+          contactEmail: true,
+        },
+      },
+    },
+  });
+
+  const recentPendingTransactionsQuery: Promise<PlatformOperationsPendingTransaction[]> = prisma.transaction.findMany({
+    where: { status: "PENDING" },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    include: {
+      business: {
+        select: {
+          name: true,
+          contactEmail: true,
+        },
+      },
+    },
+  });
 
   const [
     totalTransactions,
@@ -259,32 +322,8 @@ export async function getPlatformOperationsSnapshot() {
     prisma.webhookLog.count({
       where: unresolvedFailedWebhookWhere,
     }),
-    prisma.webhookLog.findMany({
-      where: unresolvedFailedWebhookWhere,
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      include: {
-        business: {
-          select: {
-            name: true,
-            contactEmail: true,
-          },
-        },
-      },
-    }),
-    prisma.transaction.findMany({
-      where: { status: "PENDING" },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      include: {
-        business: {
-          select: {
-            name: true,
-            contactEmail: true,
-          },
-        },
-      },
-    }),
+    recentFailedWebhookLogsQuery,
+    recentPendingTransactionsQuery,
   ]);
 
   return {

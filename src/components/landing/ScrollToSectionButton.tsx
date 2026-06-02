@@ -8,9 +8,10 @@ interface ScrollToSectionButtonProps {
   className?: string;
   children: ReactNode;
   eventName: string;
+  eventData?: Record<string, unknown>;
 }
 
-export default function ScrollToSectionButton({ targetId, className, children, eventName }: ScrollToSectionButtonProps) {
+export default function ScrollToSectionButton({ targetId, className, children, eventName, eventData }: ScrollToSectionButtonProps) {
   return (
     <button
       type="button"
@@ -20,7 +21,7 @@ export default function ScrollToSectionButton({ targetId, className, children, e
         if (target) {
           target.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-        trackLandingEvent(eventName, { targetId });
+        trackLandingEvent(eventName, { targetId, ...eventData });
       }}
     >
       {children}

@@ -24,12 +24,14 @@ const TREASURY_SELF_PAYMENT_ERROR = "Payment blocked: buyer wallet cannot be the
 const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 const USDC_DECIMALS = 6;
+const U64_BYTE_MASK = BigInt(0xff);
+const U64_BYTE_SHIFT = BigInt(8);
 
 function writeU64LE(buffer: Buffer, value: bigint, offset: number) {
   let remaining = value;
   for (let i = 0; i < 8; i += 1) {
-    buffer[offset + i] = Number(remaining & 0xffn);
-    remaining >>= 8n;
+    buffer[offset + i] = Number(remaining & U64_BYTE_MASK);
+    remaining >>= U64_BYTE_SHIFT;
   }
 }
 

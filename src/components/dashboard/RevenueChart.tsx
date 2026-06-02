@@ -6,7 +6,10 @@ import { useMemo, useState } from "react";
 import { formatCurrencyDisplay } from "@/lib/currency-format";
 
 interface RevenueChartProps {
-  data: Array<{ date: string } & Record<string, number>>;
+  data: Array<{
+    date: string;
+    [currency: string]: string | number;
+  }>;
   series: Array<{ key: string; label: string; color: string }>;
 }
 

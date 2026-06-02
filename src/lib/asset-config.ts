@@ -2,14 +2,17 @@ import { resolveSolanaRpcConfig } from "@/lib/solana-rpc";
 
 export type CheckoutCurrency = "SOL" | "USDC";
 
+type SolAssetConfig = { currency: "SOL" };
+type UsdcAssetConfig = {
+  currency: "USDC";
+  mint: string;
+  treasuryAta: string;
+  cluster: "devnet" | "testnet" | "mainnet-beta";
+};
+
 type AssetConfig =
-  | { currency: "SOL" }
-  | {
-      currency: "USDC";
-      mint: string;
-      treasuryAta: string;
-      cluster: "devnet" | "testnet" | "mainnet-beta";
-    };
+  | SolAssetConfig
+  | UsdcAssetConfig;
 
 type SolanaCluster = "devnet" | "testnet" | "mainnet-beta";
 type AssetTarget = "server" | "client";
@@ -53,9 +56,9 @@ export function isUsdcEnabled() {
   return readBoolean("USDC_ENABLED", true);
 }
 
-export function getUsdcAllowedClusters() {
+export function getUsdcAllowedClusters(): SolanaCluster[] {
   const raw = readRuntimeEnv("USDC_ALLOWED_CLUSTERS");
-  if (!raw) return ["devnet", "mainnet-beta"] as const;
+  if (!raw) return ["devnet", "mainnet-beta"];
   return raw
     .split(",")
     .map((item) => item.trim())
@@ -120,6 +123,8 @@ export function getMissingUsdcConfigKeys(cluster: SolanaCluster, target: AssetTa
     : readServerUsdcConfig(cluster).missingKeys;
 }
 
+export function resolveAssetConfig(currency: "SOL", target: AssetTarget): SolAssetConfig;
+export function resolveAssetConfig(currency: "USDC", target: AssetTarget): UsdcAssetConfig;
 export function resolveAssetConfig(currency: CheckoutCurrency, target: AssetTarget): AssetConfig {
   if (currency === "SOL") return { currency: "SOL" };
   const cluster = resolveSolanaRpcConfig(target).cluster;

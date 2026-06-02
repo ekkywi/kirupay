@@ -24,6 +24,19 @@ type CurrencyMetric = {
   net: number;
 };
 
+type PaymentMetricCard = {
+  icon: typeof Activity;
+  label: string;
+  value: string | null;
+  detail: string;
+  tone: "emerald" | "amber" | "blue";
+  rows?: Array<{
+    key: string;
+    value: string;
+    subvalue?: string;
+  }>;
+};
+
 export default async function PaymentsPage({
   searchParams,
 }: {
@@ -129,6 +142,43 @@ export default async function PaymentsPage({
       net: 0,
     }
     : null;
+  const paymentMetricCards: PaymentMetricCard[] = [
+    {
+      icon: TrendingUp,
+      label: "Net settlement",
+      value: hasSingleCurrencyView
+        ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.net ?? 0)
+        : null,
+      detail: "after platform fee",
+      tone: "emerald",
+      rows: hasSingleCurrencyView
+        ? []
+        : metricsByCurrency.map((item) => ({
+          key: item.currency,
+          value: formatCurrencyDisplay(item.currency, item.net),
+        })),
+    },
+    {
+      icon: ReceiptText,
+      label: "Gross volume",
+      value: hasSingleCurrencyView
+        ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.gross ?? 0)
+        : null,
+      detail: hasSingleCurrencyView
+        ? `${formatCurrencyDisplay(selectedCurrency, selectedMetric?.fee ?? 0)} fees`
+        : "fee breakdown per currency",
+      tone: "blue",
+      rows: hasSingleCurrencyView
+        ? []
+        : metricsByCurrency.map((item) => ({
+          key: item.currency,
+          value: formatCurrencyDisplay(item.currency, item.gross),
+          subvalue: `${formatCurrencyDisplay(item.currency, item.fee)} fees`,
+        })),
+    },
+    { icon: CheckCircle2, label: "Paid transactions", value: paidCount.toString(), detail: "confirmed payments", tone: "emerald" },
+    { icon: Clock3, label: "Pending / failed", value: `${pendingCount} / ${failedCount}`, detail: "open payment states", tone: "amber" },
+  ];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -160,43 +210,7 @@ export default async function PaymentsPage({
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        {[
-          {
-            icon: TrendingUp,
-            label: "Net settlement",
-            value: hasSingleCurrencyView
-              ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.net ?? 0)
-              : null,
-            detail: "after platform fee",
-            tone: "emerald",
-            rows: hasSingleCurrencyView
-              ? []
-              : metricsByCurrency.map((item) => ({
-                key: item.currency,
-                value: formatCurrencyDisplay(item.currency, item.net),
-              })),
-          },
-          {
-            icon: ReceiptText,
-            label: "Gross volume",
-            value: hasSingleCurrencyView
-              ? formatCurrencyDisplay(selectedCurrency, selectedMetric?.gross ?? 0)
-              : null,
-            detail: hasSingleCurrencyView
-              ? `${formatCurrencyDisplay(selectedCurrency, selectedMetric?.fee ?? 0)} fees`
-              : "fee breakdown per currency",
-            tone: "blue",
-            rows: hasSingleCurrencyView
-              ? []
-              : metricsByCurrency.map((item) => ({
-                key: item.currency,
-                value: formatCurrencyDisplay(item.currency, item.gross),
-                subvalue: `${formatCurrencyDisplay(item.currency, item.fee)} fees`,
-              })),
-          },
-          { icon: CheckCircle2, label: "Paid transactions", value: paidCount.toString(), detail: "confirmed payments", tone: "emerald" },
-          { icon: Clock3, label: "Pending / failed", value: `${pendingCount} / ${failedCount}`, detail: "open payment states", tone: "amber" },
-        ].map((metric) => (
+        {paymentMetricCards.map((metric) => (
           <div key={metric.label} className="dashboard-card p-5">
             <metric.icon className={`mb-4 h-5 w-5 ${metric.tone === "emerald" ? "text-emerald-600 dark:text-emerald-400" : metric.tone === "amber" ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`} />
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{metric.label}</p>

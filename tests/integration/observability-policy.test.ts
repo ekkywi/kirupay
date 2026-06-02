@@ -6,15 +6,17 @@ describe("observability policy", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
     process.env = { ...envBackup };
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     process.env = { ...envBackup };
   });
 
   it("suppresses info logs in production by default but still updates metrics", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -35,7 +37,7 @@ describe("observability policy", () => {
   });
 
   it("applies deterministic info sampling when enabled in production", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     process.env.OBS_LOG_LEVEL = "info";
     process.env.OBS_INFO_ENABLED_IN_PROD = "true";
     process.env.OBS_INFO_SAMPLE_RATE = "0.5";
@@ -55,7 +57,7 @@ describe("observability policy", () => {
   });
 
   it("always logs errors regardless of info suppression settings", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     process.env.OBS_INFO_ENABLED_IN_PROD = "false";
 
     vi.spyOn(console, "info").mockImplementation(() => undefined);
@@ -72,7 +74,7 @@ describe("observability policy", () => {
   });
 
   it("promotes slow success from info to warn in production", async () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     process.env.OBS_WARN_LATENCY_MS = "1000";
 
     vi.spyOn(console, "info").mockImplementation(() => undefined);

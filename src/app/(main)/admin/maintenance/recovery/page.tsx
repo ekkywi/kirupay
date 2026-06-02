@@ -10,9 +10,6 @@ export const metadata: Metadata = {
   title: "Admin Maintenance Recovery",
 };
 
-type OperationsSnapshot = Awaited<ReturnType<typeof getPlatformOperationsSnapshot>>;
-type FailedWebhookLog = OperationsSnapshot["recentFailedWebhookLogs"][number];
-
 function formatDateTime(value: Date | null | undefined) {
   if (!value) return "Not scheduled";
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(value);
@@ -154,7 +151,7 @@ export default async function AdminMaintenanceRecoveryPage({
                 <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">No failed webhook logs found.</div>
               ) : (
                 <div className="divide-y divide-slate-200 dark:divide-white/10">
-                  {snapshot.recentFailedWebhookLogs.map((log: FailedWebhookLog) => (
+                  {snapshot.recentFailedWebhookLogs.map((log) => (
                     <div key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-slate-950 dark:text-white">{log.business.name || "Unnamed business"}</p>
