@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/internal/rpc-health/cron",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/internal/payment-lifecycle/cron",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

@@ -3,48 +3,225 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Activity, Key, Settings, LinkIcon } from "lucide-react";
+import {
+  Activity,
+  BarChart3,
+  Building2,
+  ChevronRight,
+  Code2,
+  Globe,
+  Landmark,
+  LayoutDashboard,
+  LinkIcon,
+  Settings,
+  UserCog,
+  Users,
+  Wrench,
+} from "lucide-react";
 
-export function Sidebar() {
+interface SidebarProps {
+  activeTab?: string;
+  setActiveTab?: (tab: string) => void;
+  actorType: "merchant" | "internal";
+}
+
+type MenuItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  children?: Array<{
+    href: string;
+    label: string;
+  }>;
+};
+
+type MenuCategory = {
+  title: string;
+  items: MenuItem[];
+};
+
+function isItemActive(pathname: string, item: MenuItem) {
+  if (pathname === item.href) return true;
+  if (item.href === "/dashboard") return false;
+  if (item.href === "/business") return pathname.startsWith("/business");
+  return pathname.startsWith(item.href);
+}
+
+export function Sidebar({ actorType }: SidebarProps) {
   const pathname = usePathname();
+  const isAdmin = actorType === "internal";
 
-  const menu = [
-    { href: "/dashboard", label: "Portfolio", icon: <LayoutDashboard size={16}/> },
-    { href: "/dashboard/payments", label: "Transactions", icon: <Activity size={16}/> },
-    { href: "/dashboard/payment-links", label: "Payment Links", icon: <LinkIcon size={16}/> },
-    { href: "/dashboard/api", label: "API Console", icon: <Key size={16}/> },
-    { href: "/dashboard/settings", label: "Settings", icon: <Settings size={16}/> },
+  const merchantMenuCategories: MenuCategory[] = [
+    {
+      title: "MAIN",
+      items: [
+        { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
+        { href: "/payment-links", label: "Payment Links", icon: <LinkIcon size={16} /> },
+        { href: "/payments", label: "Payments", icon: <Activity size={16} /> },
+      ],
+    },
+    {
+      title: "INSIGHTS",
+      items: [{ href: "/analytics", label: "Analytics", icon: <BarChart3 size={16} /> }],
+    },
+    {
+      title: "BUSINESS",
+      items: [{ href: "/business", label: "Business Hub", icon: <Building2 size={16} /> }],
+    },
+    {
+      title: "DEVELOPER",
+      items: [{ href: "/developers", label: "Developers", icon: <Code2 size={16} /> }],
+    },
+    {
+      title: "SETTINGS",
+      items: [{ href: "/settings", label: "Settings", icon: <Settings size={16} /> }],
+    },
   ];
 
+  const adminMenuCategories: MenuCategory[] = [
+    {
+      title: "COMMAND",
+      items: [{ href: "/admin/overview", label: "Overview", icon: <LayoutDashboard size={16} /> }],
+    },
+    {
+      title: "MONEY MOVEMENT",
+      items: [
+        { href: "/admin/transactions", label: "Global Ledger", icon: <Globe size={16} /> },
+        { href: "/admin/revenue", label: "Revenue & Treasury", icon: <Landmark size={16} /> },
+      ],
+    },
+    {
+      title: "NETWORK",
+      items: [
+        { href: "/admin/merchants", label: "Merchant Accounts", icon: <UserCog size={16} /> },
+        { href: "/admin/businesses", label: "Businesses", icon: <Building2 size={16} /> },
+      ],
+    },
+    {
+      title: "OPERATIONS",
+      items: [
+        {
+          href: "/admin/maintenance",
+          label: "Maintenance",
+          icon: <Wrench size={16} />,
+          children: [
+            { href: "/admin/maintenance", label: "Overview" },
+            { href: "/admin/maintenance/rpc-health", label: "RPC Health" },
+            { href: "/admin/maintenance/recovery", label: "Recovery" },
+            { href: "/admin/maintenance/control", label: "Control" },
+          ],
+        },
+      ],
+    },
+    {
+      title: "ACCESS",
+      items: [{ href: "/admin/internal-users", label: "Internal Users", icon: <Users size={16} /> }],
+    },
+  ];
+
+  const menuCategories = isAdmin ? adminMenuCategories : merchantMenuCategories;
+  const mobileItems = menuCategories.flatMap((category) => category.items).slice(0, 5);
+
   return (
-    <aside className="w-56 flex flex-col bg-white dark:bg-[#1E1E1E] border-r border-gray-200 dark:border-[#2A2A2A] z-20">
-      <div className="h-14 flex items-center px-4 border-b border-gray-200 dark:border-[#2A2A2A]">
-        <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center mr-2">
-          <span className="text-white font-bold text-xs">T</span>
+    <>
+      <aside className="z-20 hidden w-72 shrink-0 flex-col border-r border-blue-900/10 bg-[#f8faff]/95 shadow-sm shadow-blue-950/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#080b1f]/95 lg:flex">
+        <div className="flex h-16 items-center border-b border-blue-900/10 px-5 dark:border-white/10">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 via-violet-600 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-blue-900/20">
+              T
+            </div>
+            <div className="min-w-0">
+              <span className="block text-sm font-bold tracking-tight text-slate-950 dark:text-white">Trezalink</span>
+              <span className="block text-[10px] uppercase tracking-[0.2em] text-blue-700/70 dark:text-cyan-300/70">
+                {isAdmin ? "Admin Console" : "Merchant OS"}
+              </span>
+            </div>
+          </div>
         </div>
-        <span className="font-bold text-sm tracking-tight dark:text-white italic">TREZALINK</span>
-      </div>
-      
-      <nav className="flex-1 py-4 space-y-1 px-2">
-        {menu.map((item) => {
-          // Cek apakah URL sekarang sama dengan link menu
-          const isActive = pathname === item.href;
-          
-          return (
-            <Link
-              key={item.href} 
-              href={item.href}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-xs font-semibold transition-all ${
-                isActive 
-                  ? "bg-blue-50 dark:bg-[#2A2D35] text-blue-600 dark:text-blue-400" 
-                  : "text-gray-500 hover:bg-gray-50 dark:hover:bg-[#2A2A2A]"
-              }`}
-            >
-              {item.icon} {item.label}
-            </Link>
-          );
-        })}
+
+        <nav className="custom-scrollbar flex-1 space-y-6 overflow-y-auto px-3 py-5">
+          {menuCategories.map((category) => (
+            <div key={category.title} className="space-y-1">
+              <h4 className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                {category.title}
+              </h4>
+
+              <div className="space-y-0.5">
+                {category.items.map((item) => {
+                  const isActive = isItemActive(pathname, item);
+                  const isMaintenanceParent = Boolean(item.children && pathname.startsWith("/admin/maintenance"));
+
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      <Link
+                        href={item.href}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                          isActive
+                            ? "border border-blue-400/20 bg-gradient-to-r from-blue-500/15 via-violet-500/10 to-cyan-400/10 text-blue-800 shadow-sm shadow-blue-950/5 dark:text-cyan-100"
+                            : "text-slate-500 hover:bg-white/70 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
+                        }`}
+                      >
+                        <span className={isActive ? "text-blue-700 dark:text-cyan-300" : "text-slate-400 group-hover:text-current"}>
+                          {item.icon}
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        {isActive ? <ChevronRight size={14} /> : null}
+                      </Link>
+
+                      {item.children && isMaintenanceParent ? (
+                        <div className="ml-6 space-y-0.5 border-l border-blue-400/20 pl-3">
+                          {item.children.map((child) => {
+                            const childIsActive =
+                              pathname === child.href ||
+                              (child.href !== "/admin/maintenance" && pathname.startsWith(child.href));
+
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                className={`block rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                                  childIsActive
+                                    ? "bg-blue-400/10 text-blue-800 dark:text-cyan-200"
+                                    : "text-slate-500 hover:bg-white/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.05] dark:hover:text-slate-100"
+                                }`}
+                              >
+                                {child.label}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-blue-400/20 bg-white/95 p-1.5 shadow-xl shadow-blue-950/10 backdrop-blur dark:border-white/10 dark:bg-[#080b1f]/95 dark:shadow-black/30 lg:hidden">
+        <div className="grid grid-cols-5 gap-1">
+          {mobileItems.map((item) => {
+            const isActive = isItemActive(pathname, item);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold transition-colors ${
+                  isActive
+                    ? "bg-blue-400/15 text-blue-800 dark:text-cyan-200"
+                    : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-white/[0.05]"
+                }`}
+              >
+                {item.icon}
+                <span className="max-w-full truncate">{item.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
-    </aside>
+    </>
   );
 }

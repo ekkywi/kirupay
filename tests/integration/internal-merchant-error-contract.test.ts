@@ -1,0 +1,147 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const getCurrentMerchantMock = vi.fn();
+const confirmTransactionPaymentMock = vi.fn();
+const logRpcUsageEventMock = vi.fn();
+const prismaMock = {
+  merchant: {
+    update: vi.fn(),
+  },
+  transaction: {
+    findUnique: vi.fn(),
+  },
+};
+const verifyCheckoutPaymentOnChainMock = vi.fn();
+
+vi.mock("@/lib/neon", () => ({
+  default: prismaMock,
+}));
+
+vi.mock("@/lib/auth-service", () => ({
+  getCurrentMerchant: getCurrentMerchantMock,
+}));
+
+vi.mock("@/lib/payment-recovery", () => ({
+  confirmTransactionPayment: confirmTransactionPaymentMock,
+}));
+
+vi.mock("@/lib/chain-verification", () => ({
+  verifyCheckoutPaymentOnChain: verifyCheckoutPaymentOnChainMock,
+}));
+
+vi.mock("@/lib/rpc-traffic", () => ({
+  logRpcUsageEvent: logRpcUsageEventMock,
+}));
+
+describe("error contract consistency for internal/merchant routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.transaction.findUnique.mockResolvedValue({
+      id: "txn_1",
+      amount: 1,
+      currency: "SOL",
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      expiresAt: new Date("2026-01-01T00:30:00.000Z"),
+      business: { settlementWallets: [{ walletAddress: "merchant_wallet_1" }] },
+    });
+    verifyCheckoutPaymentOnChainMock.mockResolvedValue({
+      ok: true,
+      buyerWallet: "buyer_wallet_1",
+      verifiedAt: new Date("2026-01-01T00:01:00.000Z").toISOString(),
+      verifiedSlot: 123,
+      verificationSource: "rpc.getParsedTransaction",
+    });
+  });
+
+  it("merchant API key regenerate returns MERCHANT_UNAUTHORIZED", async () => {
+    getCurrentMerchantMock.mockResolvedValue(null);
+    const { POST } = await import("@/app/api/merchant/apikey/regenerate/route");
+
+    const res = await POST();
+    const json = (await res.json()) as { error: { code: string; requestId: string; docsUrl: string } };
+
+    expect(res.status).toBe(401);
+    expect(json.error.code).toBe("MERCHANT_UNAUTHORIZED");
+    expect(json.error.requestId).toMatch(/^req_/);
+    expect(json.error.docsUrl).toContain("error-merchant_unauthorized");
+  });
+
+  it("internal confirm returns missing-fields diagnostics", async () => {
+    const { POST } = await import("@/app/api/internal/confirm/route");
+
+    const req = new Request("http://localhost/api/internal/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("INTERNAL_CONFIRMATION_MISSING_FIELDS");
+  });
+
+  it("internal rpc telemetry returns invalid-payload diagnostics", async () => {
+    const { POST } = await import("@/app/api/internal/rpc-telemetry/route");
+
+    const req = new Request("http://localhost/api/internal/rpc-telemetry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ operation: "wallet.getBalance" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("INTERNAL_RPC_TELEMETRY_INVALID_PAYLOAD");
+    expect(logRpcUsageEventMock).not.toHaveBeenCalled();
+  });
+
+  it("internal rpc telemetry returns 200 on valid payload", async () => {
+    logRpcUsageEventMock.mockResolvedValue(undefined);
+    const { POST } = await import("@/app/api/internal/rpc-telemetry/route");
+
+    const req = new Request("http://localhost/api/internal/rpc-telemetry", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        operation: "wallet.getBalance",
+        endpoint: "https://rpc.devnet.solana.com",
+        primaryEndpoint: "https://rpc.devnet.solana.com",
+      }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { ok: boolean };
+
+    expect(res.status).toBe(200);
+    expect(json.ok).toBe(true);
+    expect(logRpcUsageEventMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("internal confirm maps rejection into INTERNAL_CONFIRMATION_REJECTED", async () => {
+    confirmTransactionPaymentMock.mockResolvedValue({
+      success: false,
+      error: "Transaction mismatch",
+      statusCode: 409,
+      code: "TX_NOT_PAYABLE",
+    });
+
+    const { POST } = await import("@/app/api/internal/confirm/route");
+
+    const req = new Request("http://localhost/api/internal/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transactionId: "txn_1", signature: "sig_1" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string; message: string } };
+
+    expect(res.status).toBe(409);
+    expect(json.error.code).toBe("TX_NOT_PAYABLE");
+    expect(json.error.message).toContain("Transaction mismatch");
+  });
+});

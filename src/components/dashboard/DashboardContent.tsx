@@ -5,10 +5,19 @@ import { Sidebar } from "./Sidebar";
 import { StatCard } from "./StatCard";
 import { WalletOverview } from "./WalletOverview";
 import { TransactionTable } from "./TransactionTable";
-import { ApiConsoleView } from "./ApiConsoleView";
-import { Activity, Settings as SettingsIcon, Globe, Save } from "lucide-react";
+import { Activity, Globe, Save } from "lucide-react";
+import type { Transaction } from "@prisma/client";
 
-export function DashboardContent({ merchant, transactions, totalRevenue }: any) {
+type DashboardContentProps = {
+  merchant: {
+    webhookUrl: string | null;
+    walletAddress: string | null;
+  };
+  transactions: Transaction[];
+  totalRevenue: number;
+};
+
+export function DashboardContent({ merchant, transactions, totalRevenue }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [webhookUrl, setWebhookUrl] = useState(merchant.webhookUrl || "");
   const [saving, setSaving] = useState(false);
@@ -25,7 +34,7 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: any) 
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-[#121212]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} actorType="merchant" />
       
       <main className="flex-1 overflow-y-auto p-8">
         {/* TAB: OVERVIEW */}
@@ -55,9 +64,6 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: any) 
           </div>
         )}
 
-        {/* TAB: API CONSOLE */}
-        {activeTab === "api" && <ApiConsoleView merchant={merchant} />}
-
         {/* TAB: SETTINGS */}
         {activeTab === "settings" && (
           <div className="max-w-2xl space-y-6">
@@ -77,7 +83,7 @@ export function DashboardContent({ merchant, transactions, totalRevenue }: any) 
                 <button 
                   onClick={handleSaveSettings}
                   disabled={saving}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
+                  className="bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 text-white px-6 rounded-xl font-bold text-sm transition-all flex items-center gap-2"
                 >
                   <Save size={16} /> {saving ? "..." : "Save"}
                 </button>

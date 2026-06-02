@@ -1,47 +1,42 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/neon";
+import { apiError, createRequestId } from "@/lib/api-errors";
+import { consumeMerchantVerificationToken } from "@/lib/email-verification";
 
 export async function POST(req: Request) {
-    try {
-        const body = await req.json();
-        const { token } = body;
+  const requestId = createRequestId();
 
-        if (!token) {
-            return NextResponse.json(
-                { error: "Missing activation token." },
-                { status: 400 }
-            );
-        }
+  try {
+    const body = await req.json();
+    const { token } = body;
 
-        const merchant = await prisma.merchant.findUnique({
-            where: { activationToken: token }
-        });
-
-        if (!merchant) {
-            return NextResponse.json(
-                { error: "Invalid or expired activation link." },
-                { status: 400 }
-            );
-        }
-
-        await prisma.merchant.update({
-            where: { id: merchant.id },
-            data: {
-                emailVerified: true,
-                activationToken: null,
-            }
-        });
-
-        return NextResponse.json(
-            { message: "Account activated successfully." },
-            { status: 200 }
-        );
-    
-    } catch (error) {
-        console.error("Activation error:", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
+    if (!token) {
+      return apiError(400, {
+        code: "AUTH_ACTIVATION_TOKEN_MISSING",
+        message: "Missing activation token.",
+        requestId,
+        retryable: false,
+      });
     }
+
+    const merchantId = await consumeMerchantVerificationToken(token);
+
+    if (!merchantId) {
+      return apiError(400, {
+        code: "AUTH_ACTIVATION_TOKEN_INVALID",
+        message: "Invalid or expired activation link.",
+        requestId,
+        retryable: false,
+      });
+    }
+
+    return NextResponse.json({ message: "Account activated successfully." }, { status: 200 });
+  } catch (error) {
+    console.error("Activation error", { requestId, error });
+    return apiError(500, {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Internal server error.",
+      requestId,
+      retryable: true,
+    });
+  }
 }

@@ -2,109 +2,122 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Copy, Check, AlertCircle } from "lucide-react";
-import { createManualPaymentLink } from "@/app/actions/payment-link";
+import { useCreatePaymentLink } from "@/hooks/api/transactions/useCreatePaymentLink";
+import { DEFAULT_PAYMENT_CURRENCY, SUPPORTED_PAYMENT_CURRENCIES } from "@/lib/payment-currencies";
+import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
 
-export function CreateLinkButton({ merchantId }: { merchantId: string }) {
+export function CreateLinkButton({ businessId }: { businessId: string }) {
+  const { loading, generatedLink, errorMsg, generateLink, resetState } = useCreatePaymentLink(businessId);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-    
     const formData = new FormData(e.currentTarget);
-    
-    const result = await createManualPaymentLink({
-      merchantId,
-      amount: parseFloat(formData.get("amount") as string),
-      orderId: formData.get("orderId") as string,
-      customerEmail: formData.get("email") as string,
-    });
-
-    if (result.success) {
-      const url = `${window.location.origin}/pay/${result.transactionId}`;
-      setGeneratedLink(url);
-    } else {
-      setErrorMsg(result.error || "An error occurred");
-    }
-    setLoading(false);
-  }
+    await generateLink(formData);
+  };
 
   const closeAndReset = () => {
     setIsOpen(false);
-    setGeneratedLink("");
-    setErrorMsg("");
-  }
+    resetState();
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const modalContent = (
+    <div className="fixed inset-0 z-[120] grid place-items-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm transition-all duration-300">
+      <div className="dashboard-card relative z-[121] my-8 w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="mb-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-600 dark:text-emerald-400">No-code checkout</p>
+          <h3 className="mt-2 text-lg font-semibold text-slate-950 dark:text-white">Create payment link</h3>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Generate a hosted checkout URL for invoices or direct collection.</p>
+        </div>
+
+        {/* TAMPILKAN BANNER ERROR */}
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-start gap-2 text-red-600 dark:text-red-400">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <p className="text-xs font-medium">{errorMsg}</p>
+          </div>
+        )}
+
+        {!generatedLink ? (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Currency*</label>
+              <DashboardSelect
+                name="currency"
+                defaultValue={DEFAULT_PAYMENT_CURRENCY}
+                options={SUPPORTED_PAYMENT_CURRENCIES.map((currency) => ({ value: currency, label: currency }))}
+                className="w-full p-3"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Amount*</label>
+              <input name="amount" type="number" step="0.000000001" min="0" required className="w-full dashboard-field p-3 text-sm" placeholder="0.1" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Reference / Order ID (Optional)</label>
+              <input name="orderId" type="text" className="w-full dashboard-field p-3 text-sm" placeholder="e.g. INV-001" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Customer reference (Optional)</label>
+              <input name="customerReference" type="text" maxLength={80} className="w-full dashboard-field p-3 text-sm" placeholder="e.g. CUST-REF-001" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Customer name (Optional)</label>
+              <input name="customerName" type="text" maxLength={80} className="w-full dashboard-field p-3 text-sm" placeholder="e.g. Avery Stone" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-gray-500 block mb-1">Notes (Optional)</label>
+              <textarea name="notes" maxLength={300} rows={3} className="w-full dashboard-field p-3 text-sm resize-none" placeholder="Internal context for support/reconciliation" />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={closeAndReset} className="flex-1 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors">Cancel</button>
+              <button type="submit" disabled={loading} className="flex-1 bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 disabled:opacity-50 transition-colors shadow-lg shadow-blue-600/20">
+                {loading ? "Generating..." : "Generate Link"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-4 text-center py-4 animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+              <Check size={32} />
+            </div>
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-200">Payment link ready to share!</p>
+
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-white/[0.03] p-3 rounded-xl border border-slate-200 dark:border-white/10">
+              <input readOnly value={generatedLink} className="bg-transparent flex-1 outline-none text-xs font-mono dark:text-gray-300" />
+              <button onClick={copyToClipboard} className="text-blue-600 hover:text-blue-700 transition-colors p-1">
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+              </button>
+            </div>
+
+            <button onClick={closeAndReset} className="w-full py-3 text-sm font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors">
+              Close
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div>
       <button 
         onClick={() => setIsOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all"
+        className="dashboard-primary transition-colors"
       >
-        <Plus size={18} /> Create Link
+        <Plus size={18} /> Create link
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1E1E1E] w-full max-w-md rounded-2xl p-6 border border-gray-200 dark:border-[#2A2A2A] shadow-2xl">
-            <h3 className="text-lg font-bold mb-4 dark:text-white">Create New Payment Link</h3>
-            
-            {/* TAMPILKAN BANNER ERROR JIKA ADA */}
-            {errorMsg && (
-              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl flex items-start gap-2 text-red-600 dark:text-red-400">
-                <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                <p className="text-xs font-medium">{errorMsg}</p>
-              </div>
-            )}
-
-            {!generatedLink ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Amount (SOL)*</label>
-                  <input name="amount" type="number" step="0.000000001" min="0" required className="w-full bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white" placeholder="0.1" />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Reference / Order ID (Optional)</label>
-                  <input name="orderId" type="text" className="w-full bg-gray-50 dark:bg-[#151515] border border-gray-200 dark:border-[#2A2A2A] rounded-xl p-3 text-sm outline-none focus:border-blue-500 transition-all dark:text-white" placeholder="e.g. INV-001 (Leave blank to auto-generate)" />
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button type="button" onClick={closeAndReset} className="flex-1 px-4 py-3 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition-all">Cancel</button>
-                  <button type="submit" disabled={loading} className="flex-1 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 disabled:opacity-50 transition-all">
-                    {loading ? "Generating..." : "Generate Link"}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="space-y-4 text-center py-4">
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/20 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Check size={32} />
-                </div>
-                <p className="text-sm text-gray-500">Payment link ready to share!</p>
-                <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#151515] p-3 rounded-xl border border-gray-200 dark:border-[#2A2A2A]">
-                  <input readOnly value={generatedLink} className="bg-transparent flex-1 outline-none text-xs font-mono dark:text-gray-300" />
-                  <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedLink);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                    className="text-blue-600"
-                  >
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                  </button>
-                </div>
-                <button onClick={closeAndReset} className="w-full py-3 text-sm font-bold text-gray-500 hover:text-gray-700 dark:hover:text-white transition-colors">Close</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {isOpen && typeof document !== "undefined" ? createPortal(modalContent, document.body) : null}
     </div>
   );
 }

@@ -1,45 +1,66 @@
-// src/app/api/merchant/apikey/regenerate/route.ts
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
 import crypto from "crypto";
 import prisma from "@/lib/neon";
+import { apiError, createRequestId } from "@/lib/api-errors";
+import { recordObservation, startObservation } from "@/lib/observability";
+import { requireBusinessMembership, requireBusinessMembershipById } from "@/lib/auth-service";
 
-export async function POST(req: Request) {
+function mapAccessError(error: unknown): { status: 401 | 403; code: "MERCHANT_UNAUTHORIZED" | "MERCHANT_FORBIDDEN"; message: string } {
+  if (error instanceof Error && error.message === "Forbidden") {
+    return { status: 403, code: "MERCHANT_FORBIDDEN", message: "Forbidden." };
+  }
+  return { status: 401, code: "MERCHANT_UNAUTHORIZED", message: "Unauthorized." };
+}
+
+export async function POST(req?: Request) {
+  const requestId = createRequestId();
+  const obs = startObservation(requestId, "POST /api/merchant/apikey/regenerate");
+
+  try {
+    const body = ((await req?.json?.().catch(() => ({}))) || {}) as { businessId?: string };
+    const targetBusinessId = typeof body.businessId === "string" ? body.businessId : null;
+
+    let ctx;
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get("auth-token")?.value;
-
-        if (!token) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            );
-        }
-
-        const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-        const { payload } = await jwtVerify(token, secret);
-        const merchantId = payload.merchantId as string;
-
-        const cleanUuid = crypto.randomUUID().replace(/-/g, "");
-        const newApiKey = `tl_live_${cleanUuid}`;
-
-        await prisma.merchant.update({
-            where: { id: merchantId },
-            data: { apiKey: newApiKey }
-        });
-
-        return NextResponse.json({
-            success: true,
-            message: "API key regenerated successfully",
-            apiKey: newApiKey
-        }, { status: 200 });
-    
+      ctx = targetBusinessId
+        ? await requireBusinessMembershipById(targetBusinessId, { roles: ["OWNER", "ADMIN"] })
+        : await requireBusinessMembership({ roles: ["OWNER", "ADMIN"] });
     } catch (error) {
-        console.error("Api Key regeneration error:", error);
-        return NextResponse.json(
-            { error: "Internal Server Error" },
-            { status: 500 }
-        );
+      const accessError = mapAccessError(error);
+      recordObservation(obs, { outcome: "error", status: accessError.status, errorCode: accessError.code });
+      return apiError(accessError.status, {
+        code: accessError.code,
+        message: accessError.message,
+        requestId,
+        retryable: false,
+      });
     }
+
+    const newApiKey = `tl_live_${crypto.randomBytes(32).toString("hex")}`;
+
+    await prisma.businessCredential.upsert({
+      where: { businessId: ctx.business.id },
+      create: { businessId: ctx.business.id, apiKey: newApiKey, rotatedAt: new Date() },
+      update: { apiKey: newApiKey, rotatedAt: new Date() },
+    });
+
+    recordObservation(obs, { outcome: "success", status: 200 });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "API key regenerated successfully",
+        apiKey: newApiKey,
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("API key regeneration error", { requestId, error });
+    recordObservation(obs, { outcome: "error", status: 500, errorCode: "INTERNAL_SERVER_ERROR" });
+    return apiError(500, {
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Internal server error.",
+      requestId,
+      retryable: true,
+    });
+  }
 }

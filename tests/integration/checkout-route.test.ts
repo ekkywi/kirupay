@@ -1,0 +1,301 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const prismaMock = {
+  businessCredential: {
+    findUnique: vi.fn(),
+  },
+  transaction: {
+    findFirst: vi.fn(),
+    create: vi.fn(),
+  },
+};
+
+const maintenanceMock = vi.fn();
+
+vi.mock("@/lib/neon", () => ({
+  default: prismaMock,
+}));
+
+vi.mock("@/lib/maintenance-policy", () => ({
+  getPaymentMaintenanceBlock: maintenanceMock,
+}));
+
+describe("POST /api/v1/checkout", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.NEXT_PUBLIC_BASE_URL = "https://trezalink.test";
+    process.env.USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.NEXT_PUBLIC_USDC_MINT_DEVNET = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
+    process.env.NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET = "9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E";
+    process.env.SOLANA_CLUSTER = "devnet";
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER = "devnet";
+    maintenanceMock.mockResolvedValue(null);
+  });
+
+  it("returns 401 when bearer token is missing", async () => {
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: "INV-1", amount: 1, currency: "SOL" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string; requestId: string; retryable: boolean; docsUrl: string } };
+
+    expect(res.status).toBe(401);
+    expect(json.error.code).toBe("AUTH_MISSING_BEARER_TOKEN");
+    expect(json.error.requestId).toMatch(/^req_/);
+    expect(json.error.retryable).toBe(false);
+    expect(json.error.docsUrl).toContain("error-auth_missing_bearer_token");
+  });
+
+  it("returns 400 on validation error with diagnostics contract", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-2", amount: -10, currency: "SOL" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string; details?: Record<string, unknown> } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("CHECKOUT_VALIDATION_FAILED");
+    expect(json.error.details).toBeDefined();
+  });
+
+  it("returns 400 when metadata exceeds allowed length", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({
+        orderId: "INV-META-TOO-LONG",
+        amount: 10,
+        currency: "SOL",
+        notes: "x".repeat(301),
+      }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string; details?: Record<string, unknown> } };
+
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("CHECKOUT_VALIDATION_FAILED");
+    expect(json.error.details).toBeDefined();
+  });
+
+  it("returns 409 when duplicate order id exists", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+    prismaMock.transaction.findFirst.mockResolvedValue({ id: "txn-existing" });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-3", amount: 10, currency: "SOL" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+
+    expect(res.status).toBe(409);
+    expect(json.error.code).toBe("CHECKOUT_DUPLICATE_ORDER_ID");
+  });
+
+  it("returns 503 + Retry-After when maintenance is active", async () => {
+    maintenanceMock.mockResolvedValue({
+      status: 503,
+      retryAfter: "300",
+      payload: {
+        error: "System under maintenance",
+        message: "Maintenance in progress",
+        maintenanceEndsAt: null,
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-4", amount: 10, currency: "SOL" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+
+    expect(res.status).toBe(503);
+    expect(res.headers.get("Retry-After")).toBe("300");
+    expect(json.error.code).toBe("MAINTENANCE_MODE_ACTIVE");
+  });
+
+  it("returns 201 on success", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+    prismaMock.transaction.findFirst.mockResolvedValue(null);
+    const expiresAt = new Date("2026-05-22T01:30:00.000Z");
+    prismaMock.transaction.create.mockResolvedValue({ id: "txn_abc", expiresAt });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-5", amount: 10, currency: "SOL" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { transactionId: string; checkoutUrl: string; expiresAt: string };
+
+    expect(res.status).toBe(201);
+    expect(json.transactionId).toBe("txn_abc");
+    expect(json.checkoutUrl).toBe("https://trezalink.test/pay/txn_abc");
+    expect(new Date(json.expiresAt).toISOString()).toBe(expiresAt.toISOString());
+    expect(prismaMock.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PENDING",
+          expiresAt: expect.any(Date),
+        }),
+      }),
+    );
+  });
+
+  it("returns 201 on USDC checkout when network config is available", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+    prismaMock.transaction.findFirst.mockResolvedValue(null);
+    const expiresAt = new Date("2026-05-22T01:30:00.000Z");
+    prismaMock.transaction.create.mockResolvedValue({ id: "txn_usdc", expiresAt });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-USDC-1", amount: 10, currency: "USDC" }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(201);
+  });
+
+  it("returns 400 when USDC client config is missing and does not create transaction", async () => {
+    process.env.NEXT_PUBLIC_USDC_MINT_DEVNET = "";
+    process.env.NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET = "";
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-USDC-MISSING-CLIENT", amount: 10, currency: "USDC" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as {
+      error: { code: string; details?: { cluster?: string; missingKeys?: string[] } };
+    };
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("USDC_CLIENT_CONFIG_MISSING");
+    expect(json.error.details?.cluster).toBe("devnet");
+    expect(json.error.details?.missingKeys).toEqual(
+      expect.arrayContaining(["NEXT_PUBLIC_USDC_MINT_DEVNET", "NEXT_PUBLIC_TREASURY_USDC_ATA_DEVNET"]),
+    );
+    expect(prismaMock.transaction.create).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for unsupported currency enum", async () => {
+    prismaMock.businessCredential.findUnique.mockResolvedValue({
+      businessId: "biz_1",
+      business: {
+        isActive: true,
+        settlementWallets: [{ walletAddress: "FQfNw1xwV3Qx9ZxZxZxZxZxZxZxZxZxZxZxZxZ" }],
+      },
+    });
+
+    const { POST } = await import("@/app/api/v1/checkout/route");
+
+    const req = new Request("http://localhost/api/v1/checkout", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer valid_key",
+      },
+      body: JSON.stringify({ orderId: "INV-BAD-1", amount: 10, currency: "BTC" }),
+    });
+
+    const res = await POST(req);
+    const json = (await res.json()) as { error: { code: string } };
+    expect(res.status).toBe(400);
+    expect(json.error.code).toBe("CHECKOUT_VALIDATION_FAILED");
+  });
+});

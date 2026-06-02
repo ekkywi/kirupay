@@ -4,74 +4,24 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Mail, Lock, Building2, ArrowRight, Loader2 } from "lucide-react";
+import { useGatekeeper } from "@/hooks/auth/useGatekeeper";
 
 interface SetupGatekeeperProps {
-  merchantId: string;
+  businessId: string;
   currentEmail: string;
   isWalletUser: boolean;
 }
 
-export default function SetupGatekeeper({ merchantId, currentEmail, isWalletUser }: SetupGatekeeperProps) {
-  // State untuk form
+export default function SetupGatekeeper({ businessId, currentEmail, isWalletUser }: SetupGatekeeperProps) {
+  const { isLoading, statusMsg, completeProfile, resendVerification } = useGatekeeper(businessId, currentEmail);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState(""); // <-- State baru
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [businessName, setBusinessName] = useState("");
-  
-  // State untuk status UI
-  const [isLoading, setIsLoading] = useState(false);
-  const [statusMsg, setStatusMsg] = useState<{type: "error" | "success" | "", text: string}>({type: "", text: ""});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setStatusMsg({ type: "", text: "" });
-
-    // Validasi Konfirmasi Password
-    if (password !== confirmPassword) {
-      setStatusMsg({ type: "error", text: "Passwords do not match. Please try again." });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/auth/profile/complete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchantId, email, password, businessName })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      setStatusMsg({ type: "success", text: "Verification email sent! Please check your inbox." });
-    } catch (error: any) {
-      setStatusMsg({ type: "error", text: error.message });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResendEmail = async () => {
-    setIsLoading(true);
-    setStatusMsg({ type: "", text: "" });
-
-    try {
-      const res = await fetch("/api/auth/profile/resend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchantId, email: currentEmail })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
-      setStatusMsg({ type: "success", text: "Verification email re-sent! Please check your inbox." });
-    } catch (error: any) {
-      setStatusMsg({ type: "error", text: error.message });
-    } finally {
-      setIsLoading(false);
-    }
+    await completeProfile({ email, password, confirmPassword, businessName });
   };
 
   return (
@@ -88,7 +38,7 @@ export default function SetupGatekeeper({ merchantId, currentEmail, isWalletUser
           Action Required
         </h2>
 
-        {/* KONDISI 1: User Login via Wallet (Data masih kosong) */}
+        {/* KONDISI 1: User Login via Wallet */}
         {isWalletUser && (
           <>
             <p className="text-center text-gray-500 dark:text-gray-400 text-sm mb-6">
@@ -115,12 +65,11 @@ export default function SetupGatekeeper({ merchantId, currentEmail, isWalletUser
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input type="password" placeholder="Create Password" required minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
-                {/* KOLOM BARU: Konfirmasi Password */}
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input type="password" placeholder="Confirm Password" required minLength={12} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] text-gray-900 dark:text-white rounded-xl py-3 pl-12 pr-4 outline-none focus:border-blue-500 transition-colors" />
                 </div>
-                <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-blue-600 via-violet-600 to-cyan-600 hover:from-blue-700 hover:via-violet-700 hover:to-cyan-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Save & Verify <ArrowRight className="w-4 h-4" /></>}
                 </button>
               </form>
@@ -141,7 +90,7 @@ export default function SetupGatekeeper({ merchantId, currentEmail, isWalletUser
               </div>
             )}
 
-            <button onClick={handleResendEmail} disabled={isLoading} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black hover:scale-[1.02] active:scale-95 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+            <button onClick={resendVerification} disabled={isLoading} className="w-full bg-gray-900 dark:bg-white text-white dark:text-black hover:scale-[1.02] active:scale-95 font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Resend Verification Email"}
             </button>
           </div>

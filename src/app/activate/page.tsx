@@ -6,20 +6,22 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { throwApiResponseError } from "@/lib/client-api-error";
 
 // Komponen Utama yang memproses logika
 function ActivationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const hasToken = Boolean(token);
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Authenticating your token...");
+  const [status, setStatus] = useState<"loading" | "success" | "error">(hasToken ? "loading" : "error");
+  const [message, setMessage] = useState(
+    hasToken ? "Authenticating your token..." : "Invalid activation link. No token provided."
+  );
 
   useEffect(() => {
     if (!token) {
-      setStatus("error");
-      setMessage("Invalid activation link. No token provided.");
       return;
     }
 
@@ -31,10 +33,8 @@ function ActivationContent() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await res.json();
-
         if (!res.ok) {
-          throw new Error(data.error || "Failed to activate account.");
+          await throwApiResponseError(res, "Failed to activate account.");
         }
 
         setStatus("success");
@@ -45,9 +45,10 @@ function ActivationContent() {
           router.push("/login");
         }, 3000);
 
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : "Failed to activate account.";
         setStatus("error");
-        setMessage(error.message);
+        setMessage(errorMessage);
       }
     };
 
