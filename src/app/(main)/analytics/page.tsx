@@ -7,7 +7,7 @@ import { TopCustomersTable } from "@/components/dashboard/analytics/TopCustomers
 import { RevenueSourceChart } from "@/components/dashboard/analytics/RevenueSourceChart";
 import { HistoricalVolumeChart } from "@/components/dashboard/analytics/HistoricalVolumeChart";
 import { PeakHoursChart } from "@/components/dashboard/analytics/PeakHoursChart";
-import { formatCurrencyDisplay, formatCurrencyNumber } from "@/lib/currency-format";
+import { formatCurrencyDisplay } from "@/lib/currency-format";
 import {
   Activity,
   ArrowUpRight,
@@ -79,6 +79,13 @@ type TrendSnapshot = {
   successRate: number;
 };
 
+type CurrencyAggregateRow = {
+  currency: string;
+  _sum: { amount: number | null; feeAmount: number | null; netAmount: number | null };
+  _avg: { amount: number | null };
+  _count: { id: number };
+};
+
 const CURRENCY_SERIES_COLORS = [
   "#3b82f6",
   "#10b981",
@@ -99,6 +106,34 @@ function percentDelta(current: number, previous: number) {
 function moneyWhere(base: Prisma.TransactionWhereInput, currency: CurrencyView): Prisma.TransactionWhereInput {
   if (currency === "ALL") return base;
   return { ...base, currency };
+}
+
+function formatMultiCurrencyTotals(rows: CurrencyAggregateRow[], field: keyof CurrencyAggregateRow["_sum"]) {
+  const entries = rows
+    .map((row) => {
+      const value = row._sum[field] ?? 0;
+      return value > 0 ? formatCurrencyDisplay(row.currency, value) : null;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  if (entries.length === 0) return "-";
+  return entries.join(" • ");
+}
+
+function formatMultiCurrencyDelta(currentRows: CurrencyAggregateRow[], previousRows: CurrencyAggregateRow[], field: keyof CurrencyAggregateRow["_sum"]) {
+  const previousByCurrency = new Map(previousRows.map((row) => [row.currency, row._sum[field] ?? 0]));
+  const entries = currentRows
+    .map((row) => {
+      const currentValue = row._sum[field] ?? 0;
+      if (currentValue <= 0) return null;
+
+      const delta = percentDelta(currentValue, previousByCurrency.get(row.currency) ?? 0);
+      return `${row.currency} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  if (entries.length === 0) return "No paid volume in this period";
+  return `${entries.join(" • ")} vs previous period`;
 }
 
 export default async function AnalyticsPage({
@@ -156,6 +191,10 @@ export default async function AnalyticsPage({
     paidPrevious7d,
     paidCurrent30d,
     paidPrevious30d,
+    paidCurrent7dByCurrency,
+    paidPrevious7dByCurrency,
+    paidCurrent30dByCurrency,
+    paidPrevious30dByCurrency,
     allCurrent7d,
     allPrevious7d,
     allCurrent30d,
@@ -257,6 +296,38 @@ export default async function AnalyticsPage({
       where: { ...scopedWhere, status: "PAID", createdAt: { gte: previous30dStart, lt: current30dStart } },
       _sum: { amount: true, feeAmount: true, netAmount: true },
       _count: { id: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: { ...baseWhere, status: "PAID", createdAt: { gte: current7dStart, lt: now } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { amount: true },
+      _count: { id: true },
+      orderBy: { currency: "asc" },
+    }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: { ...baseWhere, status: "PAID", createdAt: { gte: previous7dStart, lt: current7dStart } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { amount: true },
+      _count: { id: true },
+      orderBy: { currency: "asc" },
+    }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: { ...baseWhere, status: "PAID", createdAt: { gte: current30dStart, lt: now } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { amount: true },
+      _count: { id: true },
+      orderBy: { currency: "asc" },
+    }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: { ...baseWhere, status: "PAID", createdAt: { gte: previous30dStart, lt: current30dStart } },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      _avg: { amount: true },
+      _count: { id: true },
+      orderBy: { currency: "asc" },
     }),
     prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: current7dStart, lt: now } } }),
     prisma.transaction.count({ where: { ...scopedWhere, createdAt: { gte: previous7dStart, lt: current7dStart } } }),
@@ -400,33 +471,61 @@ export default async function AnalyticsPage({
   const trend30Current = buildTrend("Last 30 days", paidCurrent30d, allCurrent30d);
   const trend30Previous = buildTrend("Previous 30 days", paidPrevious30d, allPrevious30d);
 
+  const trend7Value = selectedCurrency === "ALL"
+    ? formatMultiCurrencyTotals(paidCurrent7dByCurrency as CurrencyAggregateRow[], "netAmount")
+    : formatCurrencyDisplay(selectedCurrency, trend7Current.net);
+  const trend30Value = selectedCurrency === "ALL"
+    ? formatMultiCurrencyTotals(paidCurrent30dByCurrency as CurrencyAggregateRow[], "netAmount")
+    : formatCurrencyDisplay(selectedCurrency, trend30Current.net);
+  const trend7DeltaLabel = selectedCurrency === "ALL"
+    ? formatMultiCurrencyDelta(
+      paidCurrent7dByCurrency as CurrencyAggregateRow[],
+      paidPrevious7dByCurrency as CurrencyAggregateRow[],
+      "netAmount"
+    )
+    : `${percentDelta(trend7Current.net, trend7Previous.net) >= 0 ? "+" : ""}${percentDelta(trend7Current.net, trend7Previous.net).toFixed(1)}% vs previous period`;
+  const trend30DeltaLabel = selectedCurrency === "ALL"
+    ? formatMultiCurrencyDelta(
+      paidCurrent30dByCurrency as CurrencyAggregateRow[],
+      paidPrevious30dByCurrency as CurrencyAggregateRow[],
+      "netAmount"
+    )
+    : `${percentDelta(trend30Current.net, trend30Previous.net) >= 0 ? "+" : ""}${percentDelta(trend30Current.net, trend30Previous.net).toFixed(1)}% vs previous period`;
+
   const trendCards = [
     {
       label: "7-day net",
-      value: formatCurrencyDisplay(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, trend7Current.net),
+      value: trend7Value,
       delta: percentDelta(trend7Current.net, trend7Previous.net),
+      deltaLabel: trend7DeltaLabel,
     },
     {
       label: "30-day net",
-      value: formatCurrencyDisplay(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, trend30Current.net),
+      value: trend30Value,
       delta: percentDelta(trend30Current.net, trend30Previous.net),
+      deltaLabel: trend30DeltaLabel,
     },
     {
       label: "7-day success",
       value: `${trend7Current.successRate.toFixed(1)}%`,
       delta: percentDelta(trend7Current.successRate, trend7Previous.successRate),
+      deltaLabel: `${percentDelta(trend7Current.successRate, trend7Previous.successRate) >= 0 ? "+" : ""}${percentDelta(trend7Current.successRate, trend7Previous.successRate).toFixed(1)}% vs previous period`,
     },
     {
       label: "30-day success",
       value: `${trend30Current.successRate.toFixed(1)}%`,
       delta: percentDelta(trend30Current.successRate, trend30Previous.successRate),
+      deltaLabel: `${percentDelta(trend30Current.successRate, trend30Previous.successRate) >= 0 ? "+" : ""}${percentDelta(trend30Current.successRate, trend30Previous.successRate).toFixed(1)}% vs previous period`,
     },
   ];
 
   const activeCurrencyLabel = selectedCurrency === "ALL" ? "All currencies" : selectedCurrency;
+  const activeNetInsight = selectedCurrency === "ALL"
+    ? `${formatMultiCurrencyTotals(paidByCurrency as CurrencyAggregateRow[], "netAmount")} (mixed by currency)`
+    : formatCurrencyDisplay(selectedCurrency, activeMonetarySummary.net);
   const insightSummary = [
     paidCount > 0
-      ? `Net settlement is ${formatCurrencyNumber(selectedCurrency === "ALL" ? "SOL" : selectedCurrency, activeMonetarySummary.net)} ${selectedCurrency === "ALL" ? "(mixed by currency)" : selectedCurrency} from ${paidCount} paid transactions.`
+      ? `Net settlement is ${activeNetInsight} from ${paidCount} paid transactions.`
       : "No paid settlement yet. Create payment links or API checkout sessions to start collecting.",
     peakHour.count > 0
       ? `Highest paid activity is around ${peakHour.hour}:00 with ${peakHour.count} paid checkout${peakHour.count === 1 ? "" : "s"}.`
@@ -521,7 +620,7 @@ export default async function AnalyticsPage({
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">{card.label}</p>
             <p className="mt-2 font-mono text-lg font-semibold text-slate-950 dark:text-white">{card.value}</p>
             <p className={`mt-1 text-xs font-semibold ${card.delta >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-              {card.delta >= 0 ? "+" : ""}{card.delta.toFixed(1)}% vs previous period
+              {card.deltaLabel}
             </p>
           </div>
         ))}
