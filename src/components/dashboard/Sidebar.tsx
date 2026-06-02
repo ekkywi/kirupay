@@ -198,13 +198,6 @@ export function Sidebar({ actorType }: SidebarProps) {
             </div>
           ))}
         </nav>
-
-        <div className="m-3 rounded-2xl border border-blue-400/20 bg-white/65 p-4 shadow-sm shadow-blue-950/5 dark:bg-white/[0.04]">
-          <p className="text-xs font-semibold text-slate-950 dark:text-white">Production mode</p>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-            SOL settlement, live API keys, and signed webhook delivery are active.
-          </p>
-        </div>
       </aside>
 
       <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-blue-400/20 bg-white/95 p-1.5 shadow-xl shadow-blue-950/10 backdrop-blur dark:border-white/10 dark:bg-[#080b1f]/95 dark:shadow-black/30 lg:hidden">

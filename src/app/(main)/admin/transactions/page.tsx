@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 // src/app/(main)/admin/transactions/page.tsx
 import prisma from "@/lib/neon";
 import type { Prisma } from "@prisma/client";
+import { formatCurrencyBreakdown } from "@/lib/currency-breakdown";
+import { formatCurrencyDisplay } from "@/lib/currency-format";
 import {
   Activity,
   ArrowUpRight,
@@ -20,6 +22,7 @@ import {
 import Link from "next/link";
 import { AdminMetricCard, AdminSectionHeader, AdminSurface } from "@/components/admin/AdminUI";
 import { DashboardSelect } from "@/components/dashboard/DashboardSelect";
+import { buildPaymentCurrencyOptions } from "@/lib/payment-currencies";
 
 export const metadata: Metadata = {
   title: "Admin Transactions",
@@ -31,12 +34,11 @@ const SOURCES = ["ALL", "CHECKOUT_API", "PAYMENT_LINK"] as const;
 
 type AdminTransactionSearchParams = {
   search?: string;
+  currency?: string;
   status?: string;
   source?: string;
   page?: string;
 };
-
-const formatSOL = (value: number | null | undefined, precision = 4) => (value ?? 0).toFixed(precision);
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en", {
@@ -60,11 +62,12 @@ function getStatusClasses(status: string) {
   return "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300";
 }
 
-function buildPageHref(page: number, search: string, status: string, source: string) {
+function buildPageHref(page: number, search: string, currency: string, status: string, source: string) {
   const params = new URLSearchParams();
 
   if (page > 1) params.set("page", page.toString());
   if (search) params.set("search", search);
+  if (currency !== "ALL") params.set("currency", currency);
   if (status !== "ALL") params.set("status", status);
   if (source !== "ALL") params.set("source", source);
 
@@ -80,10 +83,20 @@ export default async function AdminTransactionsPage({
   const resolvedSearchParams = await searchParams;
   const currentPage = Math.max(Number(resolvedSearchParams.page) || 1, 1);
   const search = resolvedSearchParams.search?.trim() || "";
+  const selectedRawCurrency = typeof resolvedSearchParams.currency === "string" ? resolvedSearchParams.currency.toUpperCase() : "ALL";
   const status = STATUSES.includes(resolvedSearchParams.status as (typeof STATUSES)[number]) ? resolvedSearchParams.status || "ALL" : "ALL";
   const source = SOURCES.includes(resolvedSearchParams.source as (typeof SOURCES)[number]) ? resolvedSearchParams.source || "ALL" : "ALL";
 
+  const discoveredCurrencies = await prisma.transaction.findMany({
+    distinct: ["currency"],
+    select: { currency: true },
+    orderBy: { currency: "asc" },
+  });
+  const currencyOptions = buildPaymentCurrencyOptions(discoveredCurrencies.map((row) => row.currency));
+  const selectedCurrency = currencyOptions.includes(selectedRawCurrency) ? selectedRawCurrency : "ALL";
+
   const whereClause: Prisma.TransactionWhereInput = {};
+  const currencyScope: Prisma.TransactionWhereInput = selectedCurrency !== "ALL" ? { currency: selectedCurrency } : {};
 
   if (search) {
     whereClause.OR = [
@@ -112,8 +125,12 @@ export default async function AdminTransactionsPage({
     whereClause.source = source;
   }
 
+  if (selectedCurrency !== "ALL") {
+    whereClause.currency = selectedCurrency;
+  }
+
   const skip = (currentPage - 1) * ITEMS_PER_PAGE;
-  const basePaidWhere: Prisma.TransactionWhereInput = { status: "PAID" };
+  const paidWhere: Prisma.TransactionWhereInput = { ...currencyScope, status: "PAID" };
 
   const [transactions, totalCount, filteredStats, paidStats, pendingCount, failedCount] = await Promise.all([
     prisma.transaction.findMany({
@@ -126,27 +143,33 @@ export default async function AdminTransactionsPage({
       },
     }),
     prisma.transaction.count({ where: whereClause }),
-    prisma.transaction.aggregate({
+    prisma.transaction.groupBy({
+      by: ["currency"],
       where: whereClause,
-      _sum: { amount: true, feeAmount: true, netAmount: true },
-    }),
-    prisma.transaction.aggregate({
-      where: basePaidWhere,
       _count: { id: true },
       _sum: { amount: true, feeAmount: true, netAmount: true },
+      orderBy: { currency: "asc" },
     }),
-    prisma.transaction.count({ where: { status: "PENDING" } }),
-    prisma.transaction.count({ where: { status: "FAILED" } }),
+    prisma.transaction.groupBy({
+      by: ["currency"],
+      where: paidWhere,
+      _count: { id: true },
+      _sum: { amount: true, feeAmount: true, netAmount: true },
+      orderBy: { currency: "asc" },
+    }),
+    prisma.transaction.count({ where: { ...currencyScope, status: "PENDING" } }),
+    prisma.transaction.count({ where: { ...currencyScope, status: "FAILED" } }),
   ]);
 
   const totalPages = Math.max(Math.ceil(totalCount / ITEMS_PER_PAGE), 1);
-  const filteredGross = filteredStats._sum.amount || 0;
-  const filteredFees = filteredStats._sum.feeAmount || 0;
-  const paidVolume = paidStats._sum.amount || 0;
-  const paidFees = paidStats._sum.feeAmount || 0;
+  const filteredCount = totalCount;
+  const paidCount = paidStats.reduce((sum, row) => sum + row._count.id, 0);
+  const filteredGrossBreakdown = formatCurrencyBreakdown(filteredStats, "amount");
+  const paidVolumeBreakdown = formatCurrencyBreakdown(paidStats, "amount");
+  const paidFeesBreakdown = formatCurrencyBreakdown(paidStats, "feeAmount");
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500">
       <AdminSurface className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-600 dark:text-red-400">
@@ -178,29 +201,29 @@ export default async function AdminTransactionsPage({
           {
             icon: ReceiptText,
             label: "Filtered records",
-            value: totalCount.toString(),
-            detail: `${filteredGross.toFixed(4)} SOL in view`,
+            value: filteredCount.toString(),
+            detail: filteredGrossBreakdown === "-" ? "No gross volume yet" : `Gross in view: ${filteredGrossBreakdown}`,
             tone: "blue",
           },
           {
             icon: CheckCircle2,
             label: "Paid network volume",
-            value: `${formatSOL(paidVolume)} SOL`,
-            detail: `${paidStats._count.id} confirmed payments`,
+            value: paidVolumeBreakdown,
+            detail: `${paidCount} confirmed payments`,
             tone: "emerald",
           },
           {
             icon: Landmark,
             label: "Platform fees",
-            value: `${formatSOL(paidFees)} SOL`,
-            detail: `${filteredFees.toFixed(4)} SOL in filtered set`,
+            value: paidFeesBreakdown,
+            detail: paidFeesBreakdown === "-" ? "No platform fees yet" : "Fees in current filter scope",
             tone: "emerald",
           },
           {
             icon: Clock3,
             label: "Open risk states",
             value: `${pendingCount} / ${failedCount}`,
-            detail: "pending / failed transactions",
+            detail: selectedCurrency === "ALL" ? "pending / failed transactions" : `${selectedCurrency} pending / failed transactions`,
             tone: failedCount > 0 ? "amber" : "blue",
           },
         ].map((metric) => (
@@ -216,7 +239,7 @@ export default async function AdminTransactionsPage({
       </div>
 
       <AdminSurface padded={false} className="p-4">
-        <form className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_190px_auto]">
+        <form className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_170px_180px_190px_auto]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -227,6 +250,17 @@ export default async function AdminTransactionsPage({
               className="w-full dashboard-muted-panel py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition-colors focus:border-blue-500 focus:bg-white dark:border-white/10 dark:bg-white/[0.03] dark:text-white dark:focus:bg-white/[0.05]"
             />
           </div>
+
+          <DashboardSelect
+            name="currency"
+            defaultValue={selectedCurrency}
+            variant="muted"
+            options={[
+              { value: "ALL", label: "All currencies" },
+              ...currencyOptions.map((currency) => ({ value: currency, label: currency })),
+            ]}
+            className="w-full px-3 py-3"
+          />
 
           <div className="relative">
             <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -322,13 +356,13 @@ export default async function AdminTransactionsPage({
                       <p className="mt-0.5 max-w-[180px] truncate font-mono text-[10px] text-slate-400">{transaction.buyerWallet || "No wallet captured"}</p>
                     </td>
                     <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-200">
-                      {formatSOL(transaction.amount)} {transaction.currency}
+                      {formatCurrencyDisplay(transaction.currency, transaction.amount)}
                     </td>
                     <td className="px-5 py-4 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                      +{formatSOL(transaction.feeAmount)} {transaction.currency}
+                      {transaction.feeAmount != null ? `+${formatCurrencyDisplay(transaction.currency, transaction.feeAmount)}` : "-"}
                     </td>
                     <td className="px-5 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">
-                      {formatSOL(transaction.netAmount)} {transaction.currency}
+                      {formatCurrencyDisplay(transaction.currency, transaction.netAmount)}
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${getStatusClasses(transaction.status)}`}>
@@ -368,7 +402,7 @@ export default async function AdminTransactionsPage({
           </p>
           <div className="flex gap-2">
             <Link
-              href={buildPageHref(currentPage - 1, search, status, source)}
+              href={buildPageHref(currentPage - 1, search, selectedCurrency, status, source)}
               aria-disabled={currentPage <= 1}
               className={`inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-white/10 ${
                 currentPage <= 1
@@ -380,7 +414,7 @@ export default async function AdminTransactionsPage({
               Previous
             </Link>
             <Link
-              href={buildPageHref(currentPage + 1, search, status, source)}
+              href={buildPageHref(currentPage + 1, search, selectedCurrency, status, source)}
               aria-disabled={currentPage >= totalPages}
               className={`inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold transition-colors dark:border-white/10 ${
                 currentPage >= totalPages
